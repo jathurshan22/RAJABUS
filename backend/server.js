@@ -10,6 +10,7 @@ const busRoutes = require("./routes/busRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const realtimeRoutes = require("./routes/realtimeRoutes");
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/buses", busRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/realtime", realtimeRoutes);
 
 app.get("/", (req, res) => {
   res.send("Raja Bus Backend Running");
