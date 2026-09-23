@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Raja Bus - Admin Profile</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="admin-common.css">
+
+<style>
+.profile-grid{
+    display:grid;
+    grid-template-columns:360px 1fr;
+    gap:25px;
+}
+
+.profile-card,.info-card{
+    background:white;
+    border-radius:24px;
+    padding:30px;
+    box-shadow:0 15px 35px rgba(0,0,0,.06);
+}
+
+.profile-card{
+    text-align:center;
+}
+
+.profile-card img{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
+    border:5px solid #fff2e8;
+}
+
+.role-badge{
+    display:inline-block;
+    background:#f97316;
+    color:white;
+    padding:7px 15px;
+    border-radius:30px;
+    font-size:13px;
+    margin:10px 0 20px;
+}
+
+.form-grid-profile{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:20px;
+}
+
+.form-group label{
+    display:block;
+    font-weight:600;
+    margin-bottom:8px;
+    color:#475569;
+}
+
+.form-group input{
+    width:100%;
+}
+
+.action-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:25px;
+    flex-wrap:wrap;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin-top:25px;
+}
+
+.stat-card{
+    background:white;
+    border-radius:20px;
+    padding:22px;
+    box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+.stat-card h2{
+    color:#f97316;
+}
+
+@media(max-width:900px){
+    .profile-grid{grid-template-columns:1fr;}
+    .form-grid-profile{grid-template-columns:1fr;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+        <div>
+            <div class="logo">
+                <i class="fa-solid fa-bus"></i>
+                <span>Raja Bus</span>
+            </div>
+
+            <ul class="menu">
+                <li><a href="admin-dashboard.html"><i class="fa-solid fa-chart-line"></i>Dashboard</a></li>
+                <li><a href="admin-buses.html"><i class="fa-solid fa-bus"></i>Buses</a></li>
+                <li><a href="admin-bookings.html"><i class="fa-solid fa-ticket"></i>Bookings</a></li>
+                <li><a href="admin-users.html"><i class="fa-solid fa-users"></i>Users</a></li>
+                <li><a href="admin-messages.html"><i class="fa-solid fa-envelope"></i>Messages</a></li>
+                <li class="active"><a href="admin-profile.html"><i class="fa-solid fa-user"></i>Profile</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h1>Admin Profile</h1>
+                <p>Update admin details and security</p>
+            </div>
+
+            <button class="delete-btn" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </button>
+        </div>
+
+        <div class="profile-grid">
+
+            <div class="profile-card">
+                <img id="profilePreview" src="https://i.pravatar.cc/150" alt="Admin">
+
+                <input type="file" id="profileImage" accept="image/*" hidden>
+
+                <h2 id="profileNameText">JATHURSHAN</h2>
+                <p id="profileEmailText">jathurshanjohn2217@gmail.com</p>
+
+
+                <button class="primary-btn" onclick="document.getElementById('profileImage').click()">
+                    <i class="fa-solid fa-camera"></i>
+                    Change Photo
+                </button>
+            </div>
+
+            <div class="info-card">
+                <h2>Edit Profile</h2>
+
+                <div class="form-grid-profile">
+
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input id="fullName" type="text" value="JATHURSHAN">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input id="email" type="email" value="jathurshanjohn2217@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input id="phone" type="text" value="0778446248">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Role</label>
+                        <input id="role" type="text" value="Super Admin" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Joined Date</label>
+                        <input id="joinedDate" type="text" value="22-06-2026" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Login</label>
+                        <input id="lastLogin" type="text" value="Today" readonly>
+                    </div>
+
+                </div>
+
+                <div class="action-buttons">
+                    <button class="primary-btn" onclick="saveProfile()">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Save Changes
+                    </button>
+
+                    <button class="view-btn" onclick="openPasswordBox()">
+                        <i class="fa-solid fa-lock"></i>
+                        Change Password
+                    </button>
+                </div>
+
+                <div id="passwordBox" style="display:none;margin-top:25px;">
+                    <h2>Change Password</h2>
+
+                    <div class="form-grid-profile">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input id="currentPassword" type="password">
+                        </div>
+
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input id="newPassword" type="password">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input id="confirmPassword" type="password">
+                        </div>
+                    </div>
+
+                    <button class="primary-btn" style="margin-top:22px;" onclick="changePassword()">
+                        Update Password
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <p>Total Users</p>
+                <h2 id="totalUsers">0</h2>
+            </div>
+
+            <div class="stat-card">
+                <p>Total Bookings</p>
+                <h2 id="totalBookings">0</h2>
+            </div>
+
+            <div class="stat-card">
+                <p>Total Buses</p>
+                <h2 id="totalBuses">0</h2>
+            </div>
+
+            <div class="stat-card">
+                <p>Total Revenue</p>
+                <h2 id="totalRevenue">Rs.0</h2>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="admin-auth.js"></script>
+<script src="admin-profile.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

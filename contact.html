@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTACT</title>
+    <link rel="stylesheet" href="contact.css" />
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="theme.css">
+    <script src="contact.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+     <div class="image">
+    <img class="crest" id="home" src="images/rajalogo.png" />
+  </div>
+  <div class="top-border"></div>
+<div class="container">
+  <!-- Navbar -->
+  <div class="navbar">
+
+
+
+<!-- 3-dot menu button (mobile only) -->
+<button id="menuBtn" class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
+  <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+</button>
+
+<!-- Mobile drawer (reuse the same links) -->
+<nav id="mobileNav" class="nav-drawer" aria-hidden="true">
+  <div class="drawer-header">
+    
+    <button id="closeMenu" class="drawer-close" aria-label="Close menu">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+  </div>
+  <a href="home.html">Home</a>
+  <a href="home.html#about">About</a>
+  <a href="review.html">Review</a>
+  <a href="contact.html">Contact</a>
+  <a href="booking-history.html">My Bookings</a>
+</nav>
+
+<!-- Backdrop -->
+<div id="backdrop" class="nav-backdrop" hidden></div>
+
+
+
+
+    
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="home.html#about">About</a>
+       <a href="review.html">Review</a>
+      <a href="#" class="active">Contact</a>
+      <a href="booking-history.html">Journey</a>
+    </div>
+    <div class="nav-right">
+      <button id="themeToggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle dark mode">
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+      </button>
+      <a href="login.html" class="profile-btn" id="profileBtn" aria-label="Profile or login">
+        <img id="homeProfilePhoto" src="" alt="Profile" style="display:none;">
+        <i class="fa-solid fa-user" id="defaultIcon" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+<div class="contact-container">
+    <h2>Contact Us</h2>
+    <div class="contact-wrapper">
+      <!-- Contact Form -->
+      <div class="contact-form">
+        <!-- CONTACT FORM -->
+<form action="#" method="POST" id="contactForm" novalidate>
+  <div class="form-group">
+    <label><i class="fa fa-user"></i> Name</label>
+    <input type="text" name="name" placeholder="Enter your name" required>
+  </div>
+  <div class="form-group">
+    <label><i class="fa fa-envelope"></i> Email</label>
+    <input type="email" name="email" placeholder="Enter your email" required>
+  </div>
+  <div class="form-group">
+    <label><i class="fa fa-tag"></i> Subject</label>
+    <input type="text" name="subject" placeholder="Enter subject">
+  </div>
+  <div class="form-group">
+    <label><i class="fa fa-message"></i> Message</label>
+    <textarea name="message" placeholder="Write your message" required></textarea>
+  </div>
+
+  <!-- spam honeypot (hidden) -->
+  <input type="text" name="_gotcha" style="display:none">
+
+  <!-- optional nice email subject/template -->
+  <input type="hidden" name="_subject" value="New Contact Message">
+  <input type="hidden" name="_template" value="table">
+
+  <button type="submit" id="submitBtn">
+    <i class="fa fa-paper-plane"></i> Send Message
+  </button>
+</form>
+
+<!-- status message area -->
+<div id="formStatus" aria-live="polite" style="margin-top:10px;"></div>
+
+      </div>
+
+      <!-- Contact Info -->
+      <div class="contact-info">
+        <div class="info-item">
+          <i class="fa fa-location-dot"></i>
+          <span>Rajarata University, Mihintale, Anuradhapura, Sri Lanka</span>
+        </div>
+        <div class="info-item">
+          <i class="fa fa-phone"></i>
+          <span>+94 0771234567</span>
+        </div>
+        <div class="info-item">
+          <i class="fa fa-envelope"></i>
+          <span>jathurshanjohn2217@gmail.com</span>
+        </div>
+        <div class="info-item">
+          <i class="fa fa-clock"></i>
+          <span>Mon - Fri: 8:00 AM - 5:00 PM</span>
+        </div>
+
+        <!-- Google Map Embed Rajarata University -->
+       <!-- Rajarata University (Mihintale) -->
+<iframe
+  src="https://www.google.com/maps?q=Rajarata%20University%20of%20Sri%20Lanka,%20Mihintale&ll=8.35397,80.50115&z=16&output=embed"
+  
+  allowfullscreen
+  loading="lazy"
+  referrerpolicy="no-referrer-when-downgrade">
+</iframe>
+
+      </div>
+    </div>
+  </div>
+<script src="navbar-profile.js?v=50"></script>
+<script src="theme.js"></script>
+</body>
+</html>

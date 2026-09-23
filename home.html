@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="globals.css" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="home.js" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+ 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css">
+
+  <title>RAJA BUS</title>
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+  
+  <div class="image">
+    <img class="crest" id="home" src="images/rajalogo.png" />
+  </div>
+  <div class="top-border"></div>
+<div class="container">
+ 
+  <div class="navbar">
+
+
+
+
+<div id="backdrop" class="nav-backdrop" hidden></div>
+
+    
+    
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <div class="nav-links">
+      <a href="#home" class="active">Home</a>
+      <a href="#about">About</a>
+      <a href="review.html">Review</a>
+      <a href="contact.html">Contact</a>
+      <a href="booking-history.html">Journey</a>
+
+    </div>
+    <div class="nav-right">
+      <button id="themeToggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle dark mode">
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+      </button>
+      
+      <a href="login.html" class="profile-btn" id="profileBtn" aria-label="Profile or login">
+        <img id="homeProfilePhoto" src="" alt="Profile" style="display:none;">
+        <i class="fa-solid fa-user" id="defaultIcon" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+<div class="search-box" id="searchBox">
+  <h3>Search Through 25 district in Sri Lanka</h3>
+  <form class="form-container" action="result.html" method="get">
+
+  <div class="custom-select">
+    <select class="js-enhance-select" name="district" required>
+      <option value="" disabled selected hidden>Select district</option>
+      <option>Ampara</option>
+      <option>Anuradhapura</option>
+      <option>Badulla</option>
+      <option>Batticaloa</option>
+      <option>Colombo</option>
+      <option>Galle</option>
+      <option>Gampaha</option>
+      <option>Hambantota</option>
+      <option>Jaffna</option>
+      <option>Kalutara</option>
+      <option>Kandy</option>
+      <option>Kegalle</option>
+      <option>Kilinochchi</option>
+      <option>Kurunegala</option>
+      <option>Mannar</option>
+      <option>Matale</option>
+      <option>Matara</option>
+      <option>Monaragala</option>
+      <option>Mullaitivu</option>
+      <option>Nuwara Eliya</option>
+      <option>Polonnaruwa</option>
+      <option>Puttalam</option>
+      <option>Ratnapura</option>
+      <option>Trincomalee</option>
+      <option>Vavuniya</option>
+    </select>
+  </div>
+
+
+  <div class="custom-input">
+  <input type="text" class="js-date" name="date" required placeholder="mm/dd/yyyy">
+</div>
+
+
+
+  <div class="custom-select">
+    <select class="js-enhance-select" name="bus" required>
+      <option value="" disabled selected hidden>Select bus type</option>
+      <option>Private</option>
+      <option>CTB</option>
+    </select>
+  </div>
+
+  <button type="submit" class="search-btn">Search</button>
+</form>
+
+</div>
+
+
+  <div class="city-container">
+  <img src="images/busbg1.png" alt="City background" class="city-bg">
+ 
+  <img src="images/234.png" alt="white Bus" class="bus bus-one">
+
+ 
+  <img src="images/567.png" alt="red Bus" class="bus bus-two">
+
+</div>
+
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+  rel="stylesheet"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+/>
+
+<section class="top-routes">
+  <h2 class="ghost-title">top search routes</h2>
+  
+
+  <div class="routes-grid" id="topRoutesGrid">
+    <p style="text-align:center;grid-column:1/-1;color:#999;">Loading top routes...</p>
+  </div>
+</section>
+
+
+<section class="stats-section">
+  <div class="stats-container" id="statsBox">
+    <div class="stat-box">
+      <span class="label">Passengers</span>
+      <span id="statPassengers" class="value counter" data-target="1045" data-suffix=" +" style="min-width:6ch">0 +</span>
+    </div>
+    <div class="stat-box">
+      <span class="label">Search Routes</span>
+      <span id="statSearchRoutes" class="value counter" data-target="125" data-suffix=" +" style="min-width:6ch">0 +</span>
+    </div>
+    <div class="stat-box">
+      <span class="label">Srilanka Districts</span>
+      <span id="statDistricts" class="value counter" data-target="25" data-suffix="" style="min-width:6ch">0 </span>
+    </div>
+  </div>
+</section>
+
+
+<div class="highlight-line"></div>
+<div class="highlight-line1"></div>
+
+
+
+<div class="quote-bg">
+<h2 class="gold-embossed">
+  “RIDE WITH ROYALTY. <br> ALWAYS
+  PERFECT TIMING."<br><span class="steady">YOUR</span>
+  <span class="swap">
+    <span class="word time">TIME.</span>
+    <span class="word bus">BUS.</span>
+  </span>
+</h2>
+</div>
+
+<div class="only-line"></div>
+
+
+
+
+<section class="about-section" id="about" style="height:65vh;">
+  <div class="about-box">
+  <div class="about-title">
+  <img src="images/about.png" alt="About Us" class="about-img">
+  </div>
+
+  <div class="about-content">
+    <p>
+This website provides a complete bus timetable for all routes starting from Rajarata University to every district in Sri Lanka. It covers all 25 districts, making it easy for university students to check bus timings in one place. The information is based on official sources and updated regularly to ensure accuracy.    </p>
+    <p>
+With a fully responsive design, the site is accessible on mobile, tablet, and computer. Users can also search and filter bus times by district, helping them save time and choose the right bus without confusion. This project is developed by Gen-Z as a community service initiative, aiming to create a valuable resource for society.    </p>
+  </div>
+</div>
+
+</section>
+
+
+
+
+
+
+<div class="anim-underline"></div>
+
+
+
+<section class="hero-left">
+  <div class="hero-art">
+    <img src="images/review.png" alt="illustration" class="hero-img">
+
+
+    <div class="badge badge-stars">
+      ★★★★★
+    </div>
+
+    <div class="badge badge-ratings">Ratings</div>
+    <div class="badge badge-reviews">Reviews</div>
+  </div>
+</section>
+
+
+
+
+<div class="scroll-indicator">
+  <div class="mouse">
+    <span class="wheel"></span>
+  </div>
+</div>
+
+
+
+
+
+<div class="reviews-viewport">
+  <div class="reviews-track">
+    <div class="reviews-grid" id="reviewsGrid1">
+      <p style="text-align:center;grid-column:1/-1;color:#999;">Loading reviews...</p>
+    </div>
+
+    <div class="reviews-grid" id="reviewsGrid2">
+      <p style="text-align:center;grid-column:1/-1;color:#999;">Loading reviews...</p>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="top-border1"></div>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <section class="f-col">
+      <h3>Use full links</h3>
+      <ul class="f-links">
+        <li><a href="https://www.rjt.ac.lk" target="_blank" rel="noopener">Rajarata University</a></li>
+        <li><a href="https://www.sltb.lk" target="_blank" rel="noopener">Sri Lanka Transport Board</a></li>
+      </ul>
+    </section>
+
+    <section class="f-col">
+      <h3>Quick Links</h3>
+      <ul class="f-links">
+  
+        <li><a href="home.html#home">Search Buses</a></li>
+        <li><a href="booking-history.html">Booking History</a></li>
+        <li><a href="review.html">Reviews</a></li>
+      </ul>
+    </section>
+
+    <section class="f-col">
+      <h3>Contact</h3>
+      <ul class="f-links">
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </section>
+
+    <section class="f-col">
+      <h3>Address</h3>
+      <address class="f-address">
+        Rajarata University of Sri Lanka,<br>
+        Mihintale - <strong>50300</strong>,<br>
+        Sri Lanka
+      </address>
+
+      <a class="f-phone" href="tel:+94252266643" aria-label="Call">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.2 11.2 0 003.5.56 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.2 11.2 0 00.56 3.5 1 1 0 01-.25 1L6.6 10.8z" fill="currentColor"/>
+        </svg>
+        <span>+94 771234567 </span>
+      </a>
+    </section>
+  </div>
+</footer>
+
+
+
+<div class="marquee-viewport">
+  <div class="marquee-track">
+
+    <ul class="marquee-list">
+      <li>Ampara</li>
+      <li>Anuradhapura</li>
+      <li>Badulla</li>
+      <li>Batticaloa</li>
+      <li>Colombo</li>
+      <li>Galle</li>
+      <li>Gampaha</li>
+      <li>Hambantota</li>
+      <li>Jaffna</li>
+      <li>Kalutara</li>
+      <li>Kandy</li>
+      <li>Kegalle</li>
+      <li>Kilinochchi</li>
+      <li>Kurunegala</li>
+      <li>Mannar</li>
+      <li>Matale</li>
+      <li>Matara</li>
+      <li>Monaragala</li>
+      <li>Mullaitivu</li>
+      <li>Nuwara Eliya</li>
+      <li>Polonnaruwa</li>
+      <li>Puttalam</li>
+      <li>Ratnapura</li>
+      <li>Trincomalee</li>
+      <li>Vavuniya</li>
+    </ul>
+    <ul class="marquee-list">
+      <li>Ampara</li>
+      <li>Anuradhapura</li>
+      <li>Badulla</li>
+      <li>Batticaloa</li>
+      <li>Colombo</li>
+      <li>Galle</li>
+      <li>Gampaha</li>
+      <li>Hambantota</li>
+      <li>Jaffna</li>
+      <li>Kalutara</li>
+      <li>Kandy</li>
+      <li>Kegalle</li>
+      <li>Kilinochchi</li>
+      <li>Kurunegala</li>
+      <li>Mannar</li>
+      <li>Matale</li>
+      <li>Matara</li>
+      <li>Monaragala</li>
+      <li>Mullaitivu</li>
+      <li>Nuwara Eliya</li>
+      <li>Polonnaruwa</li>
+      <li>Puttalam</li>
+      <li>Ratnapura</li>
+      <li>Trincomalee</li>
+      <li>Vavuniya</li>
+    </ul>
+  </div>
+</div>
+
+<button id="scrollTopBtn">↑</button>
+
+<footer class="footer-bar">
+  <p class="top-text">
+    Powered by Gen-Z System
+  </p>
+  <p class="bottom-text">
+    Copyright ©
+<strong>2025</strong> Raja Bus. All Rights Reserved. Powered by Gen-Z System.
+
+    
+  </p>
+</footer>
+</div>
+
+
+
+
+
+
+<script src="navbar-profile.js?v=50"></script>
+<script src="theme.js"></script>
+</body>
+</html>

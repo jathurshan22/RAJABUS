@@ -1,0 +1,653 @@
+/* 🌞 Light theme (default) */
+:root {
+  --bg: #ffffff;
+  --text: #1e1e1e;
+  --btn-bg: #f3f4f6;
+  --btn-text: #111827;
+  --btn-border: #d1d5db;
+
+}
+/* 🌙 Dark theme */
+:root[data-theme="dark"] {
+  --bg: #000000c7;
+  --text: #ecf0f3;
+  --btn-bg: #1e293b;
+  --btn-text: #f8fafc;
+  --btn-border: #334155;
+  --accent: #1b8a17;
+}
+
+/* Page base */
+body {
+  background: var(--bg);
+  color: var(--text);
+  
+  transition: background 0.35s ease, color 0.35s ease;
+  
+}
+
+
+/* 🌗 Toggle button style */
+#themeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding:7px 9px;
+  font-size: rem;
+  font-weight: 500;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: px solid var(--btn-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease,
+              box-shadow 0.3s ease, transform 0.2s ease;
+  
+  position: relative;
+  overflow: hidden;
+  margin-top:1px;
+  margin-right: -250px;
+}
+:root[data-theme="dark"] #themeToggle{
+  border-color:#334155;
+  background:#1e293b;
+  color:#e5e7eb;
+}
+
+
+
+
+
+
+
+
+/* Glow on hover */
+#themeToggle:hover {
+  background: var(--accent);
+  color: #fff;
+  transform: scale(1.01);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25),
+              0 0 8px var(--accent);
+}
+
+/* Press effect */
+#themeToggle:active {
+  transform: scale(0.95);
+}
+
+/* Subtle ripple effect */
+#themeToggle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: scale(10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+#themeToggle:active::after {
+  transform: scale(0);
+  opacity: 0.5;
+  transition: 0s;
+}
+
+
+
+
+
+
+
+
+
+
+/*home dark mode*/
+:root[data-theme="dark"] {
+  /* optional: tweak existing vars you already use */
+  --accent: #f26522;
+  --edge: rgba(242,101,34,.35);
+  --ink: #e5e7eb;
+  --muted: #a3adc2;
+}
+
+/* Page + text */
+:root[data-theme="dark"] body{
+  background:#0f172a;
+  color:#e5e7eb;
+}
+
+/* Top thin lines */
+:root[data-theme="dark"] .top-border,
+:root[data-theme="dark"] .top-border1{
+  background-color:#1f2937;
+}
+
+/* Navbar + links */
+:root[data-theme="dark"] .navbar{
+  background:#0f172a;
+  color:#e5e7eb;
+  box-shadow:none;
+}
+:root[data-theme="dark"] .logo,
+:root[data-theme="dark"] .hotline,
+:root[data-theme="dark"] .nav-links a{
+  color:#e5e7eb;
+}
+:root[data-theme="dark"] .nav-links a:hover{
+  color:#f26522;
+}
+:root[data-theme="dark"] .nav-links a::after{
+  background:#f26522;
+}
+
+/* Search box + controls */
+:root[data-theme="dark"] .search-box{
+  background:#0b1220b9;
+  box-shadow:0 2px 12px rgb(0, 0, 0);
+}
+:root[data-theme="dark"] .custom-select select,
+:root[data-theme="dark"] .custom-input input{
+  background:#1e293b;
+  color:#e5e7eb;
+  border-color:#334155;
+}
+:root[data-theme="dark"] .custom-select select:hover,
+:root[data-theme="dark"] .custom-select select:focus,
+:root[data-theme="dark"] .custom-input input:hover,
+:root[data-theme="dark"] .custom-input input:focus{
+  background:#0f172a;
+  color:#f26522;
+  border-color:#f26522;
+}
+:root[data-theme="dark"] .custom-select i{ color:#7a97d1; }
+:root[data-theme="dark"] .custom-input input[type="date"]::-webkit-calendar-picker-indicator{
+  filter: invert(0.9) hue-rotate(180deg) brightness(1.1);
+}
+
+/* Search button */
+:root[data-theme="dark"] .search-btn{
+  background:#0f172a;
+  color:#d5cdcdf1;
+  border-color:transparent;
+}
+:root[data-theme="dark"] .search-btn:hover,
+:root[data-theme="dark"] .search-btn:focus{
+  background:#0f172a;
+  color:#f26522;
+  border-color:#d15d27;
+}
+/* Ghost title – dark mode only */
+:root[data-theme="dark"] .ghost-title{
+  /* light-on-dark ghost tint */
+  color: rgba(240, 229, 229, 0.162);   /* was rgba(0,0,0,.05) */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0); /* very soft lift */
+  /* layout values untouched */
+}
+
+/* ==== CTA / MINI — Dark theme overrides (no layout changes) ==== */
+:root[data-theme="dark"] {
+  /* if you use --edge elsewhere, give it a darker value for dark surfaces */
+  --edge: #263244; /* subtle bluish-gray border for dark bg */
+}
+
+
+
+:root[data-theme="dark"] .mini{
+  color: var(--accent);          /* keep your orange text */
+  background: #0f172a;           /* dark card bg */
+  border-color: var(--edge);     /* softer border on dark */
+  box-shadow: 0 1px 10px rgba(0,0,0,.35); /* tiny lift, optional */
+}
+
+:root[data-theme="dark"] .mini:hover{
+  border-color: var(--accent-light);               /* same hover behavior */
+  background: rgba(242, 100, 34, 0.167);          /* orange-tinted hover */
+}
+
+/* keyboard accessibility (optional but recommended) */
+:root[data-theme="dark"] .mini:focus-visible{
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+
+/* City bg container (no layout change) */
+
+/* Cards, pills, meta blocks */
+:root[data-theme="dark"] .route-card,
+:root[data-theme="dark"] .pill{
+  background:#0b1220;
+  border-color:#263244;
+  box-shadow:0 8px 22px rgb(0, 0, 0);
+}
+:root[data-theme="dark"] .fromto .lbl,
+:root[data-theme="dark"] .meta .row,
+:root[data-theme="dark"] .fare{
+  color:#b6c0d495;
+}
+:root[data-theme="dark"] .fare b{ color:#e5e7eb9a; }
+:root[data-theme="dark"] .pill{ color:#c7cfde; }
+:root[data-theme="dark"] .pill::before,
+:root[data-theme="dark"] .pill::after{
+  background:#263244;
+}
+
+/* Reviews scroller */
+:root[data-theme="dark"] .reviews-viewport{
+  background:#0b1220;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
+:root[data-theme="dark"] .review-card{
+  background:#0f172a;
+  box-shadow:0 4px 14px rgba(0,0,0,.3);
+}
+:root[data-theme="dark"] .review-card p{ color:#d5dbea; }
+
+
+:root[data-theme="dark"] .stats-container{
+  background: rgba(17,24,39,0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow:0 6px 24px rgba(0,0,0,.35);
+}
+:root[data-theme="dark"] .stat-box .label,
+:root[data-theme="dark"] .stat-box .value{ color:#fff; }
+
+/* Highlight lines */
+:root[data-theme="dark"] .highlight-line,
+:root[data-theme="dark"] .highlight-line1{
+  background:#1f2937;
+}
+
+/* Quote bg sweep */
+:root[data-theme="dark"] .quote-bg{
+  background: linear-gradient(90deg, #3a1f1169 0%, #1f293700 60%, transparent 100%);
+}
+
+/* About content sweep */
+:root[data-theme="dark"] .about-content{
+  background: linear-gradient(90deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0) 60%, rgba(242,100,34,0.2) 100%);
+}
+:root[data-theme="dark"] .about-content p{ color:#cdd6e7; }
+
+/* Animated underline + dot stays same color; line on dark bg looks nicer */
+:root[data-theme="dark"] .anim-underline{ background:#f26522; }
+:root[data-theme="dark"] .anim-underline::after{ background:#fff; }
+
+/* Hero badges */
+:root[data-theme="dark"] .badge{
+  background:#111827;
+  color:#e5e7eb;
+  box-shadow:0 18px 45px rgb(0, 0, 0);
+}
+
+/* Mouse scroll indicator */
+:root[data-theme="dark"] .mouse{
+  border-color:#f26522;
+  box-shadow:0 2px 12px rgba(242,101,34,.25);
+}
+:root[data-theme="dark"] .mouse .wheel{ background:#f26522; }
+
+/* Marquee strip */
+:root[data-theme="dark"] .marquee-viewport{
+  background:#0b1220;
+  opacity:.35; /* your original had 20%; keep subtle */
+}
+:root[data-theme="dark"] .marquee-list li{ color:#e5e7eb; }
+
+/* Footer */
+:root[data-theme="dark"] .site-footer{
+  background:#0b1220;
+}
+:root[data-theme="dark"] .site-footer .f-col h3{ color:#e5e7eb; }
+:root[data-theme="dark"] .site-footer .f-address{ color:#c7cfde; }
+:root[data-theme="dark"] .site-footer .f-links a{ color:#aab4c9; }
+:root[data-theme="dark"] .site-footer .f-links a:hover{ color:#fff; }
+:root[data-theme="dark"] .site-footer .f-phone{ color:#e5e7eb; }
+:root[data-theme="dark"] .site-footer .f-phone svg{ color:#fff; }
+
+/* Footer bar */
+:root[data-theme="dark"] .footer-bar{
+  background:#331e165e;
+}
+:root[data-theme="dark"] .footer-bar .top-text{ color:#c7cfde; }
+:root[data-theme="dark"] .footer-bar .bottom-text{ color:#e5e7eb; }
+
+/* Thin right vertical line */
+:root[data-theme="dark"] .only-line{
+  background:#d1ae9da0;
+}
+
+
+
+
+
+
+/* review page */
+
+:root[data-theme="dark"] {
+  /* tokens */
+  --bg: #0b1220;                 /* page bg */
+  --card: #0f172a;               /* card bg */
+  --text: #e5e7eb87;               /* main text */
+  --muted: #a3adc262;              /* secondary */
+  --muted-2: #b5bfd6;
+
+  --chip: #0f172a;               /* chip/inputs */
+  --border: rgba(255,255,255,.10);
+  --shadow: 0 8px 22px rgba(0,0,0,.35);
+
+  --accent: #f26422ce;             /* keep your orange */
+  --accent-light: rgba(242,100,34,.22);
+
+  --gray-1: #687289;             /* badges bg */
+  --gray-2: #aab4c9;
+  --gray-3: #cdd6e7;
+
+  --soft-bg: rgba(242,100,34,.08);
+  --gold: #E5AF28;
+  --sky:  #38bdf8;
+  --purple:#a78bfa;
+
+  /* neon softness for .pill */
+  --neon-soft: rgba(242,101,34,.18);
+}
+
+/* Page + text */
+:root[data-theme="dark"] body{
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Navbar + links */
+:root[data-theme="dark"] .navbar{
+  background:#0b1220;
+  color:var(--text);
+  box-shadow:none;
+}
+:root[data-theme="dark"] .logo,
+:root[data-theme="dark"] .hotline,
+:root[data-theme="dark"] .nav-links a{
+  color:var(--text);
+}
+:root[data-theme="dark"] .nav-links a:hover{ color:var(--accent); }
+:root[data-theme="dark"] .nav-links a::after{ background:var(--accent); }
+
+/* Top borders */
+:root[data-theme="dark"] .top-border{ background-color: var(--accent); }
+
+/* Cards & common surfaces */
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .review{
+  background: var(--card);
+  border-color: var(--accent-light);
+  box-shadow: var(--shadow);
+}
+:root[data-theme="dark"] .sep{
+  background: linear-gradient(90deg, transparent, rgba(255,90,90,.3), transparent);
+}
+
+/* Neutral text */
+:root[data-theme="dark"] .muted,
+:root[data-theme="dark"] .review .meta{
+  color: var(--muted-2);
+}
+:root[data-theme="dark"] .review .name{ color: var(--text); }
+
+/* Summary bars */
+:root[data-theme="dark"] .bar{
+  background: transparent;
+  border-color: rgba(255,255,255,.15);
+}
+
+/* Inputs / chips / selects */
+:root[data-theme="dark"] .inp,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] .chip-btn{
+  background: var(--chip);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Buttons */
+:root[data-theme="dark"] .btn{
+  background: var(--accent);
+  color:#fff;
+  border-color: transparent;
+}
+:root[data-theme="dark"] .btn:hover{
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* === Rating stars — DARK THEME (no layout changes) === */
+
+/* Unfilled star on dark */
+:root[data-theme="dark"] .rate label::before{
+  color: rgba(255,255,255,0.24);
+  transition: color .2s ease, text-shadow .2s ease, transform .12s ease;
+}
+
+/* Hover preview */
+:root[data-theme="dark"] .rate label:hover::before{
+  color: rgba(255,255,255,0.60);
+  text-shadow: 0 0 6px rgba(242,101,34,0.25);
+}
+
+/* Selected / active (JS adds .active) */
+:root[data-theme="dark"] .rate label.active::before{
+  color: var(--accent); /* your orange */
+  text-shadow: 0 0 8px rgba(242,101,34,0.30);
+}
+
+/* If you also rely on :checked radios, keep this too */
+:root[data-theme="dark"] .rate input:checked + label::before{
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(242,101,34,0.30);
+}
+
+/* Keyboard focus ring (accessibility) */
+:root[data-theme="dark"] .rate input:focus-visible + label{
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px; /* visual only */
+}
+
+/* Disabled state (if any) */
+:root[data-theme="dark"] .rate input:disabled ~ label{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+
+/* Badge chip */
+:root[data-theme="dark"] .badge{
+  background: var(--gray-1);
+  color:#fff;
+}
+
+/* Pill glow */
+:root[data-theme="dark"] .pill{
+  background: #0b1220;
+  color: var(--gray-3);
+  box-shadow:
+    0 0 0 2px var(--neon-soft) inset,
+    0 0 10px var(--neon-soft),
+    0 0 20px var(--neon-soft);
+}
+
+/* Custom dropdown (rbdd) */
+:root[data-theme="dark"] .rbdd__btn{
+  background:#0f172a;
+  color:var(--text);
+  border-color: var(--accent);
+}
+:root[data-theme="dark"] .rbdd__list{
+  background:#0f172a;
+  border-color: var(--accent);
+  box-shadow: 0 12px 32px rgba(0,0,0,.35);
+}
+:root[data-theme="dark"] .rbdd__opt{
+  color:#e5e7eb;
+}
+:root[data-theme="dark"] .rbdd__opt:hover{
+  background: rgba(242,100,34,.15);
+}
+:root[data-theme="dark"] .rbdd__opt[aria-selected="true"]{
+  background: var(--accent);
+  color:#fff;
+}
+
+/* Sort select (native hidden) stays same; visible parts are above */
+
+/* Links inside sections that used hard #111 */
+:root[data-theme="dark"] .nav-links a{ color: var(--text); }
+:root[data-theme="dark"] .nav-links a.active{ color: var(--accent); }
+
+/* Container/background chips */
+:root[data-theme="dark"] .chip-btn.active{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+
+
+
+
+
+/* ===== CONTACT PAGE — DARK THEME OVERRIDES (no layout changes) ===== */
+
+/* Page base */
+:root[data-theme="dark"] body{
+  background:#0b1220;
+  color:#e5e7eb;
+}
+
+/* Top line */
+:root[data-theme="dark"] .top-border{ background-color:#f26522; }
+
+/* Navbar (optional, if this page shows it) */
+:root[data-theme="dark"] .navbar{
+  background:#0b1220;
+  color:#e5e7eb;
+  box-shadow:none;
+}
+:root[data-theme="dark"] .nav-links a{ color:#e5e7eb; }
+:root[data-theme="dark"] .nav-links a:hover{ color:#f26522; }
+:root[data-theme="dark"] .nav-links a::after{ background:#f26522; }
+
+/* Contact card */
+:root[data-theme="dark"] .contact-container{
+  background:#0f172a;
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.06);
+}
+
+/* Headings & text */
+:root[data-theme="dark"] h2{ color:#ffffff; }
+:root[data-theme="dark"] label{ color:#cbd5e1; }
+:root[data-theme="dark"] .info-item{ color:#c7cfde; }
+
+/* Inputs */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea{
+  background:#0b1220;
+  color:#e5e7eb;
+  border:1px solid #334155;
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder{
+  color:#94a3b8;
+  opacity:1;
+}
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] textarea:focus{
+  background:#0b1220;
+  border-color:#f26522;
+  box-shadow:0 0 0 3px rgba(242,101,34,.18);
+}
+
+/* Submit button */
+:root[data-theme="dark"] button{
+  background:#f26522;
+  color:#fff;
+  border:none; /* keep same shape/size */
+}
+:root[data-theme="dark"] button:hover{
+  background:#e65e20;
+}
+
+/* Info icons */
+:root[data-theme="dark"] .info-item i{
+  color:#f26522;                           /* icon color */
+  background: rgba(242,101,34,.12);        /* soft orange tint */
+}
+
+/* Map frame (keep style, add subtle edge on dark if needed) */
+:root[data-theme="dark"] iframe{
+  background:#0b1220;
+  outline:1px solid #1f2937; /* subtle edge; doesn't change size */
+}
+
+/* Misc from this page */
+:root[data-theme="dark"] .hotline{ color:#e5e7eb; }
+:root[data-theme="dark"] .hotline span{ color:#f26522; }
+
+
+
+
+
+
+/* ===== DARK THEME ===== */
+body.dark{
+  background:
+    radial-gradient(circle at top left, rgba(242,101,34,0.25), transparent 35%),
+    linear-gradient(135deg,#111,#1b1b1b);
+  color:#fff;
+}
+
+body.dark .navbar,
+body.dark .result-header{
+  background:#111;
+  color:#fff;
+}
+
+body.dark .logo,
+body.dark .nav-links a,
+body.dark .hotline,
+body.dark .back-btn{
+  color:#fff;
+}
+
+body.dark .navbar.is-sticky{
+  box-shadow:0 4px 15px rgba(255,255,255,0.08);
+}
+
+body.dark .search-summary,
+body.dark .bus-card{
+  background:rgba(25,25,25,0.95);
+  box-shadow:0 20px 50px rgba(0,0,0,0.45);
+}
+
+body.dark .search-summary div,
+body.dark .bus-info div{
+  background:#241812;
+}
+
+body.dark .hero p,
+body.dark .card-top p,
+body.dark .search-summary span,
+body.dark .bus-info span{
+  color:#bbb;
+}
+
+body.dark .seat-badge{
+  background:#f26522;
+}
+
+body.dark .back-btn{
+  background:#222;
+}
+
+body.dark .top-border{
+  background:#f26522;
+}

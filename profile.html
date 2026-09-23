@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - Raja Bus</title>
+
+  <link rel="stylesheet" href="profile.css">
+  <link rel="stylesheet" href="toast.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+
+<div class="profile-page">
+
+  <div class="profile-card">
+
+    <div class="profile-header">
+      <div class="online-badge"><span></span> Online</div>
+
+      <label class="profile-img" for="profilePhotoInput">
+        <img id="profilePhoto" src="" alt="Profile">
+        <i id="profileIcon" class="fa-solid fa-user"></i>
+        <div class="camera-icon">
+          <i class="fa-solid fa-camera"></i>
+        </div>
+      </label>
+
+      <input type="file" id="profilePhotoInput" accept="image/*" hidden>
+
+      <h2 id="profileName">User Name</h2>
+      <p>RAJA BUS Passenger</p>
+    </div>
+
+    <div class="profile-body">
+
+      <h3><i class="fa-solid fa-id-card"></i> Profile Information</h3>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <span>Full Name</span>
+          <b id="infoFullName">-</b>
+        </div>
+
+        <div class="info-card">
+          <span>Email Address</span>
+          <b id="profileEmail">-</b>
+        </div>
+
+        <div class="info-card">
+          <span>Phone Number</span>
+          <b id="profilePhone">-</b>
+        </div>
+
+        <div class="info-card">
+          <span>Member Since</span>
+          <b id="memberSince">-</b>
+        </div>
+
+        <div class="info-card">
+          <span>User ID</span>
+          <b id="userId">-</b>
+        </div>
+        <!-- Loyalty Points Card -->
+<div class="info-card loyalty-card">
+  <span>Loyalty Points</span>
+  <b id="loyaltyPoints" style="font-size:18px; color:#f26522; margin-top:4px; display:block;">0 pts</b>
+  <span id="loyaltyBadge" class="loyalty-badge" style="margin-top:6px; display:inline-block;">🥉 Bronze</span>
+  <div class="lp-bar-bg">
+    <div class="lp-bar-fill" id="loyaltyBar" style="width:0%"></div>
+  </div>
+  <small id="loyaltyBarText" style="color:#777; font-size:11px;">Loading...</small>
+</div>
+      </div>
+
+      <h3><i class="fa-solid fa-gear"></i> Account Settings</h3>
+
+      <div class="settings-list">
+
+        <button class="setting-item" id="editProfileBtn">
+          <i class="fa-solid fa-user-pen"></i>
+          <div>
+            <b>Edit Profile</b>
+            <span>Update your name and phone</span>
+          </div>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </button>
+
+        <button class="setting-item" id="changePasswordBtn">
+          <i class="fa-solid fa-lock"></i>
+          <div>
+            <b>Change Password</b>
+            <span>Password update option</span>
+          </div>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </button>
+
+        <button class="setting-item" id="notificationBtn">
+          <i class="fa-solid fa-bell"></i>
+          <div>
+            <b>Notification Settings</b>
+            <span>Manage booking alerts</span>
+          </div>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </button>
+
+           
+         
+
+        <a href="booking-history.html" class="setting-item">
+          <i class="fa-solid fa-ticket"></i>
+          <div>
+            <b>View My Bookings</b>
+            <span>See your journey history</span>
+          </div>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </a>
+
+        <a href="contact.html" class="setting-item">
+          <i class="fa-solid fa-headset"></i>
+          <div>
+            <b>Contact Support</b>
+            <span>Need help? Send message</span>
+          </div>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </a>
+
+      </div>
+<div class="edit-modal" id="editModal">
+  <div class="edit-box">
+    <button class="close-edit" id="closeEdit">×</button>
+
+    <h2>Edit Profile</h2>
+    <p>Update your personal information</p>
+
+    <div class="edit-input">
+      <label>Full Name</label>
+      <input type="text" id="editFullName">
+    </div>
+
+    <div class="edit-input">
+      <label>Phone Number</label>
+      <input type="text" id="editPhone">
+    </div>
+
+    <button class="save-profile-btn" id="saveProfileBtn">
+      Save Changes
+    </button>
+  </div>
+</div>
+<div class="edit-modal" id="passwordModal">
+  <div class="edit-box">
+    <button class="close-edit" id="closePassword">×</button>
+
+    <h2>Change Password</h2>
+    <p>Update your account password</p>
+
+    <div class="edit-input">
+      <label>Current Password</label>
+      <input type="password" id="currentPassword">
+    </div>
+
+    <div class="edit-input">
+      <label>New Password</label>
+      <input type="password" id="newPassword">
+    </div>
+
+    <div class="edit-input">
+      <label>Confirm Password</label>
+      <input type="password" id="confirmNewPassword">
+    </div>
+
+    <button class="save-profile-btn" id="savePasswordBtn">
+      Update Password
+    </button>
+  </div>
+</div>
+      <div class="profile-actions">
+        <a href="home.html" class="home-btn">
+          <i class="fa-solid fa-house"></i> Home
+        </a>
+
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="toast.js"></script>
+<script src="profile.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register - Raja Bus</title>
+
+
+  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="toast.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+
+<div class="auth-container">
+
+  <div class="register-box">
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <h2>Create Account</h2>
+    <p>Register to book buses and manage your journey.</p>
+
+    <form id="registerForm">
+      <div class="input-group">
+        <i class="fa-solid fa-user"></i>
+        <input type="text" id="regFullName" placeholder="Full Name" required>
+      </div>
+
+      <div class="input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="regEmail" placeholder="Email Address" required>
+      </div>
+
+      <div class="input-group">
+        <i class="fa-solid fa-phone"></i>
+        <input type="tel" id="regPhone" placeholder="Phone Number" required>
+      </div>
+
+      <div class="input-group has-toggle">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <i class="fa-solid fa-eye toggle-password"></i>
+      </div>
+
+      <div class="input-group has-toggle">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
+        <i class="fa-solid fa-eye toggle-password"></i>
+      </div>
+
+   <button type="submit" class="btn register-btn">Register</button>
+    </form>
+  </div>
+
+  <div class="login-box">
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <h2>Welcome Back</h2>
+    <p>Login to continue your Raja Bus journey.</p>
+
+   <form id="loginForm">
+      <div class="input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="loginEmail" placeholder="Email Address" required>
+      </div>
+
+      <div class="input-group has-toggle">
+        <i class="fa-solid fa-lock"></i>
+     <input type="password" id="loginPassword" placeholder="Password" required>
+        <i class="fa-solid fa-eye toggle-password"></i>
+      </div>
+
+      <a href="#" class="forgot">Forgot Password?</a>
+
+     <button type="submit" class="btn login-btn-main">Login</button>
+    </form>
+
+    <a href="home.html" class="back-home">← Home</a>
+  </div>
+
+</div>
+<script src="toast.js"></script>
+<script src="login.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

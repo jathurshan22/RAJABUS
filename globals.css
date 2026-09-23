@@ -1,0 +1,204 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+* {
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0px;
+  height: 100%;
+}
+/* a blue color as a generic focus style */
+button:focus-visible {
+  outline: 2px solid #4a90e2 !important;
+  outline: -webkit-focus-ring-color auto 5px !important;
+}
+a {
+  text-decoration: none;
+}
+
+
+
+/* ================= COMMON LOGIN / PROFILE BUTTON ================= */
+.login-area{
+  position: fixed !important;
+  top: 18px !important;
+  right: 34px !important;
+  z-index: 9999 !important;
+}
+
+.login-area .login-btn{
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f26522 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  border: 3px solid rgba(255,255,255,.9) !important;
+  box-shadow: 0 12px 28px rgba(242,101,34,.35) !important;
+  transition: transform .25s ease, box-shadow .25s ease !important;
+}
+
+.login-area .login-btn:hover{
+  transform: translateY(-2px) scale(1.04) !important;
+  box-shadow: 0 16px 35px rgba(242,101,34,.45) !important;
+}
+
+#homeProfilePhoto{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 50% !important;
+}
+
+#defaultIcon{
+  color: #fff !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 768px){
+  .login-area{
+    top: 14px !important;
+    right: 14px !important;
+  }
+  .login-area .login-btn{
+    width: 48px !important;
+    height: 48px !important;
+  }
+  #defaultIcon{
+    font-size: 20px !important;
+  }
+}
+
+
+/* ==================================================
+   MODERN NAVBAR PROFILE BUTTON - COMMON ALL PAGES
+   ================================================== */
+.navbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:22px;
+  padding:14px 42px !important;
+  min-height:72px;
+}
+
+.nav-right{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:18px;
+  flex-shrink:0;
+}
+
+.nav-right #themeToggle,
+.nav-right .theme-toggle{
+  margin:0 !important;
+  position:relative !important;
+  width:40px !important;
+  height:40px !important;
+  padding:0 !important;
+  border:0 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:50% !important;
+  background:#f3f4f6 !important;
+  color:#111827 !important;
+}
+
+.profile-btn{
+  width:50px;
+  height:50px;
+  min-width:50px;
+  border-radius:50%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#f26522,#ff8a3d);
+  color:#fff;
+  text-decoration:none;
+  border:3px solid #fff;
+  box-shadow:0 12px 28px rgba(242,101,34,.35);
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+
+.profile-btn:hover{
+  transform:translateY(-2px) scale(1.04);
+  box-shadow:0 16px 34px rgba(242,101,34,.46);
+}
+
+.profile-btn #defaultIcon{
+  color:#fff !important;
+  font-size:21px !important;
+  line-height:1 !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.profile-btn #homeProfilePhoto{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  border-radius:50% !important;
+}
+
+/* old floating profile button disabled after navbar migration */
+.login-area{
+  display:none !important;
+}
+
+@media(max-width:900px){
+  .navbar{
+    padding:12px 18px !important;
+    gap:12px;
+  }
+  .nav-links{
+    gap:14px !important;
+  }
+  .nav-links a{
+    margin-left:0 !important;
+  }
+  .nav-right{
+    gap:10px;
+  }
+  .hotline{
+    display:none !important;
+  }
+  .profile-btn{
+    width:44px;
+    height:44px;
+    min-width:44px;
+  }
+  .nav-right #themeToggle,
+  .nav-right .theme-toggle{
+    width:36px !important;
+    height:36px !important;
+  }
+}
+
+@media(max-width:520px){
+  .navbar{
+    min-height:64px;
+  }
+  .logo{
+    font-size:18px !important;
+    padding-left:0 !important;
+    margin-top:0 !important;
+  }
+  .profile-btn{
+    width:42px;
+    height:42px;
+    min-width:42px;
+  }
+}

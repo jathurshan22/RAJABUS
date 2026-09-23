@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - Raja Bus</title>
+
+
+  <link rel="stylesheet" href="payment.css">
+  <link rel="stylesheet" href="toast.css">
+
+   <link rel="stylesheet" href="globals.css" />
+
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css">
+
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+<div id="toastContainer" class="toast-container"></div>
+<div class="payment-container">
+
+<h1>Secure Payment</h1>
+
+<div class="payment-card">
+
+  <div class="payment-layout">
+
+    <!-- ===== Card on top ===== -->
+    <div class="card-stage">
+      <div class="card-3d" id="card3d">
+
+        <div class="card-face card-front">
+          <div class="chip"></div>
+
+          <div class="brand-logo" id="brandLogoFront">
+            <svg class="logo-visa" viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <text x="0" y="16" font-family="Arial, sans-serif" font-style="italic" font-weight="800" font-size="18" fill="#1434CB">VISA</text>
+            </svg>
+            <svg class="logo-mastercard" viewBox="0 0 40 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="15" cy="12" r="10" fill="#EB001B"></circle>
+              <circle cx="25" cy="12" r="10" fill="#F79E1B"></circle>
+              <path d="M20 4.3a10 10 0 0 1 0 15.4 10 10 0 0 1 0-15.4z" fill="#FF5F00"></path>
+            </svg>
+          </div>
+
+          <div class="card-number" id="cardNumberDisplay">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;</div>
+
+          <div class="card-bottom-row">
+            <div class="card-field">
+              <span class="mini-label">Card holder</span>
+              <span class="mini-value" id="cardNameDisplay">YOUR NAME</span>
+            </div>
+            <div class="card-field align-right">
+              <span class="mini-label">Expires</span>
+              <span class="mini-value" id="cardExpiryDisplay">MM/YY</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-face card-back">
+          <div class="magnetic-stripe"></div>
+
+          <div class="signature-row">
+            <div class="signature-strip"></div>
+            <div class="cvv-box" id="cardCvvDisplay">&bull;&bull;&bull;</div>
+          </div>
+
+          <div class="brand-logo back-logo">
+            <svg class="logo-visa" viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <text x="0" y="16" font-family="Arial, sans-serif" font-style="italic" font-weight="800" font-size="18" fill="#1434CB">VISA</text>
+            </svg>
+            <svg class="logo-mastercard" viewBox="0 0 40 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="15" cy="12" r="10" fill="#EB001B"></circle>
+              <circle cx="25" cy="12" r="10" fill="#F79E1B"></circle>
+              <path d="M20 4.3a10 10 0 0 1 0 15.4 10 10 0 0 1 0-15.4z" fill="#FF5F00"></path>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== Details bar below the card ===== -->
+    <div class="payment-form details-bar">
+
+      <div class="input-group">
+        <label>Card Holder Name</label>
+        <input type="text" id="cardHolderInput" placeholder="JATHURSHAN">
+      </div>
+
+      <div class="input-group">
+        <label>Card Number</label>
+        <input type="text" id="cardNumberInput" placeholder="1234 5678 1234 5678" inputmode="numeric" maxlength="19">
+      </div>
+
+      <div class="input-group">
+        <label>Expiry</label>
+        <input type="text" id="cardExpiryInput" placeholder="MM/YY" inputmode="numeric" maxlength="5">
+      </div>
+
+      <div class="input-group">
+        <label>CVV</label>
+        <input type="password" id="cardCvvInput" placeholder="123" inputmode="numeric" maxlength="3">
+      </div>
+
+    </div>
+
+  </div>
+
+<div class="fare-box">
+Total Amount
+<h2 id="paymentAmount">Rs.1300</h2>
+</div>
+
+<button class="pay-btn" id="payBtn">
+  Pay Now
+</button>
+
+</div>
+
+</div>
+
+<script src="toast.js"></script>
+<script src="payment.js"></script>
+
+<script src="navbar-profile.js?v=50"></script>
+<script src="theme.js"></script>
+</body>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Raja Bus</title>
+
+  <link rel="stylesheet" href="login.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    .verify-box{
+      max-width:440px;
+      margin:80px auto;
+      background:#fff;
+      border-radius:20px;
+      padding:40px 32px;
+      text-align:center;
+      box-shadow:0 15px 40px rgba(0,0,0,.08);
+    }
+    .verify-icon{
+      font-size:48px;
+      margin-bottom:16px;
+    }
+    .verify-icon.success{ color:#16a34a; }
+    .verify-icon.error{ color:#dc2626; }
+    .verify-icon.loading{ color:#f26522; }
+    .verify-box h2{
+      margin:0 0 10px;
+    }
+    .verify-box p{
+      color:#666;
+      margin-bottom:24px;
+    }
+    .verify-box a.btn{
+      display:inline-block;
+      background:#f26522;
+      color:#fff;
+      text-decoration:none;
+      padding:12px 28px;
+      border-radius:10px;
+      font-weight:700;
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+
+  <div class="verify-box">
+    <div class="verify-icon loading" id="verifyIcon">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <h2 id="verifyTitle">Verifying your email...</h2>
+    <p id="verifyMessage">Please wait a moment.</p>
+    <a href="login.html" class="btn" id="verifyAction" style="display:none;">Go to Login</a>
+  </div>
+
+  <script src="verify-email.js"></script>
+<script src="theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raja Bus Admin Dashboard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<link rel="stylesheet" href="admin-common.css">
+
+
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <i class="fa-solid fa-bus"></i>
+            <span>Raja Bus</span>
+        </div>
+
+        <ul class="menu">
+
+            <li class="active">
+                <a href="#">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="admin-buses.html">
+                    <i class="fa-solid fa-bus-simple"></i>
+                    Buses
+                </a>
+            </li>
+
+            <li>
+                <a href="admin-bookings.html">
+                    <i class="fa-solid fa-ticket"></i>
+                    Bookings
+                </a>
+            </li>
+
+            <li>
+                <a href="admin-users.html">
+                    <i class="fa-solid fa-users"></i>
+                    Users
+                </a>
+            </li>
+
+            <li>
+                <a href="admin-messages.html">
+                    <i class="fa-solid fa-envelope"></i>
+                    Messages
+                </a>
+            </li>
+
+        </ul>
+
+       
+
+    </aside>
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+
+        <div class="topbar">
+
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome back Admin</p>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="admin-profile"
+                onclick="window.location.href='admin-profile.html'">
+
+                    <img id="dashboardAdminPhoto" src="https://i.pravatar.cc/50" alt="Admin">
+
+                    <div class="admin-profile-info">
+                        <span class="admin-profile-name">Admin</span>
+                        <span class="admin-profile-role">Administrator</span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down admin-profile-chevron"></i>
+
+                </div>
+
+                <button class="logout-btn-top"
+                onclick="logout()">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- STATS -->
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="icon blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div>
+                    <h2 id="totalUsers">0</h2>
+                    <p>Total Users</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon green">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+
+                <div>
+                    <h2 id="totalBookings">0</h2>
+                    <p>Total Bookings</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon orange">
+                    <i class="fa-solid fa-bus"></i>
+                </div>
+
+                <div>
+                    <h2 id="totalBuses">0</h2>
+                    <p>Total Buses</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon purple">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+
+                <div>
+                    <h2 id="totalRevenue">Rs.0</h2>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RECENT BOOKINGS -->
+
+        <div class="table-card">
+
+            <div class="table-header">
+
+                <h2>Recent Bookings</h2>
+
+                <a href="admin-bookings.html">
+                    View All
+                </a>
+
+            </div>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Ticket ID</th>
+                        <th>Passenger</th>
+                        <th>Route</th>
+                        <th>Seat</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="recentBookingTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="admin-auth.js"></script>
+<script src="admin-dashboard.js"></script>
+
+<script src="theme.js"></script>
+</body>
+</html>

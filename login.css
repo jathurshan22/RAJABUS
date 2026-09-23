@@ -1,0 +1,173 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#fff7f1,#fff);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.btn{
+  display:block;
+  text-decoration:none;
+  text-align:center;
+}
+
+.auth-container{
+  width:90%;
+  max-width:1100px;
+  min-height:620px;
+  display:flex;
+  border-radius:28px;
+  overflow:hidden;
+  box-shadow:0 25px 60px rgba(0,0,0,0.18);
+  background:#fff;
+}
+
+.register-box,
+.login-box{
+  width:50%;
+  padding:55px;
+}
+
+.register-box{
+  background:#fff;
+}
+
+.login-box{
+  background:linear-gradient(135deg,#f26522,#ff8a3d);
+  color:white;
+  position:relative;
+}
+
+.logo{
+  font-size:32px;
+  font-weight:800;
+  margin-bottom:25px;
+}
+
+.logo span{
+  color:#f26522;
+}
+
+.login-box .logo span{
+  color:#111;
+}
+
+h2{
+  font-size:30px;
+  margin-bottom:8px;
+}
+
+p{
+  font-size:14px;
+  margin-bottom:28px;
+  opacity:0.85;
+}
+
+.input-group{
+  position:relative;
+  margin-bottom:18px;
+}
+
+.input-group i{
+  position:absolute;
+  top:50%;
+  left:16px;
+  transform:translateY(-50%);
+  color:#f26522;
+}
+
+.input-group input{
+  width:100%;
+  padding:14px 15px 14px 45px;
+  border:1px solid #ddd;
+  border-radius:14px;
+  outline:none;
+  font-size:14px;
+}
+
+.input-group input:focus{
+  border-color:#f26522;
+  box-shadow:0 0 0 3px rgba(242,101,34,0.15);
+}
+
+/* ===== Password show/hide toggle ===== */
+.input-group .toggle-password{
+  left:auto;
+  right:16px;
+  color:#999;
+  cursor:pointer;
+  transition:color 0.2s;
+}
+
+.input-group .toggle-password:hover{
+  color:#f26522;
+}
+
+.input-group.has-toggle input{
+  padding-right:45px;
+}
+/* ===================================== */
+
+.btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-weight:700;
+  cursor:pointer;
+  font-size:15px;
+  transition:0.3s;
+}
+
+.register-btn{
+  background:#f26522;
+  color:white;
+}
+
+.login-btn-main{
+  background:#111;
+  color:white;
+}
+
+.register-btn:hover,
+.login-btn-main:hover{
+  transform:translateY(-2px);
+}
+
+.forgot{
+  display:block;
+  text-align:right;
+  color:white;
+  text-decoration:none;
+  font-size:13px;
+  margin-bottom:18px;
+}
+
+.back-home{
+  position:absolute;
+  right:30px;
+  bottom:25px;
+  color:white;
+  text-decoration:none;
+  font-weight:600;
+}
+
+@media(max-width:850px){
+  .auth-container{
+    flex-direction:column;
+    margin:30px 0;
+  }
+
+  .register-box,
+  .login-box{
+    width:100%;
+    padding:35px;
+  }
+}

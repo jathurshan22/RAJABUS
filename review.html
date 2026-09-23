@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REVIEW</title>
+    <link rel="stylesheet" href="review.css" />
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="theme.css">
+    <script src="review.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body>
+    <div class="image">
+    <img class="crest" src="images/rajalogo.png" />
+  </div>
+  <div class="top-border"></div>
+
+  <!-- Navbar -->
+   <div>
+  <div class="navbar">
+
+
+
+
+<!-- 3-dot menu button (mobile only) -->
+<button id="menuBtn" class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
+  <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+</button>
+
+<!-- Mobile drawer (reuse the same links) -->
+<nav id="mobileNav" class="nav-drawer" aria-hidden="true">
+  <div class="drawer-header">
+    
+    <button id="closeMenu" class="drawer-close" aria-label="Close menu">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+  </div>
+  <a href="home.html">Home</a>
+  <a href="home.html#about">About</a>
+  <a href="review.html">Review</a>
+  <a href="contact.html">Contact</a>
+  <a href="booking-history.html">Journey</a>
+</nav>
+
+<!-- Backdrop -->
+<div id="backdrop" class="nav-backdrop" hidden></div>
+
+
+
+
+
+
+
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <div class="nav-links">
+      <a href="home.html">Home</a>
+      <a href="home.html#about">About</a>
+      <a href="review.html" class="active">Review</a>
+      <a href="contact.html">Contact</a>
+      <a href="booking-history.html">Journey</a>
+      
+    </div>
+    <div class="nav-right">
+      <button id="themeToggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle dark mode">
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+      </button>
+      
+      <a href="login.html" class="profile-btn" id="profileBtn" aria-label="Profile or login">
+        <img id="homeProfilePhoto" src="" alt="Profile" style="display:none;">
+        <i class="fa-solid fa-user" id="defaultIcon" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+<div class="container">
+  
+  <header>
+  <div class="pill" id="summaryPill">
+    <span class="inline-stars" id="avgStars"></span>
+    <strong id="avgScore">0.0</strong>/5 
+    <div class="right">
+      <span id="totalCount">0</span> reviews
+    </div>
+  </div>
+</header>
+
+
+  <div class="top-row">
+    <aside class="summary card">
+      <div class="big-rating">
+        <div class="score" id="bigScore">0.0</div>
+        <div>
+          <div class="stars" id="bigStars"></div>
+          <div class="muted">Average rating</div>
+        </div>
+      </div>
+      <div class="dist" id="distBars"></div>
+    </aside>
+
+    <section class="card" id="formCard">
+      <form class="review-form" id="reviewForm" autocomplete="off">
+        <h3 style="margin:0">Write your review</h3>
+        <div class="field">
+          <label>Rating </label>
+          <div class="rate inline-stars" id="rateBox">
+            <input type="radio" name="rating" id="star1" value="1"><label for="star1"></label>
+            <input type="radio" name="rating" id="star2" value="2"><label for="star2"></label>
+            <input type="radio" name="rating" id="star3" value="3"><label for="star3"></label>
+            <input type="radio" name="rating" id="star4" value="4"><label for="star4"></label>
+            <input type="radio" name="rating" id="star5" value="5"><label for="star5"></label>
+          </div>
+          <div class="muted" id="rateLive">Select rating</div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:1 1 220px">
+            <label>Name (optional)</label>
+            <input class="inp" name="name" placeholder="e.g  jathurshan" />
+          </div>
+          <div class="field" style="flex:1 1 180px">
+            <label>Location (optional)</label>
+            <input class="inp" name="place" placeholder="e.g  batticaloa" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Your experience *</label>
+          <textarea name="text" maxlength="600" placeholder="Service quality, timing, cleanliness…"></textarea>
+          <div class="muted"><span id="cc">0</span>/600</div>
+        </div>
+        <div class="row">
+          <button class="btn" type="submit">Submit Review</button>
+          <span class="muted" id="formNote">* Required fields</span>
+        </div>
+      </form>
+    </section>
+  </div>
+
+
+  <main class="card reviews-card" id="reviewsCard">
+    <div class="controls">
+      
+      <select id="sortSel">
+        <option value="new">Sort: Newest</option>
+        <option value="high">Sort: Highest rating</option>
+        <option value="low">Sort: Lowest rating</option>
+      </select>
+      <button class="chip-btn active" data-filter="all">All</button>
+      <button class="chip-btn" data-filter="5">5★</button>
+      <button class="chip-btn" data-filter="4">4★</button>
+      <button class="chip-btn" data-filter="3">3★</button>
+      <button class="chip-btn" data-filter="2">2★</button>
+      <button class="chip-btn" data-filter="1">1★</button>
+    </div>
+    <div class="sep"></div>
+    <section class="reviews" id="reviewsList"></section>
+    <div id="empty" class="empty" style="display:none">No reviews yet. Be the first ✍️</div>
+  </main>
+</div>
+<!-- Scroll to Top Button -->
+<button id="scrollTopBtn">↑</button>
+
+
+
+
+
+<script src="navbar-profile.js?v=50"></script>
+<script src="theme.js"></script>
+</body>
+</html>

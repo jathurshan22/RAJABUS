@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - Raja Bus</title>
+   
+
+  <link rel="stylesheet" href="result.css">
+  <link rel="stylesheet" href="toast.css">
+ 
+   <link rel="stylesheet" href="globals.css" />
+   
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+ 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css">
+
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+<body> 
+  <div class="image">
+    <img class="crest" id="home" src="images/rajalogo.png" />
+  </div>
+  <div class="top-border"></div>
+<div class="container">
+ 
+  <div class="navbar">
+
+
+
+
+
+
+
+    
+    
+    <div class="logo">RAJA <span>BUS.</span></div>
+    <div class="nav-links">
+      <a href="home.html " class="active">Home</a>
+      <a href="home.html#about">About</a>
+      <a href="review.html">Review</a>
+      <a href="contact.html">Contact</a>
+      <a href="booking-history.html">Journey</a>
+    </div>
+    <div class="nav-right">
+      <button id="themeToggle"
+            type="button"
+            class="theme-toggle"
+            aria-label="Toggle dark mode">
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+      </button>
+      <div class="hotline">HOT LINE <span>1824</span></div>
+      <a href="login.html" class="profile-btn" id="profileBtn" aria-label="Profile or login">
+        <img id="homeProfilePhoto" src="" alt="Profile" style="display:none;">
+        <i class="fa-solid fa-user" id="defaultIcon" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+<header class="result-header">
+  
+
+ 
+</header>
+
+<section class="hero">
+  <h1>Available Buses</h1>
+  <p>Choose your best route and book your seat easily.</p>
+
+  <div class="search-summary">
+    <div>
+      <i class="fa-solid fa-location-dot"></i>
+      <span>From</span>
+      <b>Mihintale</b>
+    </div>
+
+    <div>
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>To</span>
+      <b id="districtName">-</b>
+    </div>
+
+    <div>
+      <i class="fa-solid fa-calendar-days"></i>
+      <span>Date</span>
+      <b id="travelDate">-</b>
+    </div>
+
+    <div>
+      <i class="fa-solid fa-bus"></i>
+      <span>Bus Type</span>
+      <b id="busType">Any</b>
+    </div>
+  </div>
+</section>
+
+<section class="results-section" id="resultsSection">
+  <p id="resultsStatus">Loading buses...</p>
+</section>
+<div class="seat-modal" id="seatModal">
+  <div class="sl-seat-box">
+    <button class="close-seat" id="closeSeat">×</button>
+
+    <div class="legend-row">
+      <span><i class="lg available"></i> Available Seats</span>
+      <span><i class="lg processing"></i> Processing Seats</span>
+      <span><i class="lg counter"></i> Counter Seats</span>
+      <span><i class="lg booked"></i> Booked Seats</span>
+    </div>
+
+    <div class="bus-area">
+      
+      <div class="seat-map" id="busLayout"></div>
+    </div>
+<button class="proceed-btn" id="proceedBtn">Proceed</button>
+
+    
+
+<div class="footer-actions">
+  
+</div>
+
+<div class="bottom-bar">
+
+  <div class="info-item">
+    <span>Seat No</span>
+    <b id="selectedSeats">00</b>
+  </div>
+
+  <div class="info-item">
+    <span>Boarding</span>
+    <b id="modalBoarding">Mihintale</b>
+  </div>
+
+  <div class="info-item">
+    <span>Dropping</span>
+    <b id="modalDropping">-</b>
+  </div>
+
+  <div class="info-item fare">
+    <span>Total Fare</span>
+    <b><span id="totalFare">00</span></b>
+  </div>
+
+</div>
+  
+
+
+
+
+
+  </div>
+</div>
+<script src="toast.js"></script>
+<script src="seat.js"></script>
+<script src="result.js"></script>
+<script src="navbar-profile.js?v=50"></script>
+<script src="theme.js"></script>
+</body>
+
+
+</html>
