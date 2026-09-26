@@ -1,155 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search Results - Raja Bus</title>
-   
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Passenger Details - Raja Bus</title>
 
   <link rel="stylesheet" href="booking-details.css">
   <link rel="stylesheet" href="toast.css">
- 
-   <link rel="stylesheet" href="globals.css" />
-   
+  <link rel="stylesheet" href="globals.css">
   <link rel="stylesheet" href="theme.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
- 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css">
 
-  <link rel="stylesheet" href="dark-responsive.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="dark-responsive.css"
+  >
 </head>
-<body> 
+
+
+<body>
+
+  <!-- ================================================
+       LOGO
+       ================================================ -->
+
   <div class="image">
-    <img class="crest" id="home" src="images/rajalogo.png" />
+    <img
+      class="crest"
+      id="home"
+      src="images/rajalogo.png"
+      alt="Raja Bus Logo"
+    >
   </div>
+
   <div class="top-border"></div>
-<div class="container">
- 
-  <div class="navbar">
 
 
+  <div class="container">
 
+    <!-- ================================================
+         NAVBAR
+         ================================================ -->
 
+    <div class="navbar">
 
-
-
-    
-    
-    <div class="logo">RAJA <span>BUS.</span></div>
-    <div class="nav-links">
-      <a href="home.html" class="active">Home</a>
-      <a href="home.html#about">About</a>
-      <a href="review.html">Review</a>
-      <a href="contact.html">Contact</a>
-      <a href="booking-history.html">Journey</a>
-    </div>
-    <div class="nav-right">
-      <button id="themeToggle"
-            type="button"
-            class="theme-toggle"
-            aria-label="Toggle dark mode">
-        <i class="fa-solid fa-moon" aria-hidden="true"></i>
-      </button>
-      <a href="login.html" class="profile-btn" id="profileBtn" aria-label="Profile or login">
-        <img id="homeProfilePhoto" src="" alt="Profile" style="display:none;">
-        <i class="fa-solid fa-user" id="defaultIcon" aria-hidden="true"></i>
-      </a>
-    </div>
-  </div>
-<div class="booking-container">
-
-  <div class="alert-box">
-    You have to complete your booking.
-  </div>
-
-  <h1>Your Details</h1>
-
-  <div class="details-grid">
-
-    <div class="input-group">
-      <label>Name</label>
-      <input type="text" id="passengerName" placeholder="Name"></div>
-
-    <div class="input-group">
-      <label><span>*</span> Mobile No.</label>
-      <input type="text" id="mobileNo" placeholder="701234567">
-    </div>
-
-    <div class="input-group">
-      <label>NIC/Passport No.</label>
-<input type="text" id="nicNo" placeholder="012345678V">
-    </div>
-
-    <div class="input-group">
-      <label>Email</label>
-      <input type="email" id="passengerEmail" placeholder="name@example.lk">
-    </div>
-
-  </div>
-
- <div class="booking-bottom">
-
-  <div class="ticket-card">
-
-    <div class="ticket-info">
-
-      <div class="ticket-row-top">
-        <div>
-          <span class="ticket-label">Bus</span>
-          <b id="summaryBus" class="ticket-bus">-</b>
-        </div>
-        <div class="ticket-date-block">
-          <span class="ticket-label">Travel Date</span>
-          <b id="summaryDate" class="ticket-mono">-</b>
-        </div>
+      <div class="logo">
+        RAJA <span>BUS.</span>
       </div>
 
-      <div class="ticket-route">
-        <div class="ticket-point">
-          <span class="ticket-label">Boarding</span>
-          <b id="summaryBoarding">-</b>
-        </div>
-        <span class="ticket-arrow">&#8594;</span>
-        <div class="ticket-point ticket-point-right">
-          <span class="ticket-label">Dropping</span>
-          <b id="summaryDropping">-</b>
-        </div>
+
+      <div class="nav-links">
+
+        <a
+          href="home.html"
+          class="active"
+        >
+          Home
+        </a>
+
+        <a href="home.html#about">
+          About
+        </a>
+
+        <a href="review.html">
+          Review
+        </a>
+
+        <a href="contact.html">
+          Contact
+        </a>
+
+        <a href="booking-history.html">
+          Journey
+        </a>
+
       </div>
 
-      <div class="ticket-seats">
-        <span class="ticket-label">Selected Seats</span>
-        <b id="summarySeats" class="ticket-mono seat-pill">-</b>
+
+      <div class="nav-right">
+
+        <button
+          id="themeToggle"
+          type="button"
+          class="theme-toggle"
+          aria-label="Toggle dark mode"
+        >
+          <i
+            class="fa-solid fa-moon"
+            aria-hidden="true"
+          ></i>
+        </button>
+
+
+        <a
+          href="login.html"
+          class="profile-btn"
+          id="profileBtn"
+          aria-label="Profile or login"
+        >
+
+          <img
+            id="homeProfilePhoto"
+            src=""
+            alt="Profile"
+            style="display:none;"
+          >
+
+          <i
+            class="fa-solid fa-user"
+            id="defaultIcon"
+            aria-hidden="true"
+          ></i>
+
+        </a>
+
       </div>
 
     </div>
 
-    <div class="ticket-perforation">
-      <span class="notch notch-top"></span>
-      <span class="notch notch-bottom"></span>
-    </div>
 
-    <div class="ticket-stub">
-      <div>
-        <span class="stub-label">Total Fare</span>
-        <h2 id="summaryFare" class="stub-fare">Rs.0</h2>
+    <!-- ================================================
+         BOOKING DETAILS
+         ================================================ -->
+
+    <div class="booking-container">
+
+      <div class="alert-box">
+        Enter your passenger details to continue.
+        Your selected seats will be held for
+        <strong>15 minutes</strong>
+        after you continue to payment.
       </div>
 
-      <button class="continue-btn" id="paymentBtn">
-        Continue To Payment
-      </button>
+
+      <h1>
+        Your Details
+      </h1>
+
+
+      <!-- ==============================================
+           PASSENGER FORM
+           ============================================== -->
+
+      <div class="details-grid">
+
+        <!-- NAME -->
+
+        <div class="input-group">
+
+          <label for="passengerName">
+            <span>*</span>
+            Name
+          </label>
+
+          <input
+            type="text"
+            id="passengerName"
+            placeholder="Name"
+            autocomplete="name"
+            required
+          >
+
+        </div>
+
+
+        <!-- MOBILE -->
+
+        <div class="input-group">
+
+          <label for="mobileNo">
+            <span>*</span>
+            Mobile No.
+          </label>
+
+          <input
+            type="tel"
+            id="mobileNo"
+            placeholder="0712345678"
+            inputmode="numeric"
+            maxlength="10"
+            autocomplete="tel"
+            required
+          >
+
+        </div>
+
+
+        <!-- NIC -->
+
+        <div class="input-group">
+
+          <label for="nicNo">
+            NIC / Passport No.
+          </label>
+
+          <input
+            type="text"
+            id="nicNo"
+            placeholder="200012345678 / 012345678V"
+          >
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="input-group">
+
+          <label for="passengerEmail">
+            <span>*</span>
+            Email
+          </label>
+
+          <input
+            type="email"
+            id="passengerEmail"
+            placeholder="name@example.lk"
+            autocomplete="email"
+            required
+          >
+
+        </div>
+
+      </div>
+
+
+      <!-- ==============================================
+           BOOKING SUMMARY
+           ============================================== -->
+
+      <div class="booking-bottom">
+
+        <div class="ticket-card">
+
+
+          <!-- ============================================
+               MAIN TICKET INFORMATION
+               ============================================ -->
+
+          <div class="ticket-info">
+
+            <div class="ticket-row-top">
+
+              <!-- BUS -->
+
+              <div>
+
+                <span class="ticket-label">
+                  Bus
+                </span>
+
+                <b
+                  id="summaryBus"
+                  class="ticket-bus"
+                >
+                  -
+                </b>
+
+              </div>
+
+
+              <!-- DATE -->
+
+              <div class="ticket-date-block">
+
+                <span class="ticket-label">
+                  Travel Date
+                </span>
+
+                <b
+                  id="summaryDate"
+                  class="ticket-mono"
+                >
+                  -
+                </b>
+
+              </div>
+
+            </div>
+
+
+            <!-- ROUTE -->
+
+            <div class="ticket-route">
+
+              <div class="ticket-point">
+
+                <span class="ticket-label">
+                  Boarding
+                </span>
+
+                <b id="summaryBoarding">
+                  -
+                </b>
+
+              </div>
+
+
+              <span class="ticket-arrow">
+                &#8594;
+              </span>
+
+
+              <div
+                class="ticket-point ticket-point-right"
+              >
+
+                <span class="ticket-label">
+                  Dropping
+                </span>
+
+                <b id="summaryDropping">
+                  -
+                </b>
+
+              </div>
+
+            </div>
+
+
+            <!-- SEATS -->
+
+            <div class="ticket-seats">
+
+              <span class="ticket-label">
+                Selected Seats
+              </span>
+
+              <b
+                id="summarySeats"
+                class="ticket-mono seat-pill"
+              >
+                -
+              </b>
+
+            </div>
+
+          </div>
+
+
+          <!-- ============================================
+               PERFORATION
+               ============================================ -->
+
+          <div class="ticket-perforation">
+
+            <span
+              class="notch notch-top"
+            ></span>
+
+            <span
+              class="notch notch-bottom"
+            ></span>
+
+          </div>
+
+
+          <!-- ============================================
+               FARE / CONTINUE
+               ============================================ -->
+
+          <div class="ticket-stub">
+
+            <div>
+
+              <span class="stub-label">
+                Total Fare
+              </span>
+
+              <h2
+                id="summaryFare"
+                class="stub-fare"
+              >
+                Rs.0
+              </h2>
+
+            </div>
+
+
+            <button
+              class="continue-btn"
+              id="paymentBtn"
+              type="button"
+            >
+              Continue To Payment
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
 
   </div>
 
-</div>
 
-<script src="toast.js"></script>
-<script src="booking-details.js"></script>
+  <!-- ================================================
+       JAVASCRIPT
+       ================================================ -->
 
+  <script src="toast.js"></script>
 
-<script src="navbar-profile.js?v=50"></script>
-<script src="theme.js"></script>
+  <script src="booking-details.js"></script>
+
+  <script src="navbar-profile.js?v=50"></script>
+
+  <script src="theme.js"></script>
+
 </body>
+
+</html>

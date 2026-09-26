@@ -450,31 +450,37 @@ body {
   color:#222;
 }
 
-.lg{
-  width:22px;
-  height:22px;
-  display:inline-block;
-  border-radius:6px;
-  border:1px solid #bbb;
+/* =====================================================
+   SEAT LEGEND
+   ===================================================== */
+
+.lg {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+  border-radius: 6px;
+  border: 1px solid #bbb;
 }
 
-.lg.available{
-  background:#fff;
+.lg.available {
+  background: #ffffff;
+  border-color: #999;
 }
 
-.lg.processing{
-  background:#0b9444;
-  border-color:#0b9444;
+.lg.processing {
+  background: #0b9444;
+  border-color: #0b9444;
 }
 
-.lg.counter{
-  background:#f58a18;
-  border-color:#f58a18;
+.lg.counter,
+.lg.held {
+  background: #f58a18;
+  border-color: #d86f00;
 }
 
-.lg.booked{
-  background:#e5331f;
-  border-color:#e5331f;
+.lg.booked {
+  background: #e5331f;
+  border-color: #c42314;
 }
 
 .bus-area{
@@ -511,83 +517,84 @@ body {
   padding:10px;
 }
 
-.seat{
-  width:42px;
-  height:40px;
-  border:2px solid #111;
-  border-radius:9px;
-  background:linear-gradient(180deg,#ffffff,#f1f1f1);
-  color:#111;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:800;
-  font-size:14px;
-  cursor:pointer;
-  position:relative;
-  transition:0.22s ease;
+/* =====================================================
+   AVAILABLE SEAT
+   ===================================================== */
+
+.seat {
+  width: 42px;
+  height: 40px;
+  border: 2px solid #111;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #ffffff, #f1f1f1);
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: 0.22s ease;
   box-shadow:
     0 6px 12px rgba(0,0,0,0.16),
     inset 0 -5px 0 rgba(0,0,0,0.08);
 }
 
-.seat::before,
-.seat::after{
-  content:"";
-  position:absolute;
-  left:8px;
-  width:24px;
-  height:6px;
-  border:1px solid #111;
-  background:#fff;
-  border-radius:6px;
+/* Selected seat - green */
+.seat.processing {
+  background: linear-gradient(180deg, #23c766, #058b39);
+  color: #ffffff;
+  border-color: #057d34;
+  box-shadow:
+    0 7px 15px rgba(5,139,57,0.32),
+    inset 0 -5px 0 rgba(0,0,0,0.10);
 }
 
-.seat::before{
-  top:-8px;
+/* Counter seat - orange */
+.seat.counter {
+  background: linear-gradient(180deg, #ffa52f, #f27a00);
+  color: #ffffff;
+  border-color: #d86600;
+  cursor: not-allowed;
+  opacity: 0.97;
+  box-shadow:
+    0 7px 15px rgba(242,122,0,0.30),
+    inset 0 -5px 0 rgba(0,0,0,0.10);
 }
 
-.seat::after{
-  bottom:-8px;
+/* Held seat - same orange */
+.seat.held {
+  background: linear-gradient(180deg, #ffa52f, #f27a00);
+  color: #ffffff;
+  border-color: #d86600;
+  cursor: not-allowed;
+  opacity: 0.97;
+  box-shadow:
+    0 7px 15px rgba(242,122,0,0.30),
+    inset 0 -5px 0 rgba(0,0,0,0.10);
 }
 
-.seat .handle{
-  position:absolute;
-  right:-8px;
-  top:8px;
-  width:8px;
-  height:22px;
-  background:#171717;
-  border-radius:3px;
+/* Booked seat - red */
+.seat.booked {
+  background: linear-gradient(180deg, #ff4a32, #d81f10);
+  color: #ffffff;
+  border-color: #b91c0e;
+  cursor: not-allowed;
+  opacity: 0.95;
+  box-shadow:
+    0 7px 15px rgba(216,31,16,0.30),
+    inset 0 -5px 0 rgba(0,0,0,0.10);
 }
 
-.seat:hover{
-  transform:translateY(-3px) scale(1.05);
-  box-shadow:0 12px 18px rgba(242,101,34,0.22);
+.seat.counter:hover,
+.seat.held:hover,
+.seat.booked:hover {
+  transform: none;
 }
 
-.seat.counter{
-  background:linear-gradient(180deg,#ff9f2a,#f27a00);
-  color:#111;
-  border-color:#d86600;
-}
-
-.seat.booked{
-  background:linear-gradient(180deg,#ff4a32,#d81f10);
-  color:#fff;
-  border-color:#b91c0e;
-  cursor:not-allowed;
-  opacity:0.95;
-}
-
-.seat.processing{
-  background:linear-gradient(180deg,#23c766,#058b39);
-  color:#fff;
-  border-color:#057d34;
-}
-
-.seat.empty{
-  visibility:hidden;
+.seat.empty {
+  visibility: hidden;
 }
 
 .proceed-btn{

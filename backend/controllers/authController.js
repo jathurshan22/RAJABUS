@@ -1,51 +1,72 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+
 const User = require("../models/User");
 const Admin = require("../models/Admin");
-const sendEmail = require("../utils/sendEmail");
 
-const generateToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-// Raw token is e-mailed to the user (one-time use, expires in 24h).
-// Only its SHA-256 hash is stored in the DB - same pattern as a password
-// reset token, so a DB leak alone can't be used to verify arbitrary accounts.
-const hashToken = (token) =>
-  crypto.createHash("sha256").update(token).digest("hex");
+// ======================================================
+// GENERATE JWT TOKEN
+// ======================================================
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://127.0.0.1:5500";
-
-const sendVerificationEmail = async (user, rawToken) => {
-  const verifyLink = `${FRONTEND_URL}/verify-email.html?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
-
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your Raja Bus account",
-    html: `
-      <h2>Welcome to Raja Bus, ${user.fullName}!</h2>
-      <p>Please verify your email address to activate your account.</p>
-      <p><a href="${verifyLink}" style="display:inline-block;padding:12px 24px;background:#f26522;color:#fff;text-decoration:none;border-radius:8px;">Verify My Email</a></p>
-      <p>Or copy this link into your browser:</p>
-      <p>${verifyLink}</p>
-      <p>This link expires in 24 hours.</p>
-    `,
-  });
+const generateToken = (payload) => {
+  return jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
 };
 
-// REGISTER
+
+// ======================================================
+// REGISTER USER
+// POST /api/auth/register
+// ======================================================
+
 const register = async (req, res) => {
   try {
-    const { fullName, email, phone, password } = req.body;
+    const {
+      fullName,
+      email,
+      phone,
+      password,
+    } = req.body;
 
-    if (!fullName || !email || !phone || !password) {
+
+    // --------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------
+
+    if (
+      !fullName ||
+      !email ||
+      !phone ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
       });
     }
 
-    const existingUser = await User.findOne({ email });
+
+    const cleanEmail =
+      email
+        .trim()
+        .toLowerCase();
+
+
+    // --------------------------------------------------
+    // CHECK EXISTING USER
+    // --------------------------------------------------
+
+    const existingUser =
+      await User.findOne({
+        email: cleanEmail,
+      });
+
 
     if (existingUser) {
       return res.status(400).json({
@@ -54,195 +75,85 @@ const register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const rawToken = crypto.randomBytes(32).toString("hex");
+    // --------------------------------------------------
+    // HASH PASSWORD
+    // --------------------------------------------------
 
-    const user = await User.create({
-      fullName,
-      email,
-      phone,
-      password: hashedPassword,
-      isVerified: false,
-      verificationToken: hashToken(rawToken),
-      verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // 24h
-    });
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        10
+      );
 
-    let emailSent = true;
-    try {
-      await sendVerificationEmail(user, rawToken);
-    } catch (emailError) {
-      // Don't fail registration just because the email couldn't be sent -
-      // the user can request it again later. Just let the frontend know.
-      emailSent = false;
-      console.error("Failed to send verification email:", emailError.message);
-    }
 
-    res.status(201).json({
+    // --------------------------------------------------
+    // SAVE USER DIRECTLY
+    // NO EMAIL VERIFICATION
+    // --------------------------------------------------
+
+    const user =
+      await User.create({
+        fullName:
+          fullName.trim(),
+
+        email:
+          cleanEmail,
+
+        phone:
+          phone.trim(),
+
+        password:
+          hashedPassword,
+
+        // Directly activated
+        isVerified: true,
+
+        verificationToken:
+          null,
+
+        verificationTokenExpires:
+          null,
+      });
+
+
+    // --------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------
+
+    return res.status(201).json({
       success: true,
-      message: emailSent
-        ? "Registration successful. Please check your email to verify your account."
-        : "Registration successful, but the verification email could not be sent. Please contact support.",
-      userId: user._id,
-      emailSent,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
 
-// VERIFY EMAIL
-const verifyEmail = async (req, res) => {
-  try {
-    const { token, email } = req.body;
+      message:
+        "Registration successful. You can now log in.",
 
-    if (!token || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid verification link",
-      });
-    }
-
-    const user = await User.findOne({ email: email.trim().toLowerCase() });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Account not found",
-      });
-    }
-
-    if (user.isVerified) {
-      return res.status(200).json({
-        success: true,
-        message: "Email already verified. You can log in.",
-        alreadyVerified: true,
-      });
-    }
-
-    if (
-      !user.verificationToken ||
-      user.verificationToken !== hashToken(token) ||
-      !user.verificationTokenExpires ||
-      user.verificationTokenExpires < Date.now()
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "This verification link is invalid or has expired.",
-      });
-    }
-
-    user.isVerified = true;
-    user.verificationToken = null;
-    user.verificationTokenExpires = null;
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Email verified successfully. You can now log in.",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-
-// RESEND VERIFICATION EMAIL
-const resendVerification = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const user = await User.findOne({ email: email.trim().toLowerCase() });
-
-    // Same response whether or not the account exists, so this endpoint
-    // can't be used to check which emails are registered.
-    const genericResponse = {
-      success: true,
-      message: "If that account exists and isn't verified yet, a new verification email has been sent.",
-    };
-
-    if (!user || user.isVerified) {
-      return res.json(genericResponse);
-    }
-
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    user.verificationToken = hashToken(rawToken);
-    user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
-    await user.save();
-
-    await sendVerificationEmail(user, rawToken);
-
-    res.json(genericResponse);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-
-// LOGIN
-const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Please verify your email before logging in. Check your inbox for the verification link.",
-        needsVerification: true,
-      });
-    }
-
-    const token = generateToken({ id: user._id, email: user.email, role: "user" });
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
       user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        createdAt: user.createdAt,
+        id:
+          user._id,
+
+        fullName:
+          user.fullName,
+
+        email:
+          user.email,
+
+        phone:
+          user.phone,
+
+        createdAt:
+          user.createdAt,
       },
     });
+
   } catch (error) {
-    res.status(500).json({
+
+    console.error(
+      "Registration error:",
+      error
+    );
+
+
+    return res.status(500).json({
       success: false,
       message: "Server error",
       error: error.message,
@@ -250,202 +161,632 @@ const login = async (req, res) => {
   }
 };
 
-// ADMIN LOGIN — credentials are checked against the Admin collection in
-// MongoDB (see backend/config/ensureAdminAccount.js). Issues a JWT with role "admin".
-const adminLogin = async (req, res) => {
+
+// ======================================================
+// USER LOGIN
+// POST /api/auth/login
+// ======================================================
+
+const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+    } = req.body;
+
+
+    // --------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------
 
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message:
+          "Email and password are required",
       });
     }
 
-    const admin = await Admin.findOne({ email: email.trim().toLowerCase() });
 
-    if (!admin) {
-      return res.status(401).json({
+    const cleanEmail =
+      email
+        .trim()
+        .toLowerCase();
+
+
+    // --------------------------------------------------
+    // FIND USER
+    // --------------------------------------------------
+
+    const user =
+      await User.findOne({
+        email: cleanEmail,
+      });
+
+
+    if (!user) {
+      return res.status(400).json({
         success: false,
-        message: "Invalid admin credentials",
+        message:
+          "Invalid email or password",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, admin.password);
+
+    // --------------------------------------------------
+    // CHECK PASSWORD
+    // --------------------------------------------------
+
+    const isMatch =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
+
 
     if (!isMatch) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        message: "Invalid admin credentials",
+        message:
+          "Invalid email or password",
       });
     }
 
-    const token = generateToken({ id: admin._id, email: admin.email, role: "admin" });
 
-    res.status(200).json({
+    // --------------------------------------------------
+    // NO EMAIL VERIFICATION CHECK
+    // --------------------------------------------------
+
+
+    // --------------------------------------------------
+    // GENERATE JWT
+    // --------------------------------------------------
+
+    const token =
+      generateToken({
+        id:
+          user._id,
+
+        email:
+          user.email,
+
+        role:
+          "user",
+      });
+
+
+    // --------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------
+
+    return res.status(200).json({
       success: true,
-      message: "Admin login successful",
+
+      message:
+        "Login successful",
+
       token,
-      admin: { email: admin.email },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
 
-// ADMIN CHANGE PASSWORD — requires a valid admin JWT (see protect+adminOnly
-// middleware on the route). Verifies the current password before updating.
-const changeAdminPassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Current and new password are required",
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "New password must be at least 6 characters",
-      });
-    }
-
-    const admin = await Admin.findOne({ email: req.user.email });
-
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "Admin account not found",
-      });
-    }
-
-    const isMatch = await bcrypt.compare(currentPassword, admin.password);
-
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Current password is incorrect",
-      });
-    }
-
-    admin.password = await bcrypt.hash(newPassword, 10);
-    await admin.save();
-
-    res.json({
-      success: true,
-      message: "Admin password updated successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
-};
-
-// CHANGE PASSWORD
-const changePassword = async (req, res) => {
-  try {
-    const { email, currentPassword, newPassword } = req.body;
-
-    if (!email || !currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    const match = await bcrypt.compare(currentPassword, user.password);
-
-    if (!match) {
-      return res.status(400).json({
-        success: false,
-        message: "Current password is incorrect",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Password changed successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// UPDATE PROFILE (name + phone)
-const updateProfile = async (req, res) => {
-  try {
-    const { email, fullName, phone } = req.body;
-
-    if (!email || !fullName || !phone) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    const user = await User.findOneAndUpdate(
-      { email },
-      { fullName, phone },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Profile updated successfully",
       user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        createdAt: user.createdAt,
+        id:
+          user._id,
+
+        fullName:
+          user.fullName,
+
+        email:
+          user.email,
+
+        phone:
+          user.phone,
+
+        createdAt:
+          user.createdAt,
       },
     });
+
   } catch (error) {
-    res.status(500).json({
+
+    console.error(
+      "Login error:",
+      error
+    );
+
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
+      error: error.message,
     });
   }
 };
+
+
+// ======================================================
+// ADMIN LOGIN
+// POST /api/auth/admin-login
+// ======================================================
+
+const adminLogin = async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+    } = req.body;
+
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email and password are required",
+      });
+    }
+
+
+    const cleanEmail =
+      email
+        .trim()
+        .toLowerCase();
+
+
+    // --------------------------------------------------
+    // FIND ADMIN
+    // --------------------------------------------------
+
+    const admin =
+      await Admin.findOne({
+        email:
+          cleanEmail,
+      });
+
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Invalid admin credentials",
+      });
+    }
+
+
+    // --------------------------------------------------
+    // CHECK PASSWORD
+    // --------------------------------------------------
+
+    const isMatch =
+      await bcrypt.compare(
+        password,
+        admin.password
+      );
+
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Invalid admin credentials",
+      });
+    }
+
+
+    // --------------------------------------------------
+    // GENERATE ADMIN JWT
+    // --------------------------------------------------
+
+    const token =
+      generateToken({
+        id:
+          admin._id,
+
+        email:
+          admin.email,
+
+        role:
+          "admin",
+      });
+
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Admin login successful",
+
+      token,
+
+      admin: {
+        email:
+          admin.email,
+      },
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Admin login error:",
+      error
+    );
+
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+// ======================================================
+// ADMIN CHANGE PASSWORD
+// ======================================================
+
+const changeAdminPassword =
+  async (req, res) => {
+
+    try {
+
+      const {
+        currentPassword,
+        newPassword,
+      } = req.body;
+
+
+      if (
+        !currentPassword ||
+        !newPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Current and new password are required",
+        });
+      }
+
+
+      if (
+        newPassword.length < 6
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "New password must be at least 6 characters",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // FIND ADMIN
+      // --------------------------------------------------
+
+      const admin =
+        await Admin.findOne({
+          email:
+            req.user.email,
+        });
+
+
+      if (!admin) {
+        return res.status(404).json({
+          success: false,
+
+          message:
+            "Admin account not found",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // CHECK CURRENT PASSWORD
+      // --------------------------------------------------
+
+      const isMatch =
+        await bcrypt.compare(
+          currentPassword,
+          admin.password
+        );
+
+
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Current password is incorrect",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // HASH NEW PASSWORD
+      // --------------------------------------------------
+
+      admin.password =
+        await bcrypt.hash(
+          newPassword,
+          10
+        );
+
+
+      await admin.save();
+
+
+      return res.json({
+        success: true,
+
+        message:
+          "Admin password updated successfully",
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Admin password change error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+        error: error.message,
+      });
+    }
+  };
+
+
+// ======================================================
+// USER CHANGE PASSWORD
+// ======================================================
+
+const changePassword =
+  async (req, res) => {
+
+    try {
+
+      const {
+        email,
+        currentPassword,
+        newPassword,
+      } = req.body;
+
+
+      if (
+        !email ||
+        !currentPassword ||
+        !newPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "All fields are required",
+        });
+      }
+
+
+      if (
+        newPassword.length < 6
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "New password must be at least 6 characters",
+        });
+      }
+
+
+      const cleanEmail =
+        email
+          .trim()
+          .toLowerCase();
+
+
+      // --------------------------------------------------
+      // FIND USER
+      // --------------------------------------------------
+
+      const user =
+        await User.findOne({
+          email:
+            cleanEmail,
+        });
+
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "User not found",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // CHECK CURRENT PASSWORD
+      // --------------------------------------------------
+
+      const match =
+        await bcrypt.compare(
+          currentPassword,
+          user.password
+        );
+
+
+      if (!match) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Current password is incorrect",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // SAVE NEW PASSWORD
+      // --------------------------------------------------
+
+      const hashedPassword =
+        await bcrypt.hash(
+          newPassword,
+          10
+        );
+
+
+      user.password =
+        hashedPassword;
+
+
+      await user.save();
+
+
+      return res.json({
+        success: true,
+
+        message:
+          "Password changed successfully",
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Password change error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+        message:
+          error.message,
+      });
+    }
+  };
+
+
+// ======================================================
+// UPDATE USER PROFILE
+// ======================================================
+
+const updateProfile =
+  async (req, res) => {
+
+    try {
+
+      const {
+        email,
+        fullName,
+        phone,
+      } = req.body;
+
+
+      if (
+        !email ||
+        !fullName ||
+        !phone
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "All fields are required",
+        });
+      }
+
+
+      const cleanEmail =
+        email
+          .trim()
+          .toLowerCase();
+
+
+      // --------------------------------------------------
+      // UPDATE USER
+      // --------------------------------------------------
+
+      const user =
+        await User.findOneAndUpdate(
+          {
+            email:
+              cleanEmail,
+          },
+
+          {
+            fullName:
+              fullName.trim(),
+
+            phone:
+              phone.trim(),
+          },
+
+          {
+            new: true,
+          }
+        );
+
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+
+          message:
+            "User not found",
+        });
+      }
+
+
+      return res.json({
+        success: true,
+
+        message:
+          "Profile updated successfully",
+
+        user: {
+          id:
+            user._id,
+
+          fullName:
+            user.fullName,
+
+          email:
+            user.email,
+
+          phone:
+            user.phone,
+
+          createdAt:
+            user.createdAt,
+        },
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Profile update error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          error.message,
+      });
+    }
+  };
+
+
+// ======================================================
+// EXPORTS
+// ======================================================
 
 module.exports = {
   register,
-  verifyEmail,
-  resendVerification,
   login,
   adminLogin,
   changeAdminPassword,

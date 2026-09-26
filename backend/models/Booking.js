@@ -2,51 +2,182 @@ const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
   {
-    // Human-readable ticket number shown to passengers/admin (e.g. "RB000042"),
-    // separate from MongoDB's internal _id. Assigned via an atomic counter
-    // in bookingRoutes.js at creation time.
+    // ==================================================
+    // TICKET ID
+    // Example: RB000042
+    // ==================================================
     ticketId: {
       type: String,
       unique: true,
-      sparse: true, // allows older bookings without one to still exist
+      sparse: true,
     },
 
+
+    // ==================================================
+    // USER
+    // ==================================================
     userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+
+    // ==================================================
+    // BUS / TRIP DETAILS
+    // ==================================================
+    busId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bus",
+      required: true,
+    },
+
+    busNo: {
+      type: String,
+    },
+
+    from: {
+      type: String,
+    },
+
+    to: {
+      type: String,
+    },
+
+    departTime: {
+      type: String,
+    },
+
+    arriveTime: {
+      type: String,
+    },
+
+    // Format: YYYY-MM-DD
+    journeyDate: {
       type: String,
       required: true,
     },
 
-    // Trip info (copied from the Bus at booking time so history stays
-    // accurate even if the bus schedule changes later)
-    busId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Bus",
+
+    // ==================================================
+    // PASSENGER DETAILS
+    // ==================================================
+    passengerName: {
+      type: String,
     },
-    busNo: String,
-    from: String,
-    to: String,
-    departTime: String,
-    arriveTime: String,
-    journeyDate: String, // "YYYY-MM-DD"
 
-    // Passenger info
-    passengerName: String,
-    mobileNo: String,
-    nicNo: String,
-    email: String,
+    mobileNo: {
+      type: String,
+    },
 
-    // Seats
-    seats: [String], // e.g. ["12", "17"]
-    selectedSeats: String, // comma joined, kept for easy display ("12,17")
+    nicNo: {
+      type: String,
+    },
 
-    boardingPoint: String,
-    droppingPoint: String,
-    totalFare: Number,
+    email: {
+      type: String,
+    },
 
+
+    // ==================================================
+    // SEATS
+    // ==================================================
+    seats: {
+      type: [String],
+      default: [],
+    },
+
+    // Example: "12,17"
+    selectedSeats: {
+      type: String,
+    },
+
+
+    // ==================================================
+    // BOARDING / DROPPING
+    // ==================================================
+    boardingPoint: {
+      type: String,
+    },
+
+    droppingPoint: {
+      type: String,
+    },
+
+
+    // ==================================================
+    // FARE
+    // ==================================================
+    totalFare: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+
+    // ==================================================
+    // BOOKING STATUS
+    //
+    // Pending:
+    // Passenger details submitted.
+    // Seats temporarily HELD.
+    // UI = ORANGE
+    //
+    // Paid:
+    // Payment successful.
+    // Seats permanently booked.
+    // UI = RED
+    //
+    // Cancelled:
+    // User cancelled booking.
+    // Seats available again.
+    //
+    // Expired:
+    // Payment not completed within 15 minutes.
+    // Seats automatically released.
+    // ==================================================
     status: {
       type: String,
-      enum: ["Pending", "Paid", "Cancelled"],
+
+      enum: [
+        "Pending",
+        "Paid",
+        "Cancelled",
+        "Expired",
+      ],
+
       default: "Pending",
+
+      index: true,
+    },
+
+
+    // ==================================================
+    // HOLD EXPIRY TIME
+    //
+    // Passenger details submit:
+    // now + 15 minutes
+    //
+    // Payment success:
+    // null
+    //
+    // Example:
+    // 10:00 PM created
+    // expires at 10:15 PM
+    // ==================================================
+    holdExpiresAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+
+    // ==================================================
+    // PAYMENT COMPLETION TIME
+    // ==================================================
+    paidAt: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -54,7 +185,34 @@ const bookingSchema = new mongoose.Schema(
   }
 );
 
-bookingSchema.index({ busId: 1, journeyDate: 1, status: 1 });
-bookingSchema.index({ userId: 1, createdAt: -1 });
 
-module.exports = mongoose.model("Booking", bookingSchema);
+// ======================================================
+// INDEXES
+// ======================================================
+
+// Quickly find bookings for particular bus/date
+bookingSchema.index({
+  busId: 1,
+  journeyDate: 1,
+  status: 1,
+});
+
+
+// User booking history
+bookingSchema.index({
+  userId: 1,
+  createdAt: -1,
+});
+
+
+// Helps 15-minute cleanup find expired pending bookings
+bookingSchema.index({
+  status: 1,
+  holdExpiresAt: 1,
+});
+
+
+module.exports = mongoose.model(
+  "Booking",
+  bookingSchema
+);

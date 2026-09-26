@@ -1,290 +1,886 @@
 const express = require("express");
+
 const Bus = require("../models/Bus");
 const Booking = require("../models/Booking");
+const SeatLock = require("../models/SeatLock");
 const SearchLog = require("../models/SearchLog");
+
 const {
   SEAT_PATTERN,
   COUNTER_SEATS,
   BOOKABLE_SEATS,
 } = require("../config/seatLayout");
 
+
 const router = express.Router();
 
+
+// ======================================================
+// TEST
+// GET /api/buses/test
+// ======================================================
+
 router.get("/test", (req, res) => {
-  res.json({ message: "Bus route working" });
+  res.json({
+    message: "Bus route working",
+  });
 });
 
+
+// ======================================================
+// SEARCH BUSES
 // GET /api/buses/search?to=Jaffna&date=2026-07-01&type=CTB
-// "date" is optional but if given, each bus also reports how many seats
-// are still free for that specific date.
+// ======================================================
+
 router.get("/search", async (req, res) => {
   try {
-    const { to, date, type } = req.query;
+    const {
+      to,
+      date,
+      type,
+    } = req.query;
+
+
+    // --------------------------------------------------
+    // DESTINATION REQUIRED
+    // --------------------------------------------------
 
     if (!to || !to.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Destination (to) is required",
+        message:
+          "Destination (to) is required",
       });
     }
+
+
+    // --------------------------------------------------
+    // BUS FILTER
+    // --------------------------------------------------
 
     const filter = {
-      to: new RegExp(`^${to.trim()}$`, "i"),
+      to: new RegExp(
+        `^${to.trim()}$`,
+        "i"
+      ),
     };
 
-    // Fire-and-forget: log this search for the "Top Search Routes" home
-    // page section. Never let a logging failure affect the real search.
-    SearchLog.create({ to: to.trim() }).catch(() => {});
 
+    // Search history
+    SearchLog.create({
+      to: to.trim(),
+    }).catch(() => {});
+
+
+    // Optional bus type
     if (type && type.trim()) {
-      filter.type = new RegExp(`^${type.trim()}$`, "i");
+      filter.type =
+        new RegExp(
+          `^${type.trim()}$`,
+          "i"
+        );
     }
 
-    const buses = await Bus.find(filter).sort({ depart: 1 });
 
-    let bookedMap = {};
-    if (date) {
-      const busIds = buses.map((b) => b._id);
-      const bookings = await Booking.find({
-        busId: { $in: busIds },
-        journeyDate: date,
-        status: { $ne: "Cancelled" },
-      }).select("busId seats");
+    // --------------------------------------------------
+    // FIND BUSES
+    // --------------------------------------------------
 
-      bookedMap = bookings.reduce((acc, b) => {
-        const key = String(b.busId);
-        acc[key] = (acc[key] || 0) + (b.seats ? b.seats.length : 0);
-        return acc;
-      }, {});
+    const buses =
+      await Bus.find(
+        filter
+      ).sort({
+        depart: 1,
+      });
+
+
+    // --------------------------------------------------
+    // AVAILABLE SEAT CALCULATION
+    // --------------------------------------------------
+
+    let occupiedMap = {};
+
+
+    if (
+      date &&
+      buses.length > 0
+    ) {
+      const busIds =
+        buses.map(
+          (bus) => bus._id
+        );
+
+
+      const now =
+        new Date();
+
+
+      /*
+        Count as unavailable:
+
+        1. status = booked
+           Payment complete → RED
+
+        2. status = held
+           Hold not expired → ORANGE
+
+        3. Old SeatLock documents without status
+           Treat as booked for compatibility.
+      */
+      const activeLocks =
+        await SeatLock.find({
+          busId: {
+            $in: busIds,
+          },
+
+          journeyDate:
+            date,
+
+          $or: [
+            {
+              status:
+                "booked",
+            },
+
+            {
+              status:
+                "held",
+
+              expiresAt: {
+                $gt: now,
+              },
+            },
+
+            {
+              status: {
+                $exists: false,
+              },
+            },
+          ],
+        }).select(
+          "busId seat status expiresAt"
+        );
+
+
+      occupiedMap =
+        activeLocks.reduce(
+          (acc, lock) => {
+
+            const key =
+              String(
+                lock.busId
+              );
+
+
+            acc[key] =
+              (acc[key] || 0) + 1;
+
+
+            return acc;
+          },
+
+          {}
+        );
     }
 
-    const result = buses.map((bus) => {
-      const bookedCount = bookedMap[String(bus._id)] || 0;
-      const availableSeats = date
-        ? BOOKABLE_SEATS.length - bookedCount
-        : BOOKABLE_SEATS.length;
 
-      return {
-        id: bus._id,
-        from: bus.from,
-        to: bus.to,
-        type: bus.type,
-        busNo: bus.busNo,
-        regNo: bus.regNo,
-        depart: bus.depart,
-        arrive: bus.arrive,
-        distanceKm: bus.distanceKm,
-        fareMin: bus.fareMin,
-        fareMax: bus.fareMax,
-        totalSeats: BOOKABLE_SEATS.length,
-        availableSeats,
-      };
+    // --------------------------------------------------
+    // FORMAT RESULT
+    // --------------------------------------------------
+
+    const result =
+      buses.map(
+        (bus) => {
+
+          const occupiedCount =
+            occupiedMap[
+              String(bus._id)
+            ] || 0;
+
+
+          const availableSeats =
+            date
+              ? Math.max(
+                  0,
+                  BOOKABLE_SEATS.length -
+                    occupiedCount
+                )
+              : BOOKABLE_SEATS.length;
+
+
+          return {
+            id:
+              bus._id,
+
+            from:
+              bus.from,
+
+            to:
+              bus.to,
+
+            type:
+              bus.type,
+
+            busNo:
+              bus.busNo,
+
+            regNo:
+              bus.regNo,
+
+            depart:
+              bus.depart,
+
+            arrive:
+              bus.arrive,
+
+            distanceKm:
+              bus.distanceKm,
+
+            fareMin:
+              bus.fareMin,
+
+            fareMax:
+              bus.fareMax,
+
+            totalSeats:
+              BOOKABLE_SEATS.length,
+
+            availableSeats,
+          };
+        }
+      );
+
+
+    return res.json({
+      success: true,
+
+      date:
+        date || null,
+
+      buses:
+        result,
     });
 
-    res.json({ success: true, date: date || null, buses: result });
   } catch (error) {
-    res.status(500).json({
+
+    console.error(
+      "Bus search error:",
+      error
+    );
+
+
+    return res.status(500).json({
       success: false,
-      message: "Failed to search buses",
-      error: error.message,
+
+      message:
+        "Failed to search buses",
+
+      error:
+        error.message,
     });
   }
 });
 
-// GET /api/buses/distinct/destinations -> list of all "to" values (handy
-// for building dropdowns automatically from real data)
-router.get("/distinct/destinations", async (req, res) => {
-  try {
-    const destinations = await Bus.distinct("to");
-    res.json({ success: true, destinations: destinations.sort() });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load destinations",
-      error: error.message,
-    });
-  }
-});
 
-// GET /api/buses/top-searched?limit=9 -> most-searched destinations, each
-// paired with one representative bus (cheapest/fastest match) so the home
-// page can render real route cards instead of hardcoded ones.
-router.get("/top-searched", async (req, res) => {
-  try {
-    const limit = Math.min(Number(req.query.limit) || 9, 20);
+// ======================================================
+// DISTINCT DESTINATIONS
+// GET /api/buses/distinct/destinations
+// ======================================================
 
-    const topDestinations = await SearchLog.aggregate([
-      { $group: { _id: { $toLower: "$to" }, searchCount: { $sum: 1 } } },
-      // Secondary sort on _id (destination name) is required: without it,
-      // ties in searchCount have no guaranteed stable order, so the top-9
-      // list (and therefore which bus/type shows) can shuffle between
-      // identical requests even with nothing actually changed.
-      { $sort: { searchCount: -1, _id: 1 } },
-      { $limit: limit },
-    ]);
+router.get(
+  "/distinct/destinations",
+  async (req, res) => {
 
-    const routes = [];
+    try {
 
-    for (const entry of topDestinations) {
-      // Always the earliest-departure bus for that destination. This is a
-      // predictable, explainable rule (not an arbitrary hash) - editing the
-      // currently-shown (earliest) bus always reflects immediately here.
-      const bus = await Bus.findOne({
-        to: new RegExp(`^${entry._id}$`, "i"),
-      }).sort({ depart: 1, _id: 1 });
+      const destinations =
+        await Bus.distinct(
+          "to"
+        );
 
-      if (!bus) continue; // destination was searched but no bus exists for it anymore
 
-      routes.push({
-        from: bus.from,
-        to: bus.to,
-        type: bus.type,
-        depart: bus.depart,
-        arrive: bus.arrive,
-        distanceKm: bus.distanceKm,
-        fareMin: bus.fareMin,
-        fareMax: bus.fareMax,
-        searchCount: entry.searchCount,
+      return res.json({
+        success: true,
+
+        destinations:
+          destinations.sort(),
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Destination loading error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to load destinations",
+
+        error:
+          error.message,
       });
     }
+  }
+);
 
-    // Fallback for a fresh install with no search history yet: show one
-    // bus per distinct destination (earliest departure), so the section
-    // isn't empty (and isn't just the first destination repeated 4x from
-    // seed insertion order).
-    if (routes.length === 0) {
-      const destinations = (await Bus.distinct("to")).slice(0, limit);
 
-      for (const destination of destinations) {
-        const bus = await Bus.findOne({ to: destination }).sort({ depart: 1, _id: 1 });
-        if (!bus) continue;
+// ======================================================
+// TOP SEARCHED ROUTES
+// GET /api/buses/top-searched?limit=9
+// ======================================================
+
+router.get(
+  "/top-searched",
+  async (req, res) => {
+
+    try {
+
+      const limit =
+        Math.min(
+          Number(
+            req.query.limit
+          ) || 9,
+          20
+        );
+
+
+      const topDestinations =
+        await SearchLog.aggregate([
+          {
+            $group: {
+              _id: {
+                $toLower:
+                  "$to",
+              },
+
+              searchCount: {
+                $sum: 1,
+              },
+            },
+          },
+
+          {
+            $sort: {
+              searchCount: -1,
+              _id: 1,
+            },
+          },
+
+          {
+            $limit:
+              limit,
+          },
+        ]);
+
+
+      const routes = [];
+
+
+      for (
+        const entry
+        of topDestinations
+      ) {
+
+        const bus =
+          await Bus.findOne({
+            to: new RegExp(
+              `^${entry._id}$`,
+              "i"
+            ),
+          }).sort({
+            depart: 1,
+            _id: 1,
+          });
+
+
+        if (!bus) {
+          continue;
+        }
+
 
         routes.push({
-          from: bus.from,
-          to: bus.to,
-          type: bus.type,
-          depart: bus.depart,
-          arrive: bus.arrive,
-          distanceKm: bus.distanceKm,
-          fareMin: bus.fareMin,
-          fareMax: bus.fareMax,
-          searchCount: 0,
+          from:
+            bus.from,
+
+          to:
+            bus.to,
+
+          type:
+            bus.type,
+
+          depart:
+            bus.depart,
+
+          arrive:
+            bus.arrive,
+
+          distanceKm:
+            bus.distanceKm,
+
+          fareMin:
+            bus.fareMin,
+
+          fareMax:
+            bus.fareMax,
+
+          searchCount:
+            entry.searchCount,
         });
       }
+
+
+      // --------------------------------------------------
+      // FALLBACK
+      // --------------------------------------------------
+
+      if (
+        routes.length === 0
+      ) {
+
+        const destinations =
+          (
+            await Bus.distinct(
+              "to"
+            )
+          ).slice(
+            0,
+            limit
+          );
+
+
+        for (
+          const destination
+          of destinations
+        ) {
+
+          const bus =
+            await Bus.findOne({
+              to:
+                destination,
+            }).sort({
+              depart: 1,
+              _id: 1,
+            });
+
+
+          if (!bus) {
+            continue;
+          }
+
+
+          routes.push({
+            from:
+              bus.from,
+
+            to:
+              bus.to,
+
+            type:
+              bus.type,
+
+            depart:
+              bus.depart,
+
+            arrive:
+              bus.arrive,
+
+            distanceKm:
+              bus.distanceKm,
+
+            fareMin:
+              bus.fareMin,
+
+            fareMax:
+              bus.fareMax,
+
+            searchCount:
+              0,
+          });
+        }
+      }
+
+
+      return res.json({
+        success: true,
+        routes,
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Top searched route error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to load top searched routes",
+
+        error:
+          error.message,
+      });
     }
-
-    res.json({ success: true, routes });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load top searched routes",
-      error: error.message,
-    });
   }
-});
+);
 
-// GET /api/buses/stats -> homepage stats banner (real numbers, not fake)
-// Passengers = total seats across non-cancelled bookings
-// Search Routes = total bus schedules/routes in the system (destinations x
-// buses per destination). NOT distinct destinations, since that duplicates
-// the Districts number below (1 destination per district in this dataset).
-// Districts = fixed at 25 (Sri Lanka has 25 districts, not a DB-driven number)
-router.get("/stats", async (req, res) => {
-  try {
-    const [passengerAgg, totalRoutes] = await Promise.all([
-      Booking.aggregate([
-        { $match: { status: { $ne: "Cancelled" } } },
-        { $project: { seatCount: { $size: { $ifNull: ["$seats", []] } } } },
-        { $group: { _id: null, total: { $sum: "$seatCount" } } },
-      ]),
-      Bus.countDocuments(),
-    ]);
 
-    const passengers = passengerAgg[0] ? passengerAgg[0].total : 0;
+// ======================================================
+// STATS
+// GET /api/buses/stats
+//
+// Passengers = only PAID / CONFIRMED seats
+// Pending holds should not count as passengers.
+// ======================================================
 
-    res.json({
-      success: true,
-      passengers,
-      searchRoutes: totalRoutes,
-      districts: 25,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load stats",
-      error: error.message,
-    });
-  }
-});
+router.get(
+  "/stats",
+  async (req, res) => {
 
-// GET /api/buses/:id -> single bus detail
-router.get("/:id", async (req, res) => {
-  try {
-    const bus = await Bus.findById(req.params.id);
-    if (!bus) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Bus not found" });
+    try {
+
+      const [
+        passengerAgg,
+        totalRoutes,
+      ] =
+        await Promise.all([
+
+          Booking.aggregate([
+            {
+              $match: {
+                status:
+                  "Paid",
+              },
+            },
+
+            {
+              $project: {
+                seatCount: {
+                  $size: {
+                    $ifNull: [
+                      "$seats",
+                      [],
+                    ],
+                  },
+                },
+              },
+            },
+
+            {
+              $group: {
+                _id:
+                  null,
+
+                total: {
+                  $sum:
+                    "$seatCount",
+                },
+              },
+            },
+          ]),
+
+
+          Bus.countDocuments(),
+        ]);
+
+
+      const passengers =
+        passengerAgg[0]
+          ? passengerAgg[0].total
+          : 0;
+
+
+      return res.json({
+        success: true,
+
+        passengers,
+
+        searchRoutes:
+          totalRoutes,
+
+        districts:
+          25,
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Stats error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to load stats",
+
+        error:
+          error.message,
+      });
     }
-    res.json({ success: true, bus });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load bus",
-      error: error.message,
-    });
   }
-});
+);
 
-// GET /api/buses/:id/seats?date=2026-07-01 -> seat map for that bus/date
-router.get("/:id/seats", async (req, res) => {
-  try {
-    const { date } = req.query;
-    if (!date) {
-      return res
-        .status(400)
-        .json({ success: false, message: "date is required" });
+
+// ======================================================
+// SEAT MAP
+// GET /api/buses/:id/seats?date=2026-07-01
+//
+// heldSeats   = ORANGE
+// bookedSeats = RED
+// ======================================================
+
+router.get(
+  "/:id/seats",
+  async (req, res) => {
+
+    try {
+
+      const {
+        date,
+      } = req.query;
+
+
+      if (!date) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "date is required",
+        });
+      }
+
+
+      // --------------------------------------------------
+      // FIND BUS
+      // --------------------------------------------------
+
+      const bus =
+        await Bus.findById(
+          req.params.id
+        );
+
+
+      if (!bus) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Bus not found",
+        });
+      }
+
+
+      const now =
+        new Date();
+
+
+      // --------------------------------------------------
+      // ACTIVE SEAT LOCKS
+      // --------------------------------------------------
+
+      const seatLocks =
+        await SeatLock.find({
+          busId:
+            bus._id,
+
+          journeyDate:
+            date,
+
+          $or: [
+            // Paid seat
+            {
+              status:
+                "booked",
+            },
+
+            // Active temporary hold
+            {
+              status:
+                "held",
+
+              expiresAt: {
+                $gt: now,
+              },
+            },
+
+            // Compatibility with old records
+            {
+              status: {
+                $exists: false,
+              },
+            },
+          ],
+        }).select(
+          "seat status expiresAt"
+        );
+
+
+      // --------------------------------------------------
+      // SPLIT HELD / BOOKED
+      // --------------------------------------------------
+
+      const heldSeats = [];
+
+      const bookedSeats = [];
+
+
+      seatLocks.forEach(
+        (lock) => {
+
+          const seat =
+            String(
+              lock.seat
+            );
+
+
+          if (
+            lock.status ===
+            "held"
+          ) {
+
+            heldSeats.push(
+              seat
+            );
+
+          } else {
+
+            // booked OR old lock
+            bookedSeats.push(
+              seat
+            );
+          }
+        }
+      );
+
+
+      // --------------------------------------------------
+      // RESPONSE
+      // --------------------------------------------------
+
+      return res.json({
+        success: true,
+
+        bus: {
+          id:
+            bus._id,
+
+          busNo:
+            bus.busNo,
+
+          from:
+            bus.from,
+
+          to:
+            bus.to,
+
+          depart:
+            bus.depart,
+
+          arrive:
+            bus.arrive,
+
+          fareMin:
+            bus.fareMin,
+
+          fareMax:
+            bus.fareMax,
+        },
+
+        date,
+
+        pattern:
+          SEAT_PATTERN,
+
+        counterSeats:
+          COUNTER_SEATS,
+
+        // Orange
+        heldSeats,
+
+        // Red
+        bookedSeats,
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Seat map error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to load seat map",
+
+        error:
+          error.message,
+      });
     }
-
-    const bus = await Bus.findById(req.params.id);
-    if (!bus) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Bus not found" });
-    }
-
-    const bookings = await Booking.find({
-      busId: bus._id,
-      journeyDate: date,
-      status: { $ne: "Cancelled" },
-    }).select("seats");
-
-    const bookedSeats = bookings.flatMap((b) => b.seats || []);
-
-    res.json({
-      success: true,
-      bus: {
-        id: bus._id,
-        busNo: bus.busNo,
-        from: bus.from,
-        to: bus.to,
-        depart: bus.depart,
-        arrive: bus.arrive,
-        fareMin: bus.fareMin,
-        fareMax: bus.fareMax,
-      },
-      date,
-      pattern: SEAT_PATTERN,
-      counterSeats: COUNTER_SEATS,
-      bookedSeats,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to load seat map",
-      error: error.message,
-    });
   }
-});
+);
+
+
+// ======================================================
+// SINGLE BUS
+// GET /api/buses/:id
+// ======================================================
+
+router.get(
+  "/:id",
+  async (req, res) => {
+
+    try {
+
+      const bus =
+        await Bus.findById(
+          req.params.id
+        );
+
+
+      if (!bus) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Bus not found",
+        });
+      }
+
+
+      return res.json({
+        success: true,
+        bus,
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Bus loading error:",
+        error
+      );
+
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to load bus",
+
+        error:
+          error.message,
+      });
+    }
+  }
+);
+
 
 module.exports = router;

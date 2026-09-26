@@ -1,44 +1,95 @@
 const clientsByTrip = new Map();
 
+
+// ======================================================
+// CREATE UNIQUE KEY FOR BUS + JOURNEY DATE
+// ======================================================
+
 function tripKey(busId, journeyDate) {
-  return `${String(busId)}::${journeyDate}`;
+  return `${String(busId)}::${String(journeyDate)}`;
 }
 
 
-// User real-time connection store pannum
-function subscribe(busId, journeyDate, res) {
-  const key = tripKey(busId, journeyDate);
+// ======================================================
+// SUBSCRIBE USER TO REAL-TIME SEAT UPDATES
+// ======================================================
 
-  if (!clientsByTrip.has(key)) {
-    clientsByTrip.set(key, new Set());
+function subscribe(busId, journeyDate, res) {
+  const key =
+    tripKey(
+      busId,
+      journeyDate
+    );
+
+
+  if (
+    !clientsByTrip.has(key)
+  ) {
+    clientsByTrip.set(
+      key,
+      new Set()
+    );
   }
 
-  const clients = clientsByTrip.get(key);
+
+  const clients =
+    clientsByTrip.get(key);
+
 
   clients.add(res);
 
 
-  // Connection successful message
-  res.write(
-    `event: connected\ndata: ${JSON.stringify({
-      busId: String(busId),
-      journeyDate,
-    })}\n\n`
-  );
+  // ----------------------------------------------------
+  // CONNECTION SUCCESS MESSAGE
+  // ----------------------------------------------------
+
+  try {
+    res.write(
+      `event: connected\ndata: ${JSON.stringify({
+        busId:
+          String(busId),
+
+        journeyDate:
+          String(journeyDate),
+
+        timestamp:
+          new Date().toISOString(),
+      })}\n\n`
+    );
+
+  } catch (error) {
+    clients.delete(res);
+  }
 
 
-  // Connection close aana remove pannum
+  // ----------------------------------------------------
+  // UNSUBSCRIBE
+  // ----------------------------------------------------
+
   return () => {
     clients.delete(res);
 
-    if (clients.size === 0) {
-      clientsByTrip.delete(key);
+
+    if (
+      clients.size === 0
+    ) {
+      clientsByTrip.delete(
+        key
+      );
     }
   };
 }
 
 
-// Seat booking/cancel update send pannum
+// ======================================================
+// BROADCAST SEAT UPDATE
+//
+// action:
+// held     → ORANGE
+// booked   → RED
+// released → AVAILABLE
+// ======================================================
+
 function broadcastSeatUpdate({
   busId,
   journeyDate,
@@ -46,63 +97,165 @@ function broadcastSeatUpdate({
   action,
   bookingId,
   status,
+  expiresAt = null,
 }) {
-  const key = tripKey(
-    busId,
-    journeyDate
-  );
+  if (
+    !busId ||
+    !journeyDate
+  ) {
+    return;
+  }
+
+
+  const key =
+    tripKey(
+      busId,
+      journeyDate
+    );
+
 
   const clients =
     clientsByTrip.get(key);
 
 
-  if (!clients || clients.size === 0) {
+  if (
+    !clients ||
+    clients.size === 0
+  ) {
     return;
   }
 
 
-  const payload = JSON.stringify({
-    busId: String(busId),
+  // ----------------------------------------------------
+  // PAYLOAD
+  // ----------------------------------------------------
 
-    journeyDate,
+  const payload =
+    JSON.stringify({
+      busId:
+        String(busId),
 
-    seats,
+      journeyDate:
+        String(journeyDate),
 
-    action,
+      seats:
+        Array.isArray(seats)
+          ? seats.map(String)
+          : [],
 
-    bookingId: bookingId
-      ? String(bookingId)
-      : undefined,
+      action,
 
-    status,
+      bookingId:
+        bookingId
+          ? String(bookingId)
+          : null,
 
-    timestamp:
-      new Date().toISOString(),
-  });
+      status:
+        status || null,
+
+      // Useful for held seats
+      expiresAt:
+        expiresAt
+          ? new Date(
+              expiresAt
+            ).toISOString()
+          : null,
+
+      timestamp:
+        new Date().toISOString(),
+    });
 
 
-  for (const res of clients) {
-    res.write(
-      `event: seat-update\ndata: ${payload}\n\n`
+  // ----------------------------------------------------
+  // SEND TO ALL USERS VIEWING SAME BUS + DATE
+  // ----------------------------------------------------
+
+  for (
+    const res
+    of [...clients]
+  ) {
+    try {
+      res.write(
+        `event: seat-update\ndata: ${payload}\n\n`
+      );
+
+    } catch (error) {
+      // Dead connection
+      clients.delete(res);
+    }
+  }
+
+
+  // Remove empty trip group
+  if (
+    clients.size === 0
+  ) {
+    clientsByTrip.delete(
+      key
     );
   }
 }
 
 
-// Connection disconnect aagama heartbeat
-setInterval(() => {
-  for (
-    const clients
-    of clientsByTrip.values()
-  ) {
-    for (const res of clients) {
-      res.write(
-        `: heartbeat ${Date.now()}\n\n`
-      );
-    }
-  }
-}, 25000).unref();
+// ======================================================
+// HEARTBEAT
+//
+// Keeps SSE connection alive.
+// ======================================================
 
+const heartbeat =
+  setInterval(
+    () => {
+
+      for (
+        const [
+          key,
+          clients,
+        ]
+        of clientsByTrip.entries()
+      ) {
+
+        for (
+          const res
+          of [...clients]
+        ) {
+
+          try {
+            res.write(
+              `: heartbeat ${Date.now()}\n\n`
+            );
+
+          } catch (error) {
+            clients.delete(res);
+          }
+        }
+
+
+        if (
+          clients.size === 0
+        ) {
+          clientsByTrip.delete(
+            key
+          );
+        }
+      }
+
+    },
+    25000
+  );
+
+
+if (
+  typeof heartbeat.unref ===
+  "function"
+) {
+  heartbeat.unref();
+}
+
+
+// ======================================================
+// EXPORT
+// ======================================================
 
 module.exports = {
   subscribe,
