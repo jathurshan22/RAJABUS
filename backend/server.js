@@ -46,6 +46,11 @@ const adminRoutes =
 const realtimeRoutes =
   require("./routes/realtimeRoutes");
 
+const paymentRoutes =
+  require("./routes/paymentRoutes");
+
+const path = require("path");  
+
 
 // ======================================================
 // HOLD CLEANUP
@@ -67,6 +72,14 @@ const app =
 // ======================================================
 // MIDDLEWARE
 // ======================================================
+const frontendPath = path.join(
+  __dirname,
+  ".."
+);
+
+app.use(
+  express.static(frontendPath)
+);
 
 app.use(
   cors()
@@ -114,6 +127,10 @@ app.use(
 app.use(
   "/api/realtime",
   realtimeRoutes
+);
+app.use(
+  "/api/payments",
+  paymentRoutes
 );
 
 

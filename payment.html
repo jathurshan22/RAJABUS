@@ -9,69 +9,24 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Secure Payment - Raja Bus</title>
+  <title>Secure Payment | Raja Bus</title>
 
+  <link rel="stylesheet" href="payment.css">
+  <link rel="stylesheet" href="toast.css">
 
-  <!-- Payment CSS -->
-  <link
-    rel="stylesheet"
-    href="payment.css"
-  >
-
-  <!-- Toast CSS -->
-  <link
-    rel="stylesheet"
-    href="toast.css"
-  >
-
-  <!-- Global CSS -->
-  <link
-    rel="stylesheet"
-    href="globals.css"
-  >
-
-  <!-- Theme CSS -->
-  <link
-    rel="stylesheet"
-    href="theme.css"
-  >
-
-  <!-- Font Awesome -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   >
 
-  <!-- Google Font -->
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
-  >
-
-  <!-- Flatpickr -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-  >
-
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_orange.css"
-  >
-
-  <!-- Responsive / Dark -->
-  <link
-    rel="stylesheet"
-    href="dark-responsive.css"
   >
 </head>
 
 
 <body>
-
-  <!-- ==================================================
-       TOAST
-       ================================================== -->
 
   <div
     id="toastContainer"
@@ -79,362 +34,37 @@
   ></div>
 
 
-  <!-- ==================================================
-       PAYMENT CONTAINER
-       ================================================== -->
+  <main class="pay-page">
 
-  <div class="payment-container">
+    <section class="pay-box">
 
-    <h1>
-      Secure Payment
-    </h1>
+      <!-- TOP ICON -->
+      <div class="pay-icon">
+        <i class="fa-solid fa-bus"></i>
+      </div>
 
+      <h1>Complete Your Payment</h1>
 
-    <!-- ==================================================
-         15 MINUTE HOLD MESSAGE
-         ================================================== -->
+      <p class="pay-subtitle">
+        Your seats are temporarily reserved.
+        Complete the payment before the timer expires.
+      </p>
 
-    <div
-      id="holdTimer"
-      style="
-        margin: 15px auto 20px;
-        padding: 13px 20px;
-        max-width: 500px;
-        text-align: center;
-        background: #fff3cd;
-        color: #8a5200;
-        border: 1px solid #ffe69c;
-        border-radius: 12px;
-        font-weight: 700;
-      "
-    >
-      Seats held for: 15:00
-    </div>
 
-
-    <div class="payment-card">
-
-      <div class="payment-layout">
-
-
-        <!-- ==================================================
-             3D CARD
-             ================================================== -->
-
-        <div class="card-stage">
-
-          <div
-            class="card-3d"
-            id="card3d"
-          >
-
-
-            <!-- ================= FRONT ================= -->
-
-            <div class="card-face card-front">
-
-              <div class="chip"></div>
-
-
-              <div
-                class="brand-logo"
-                id="brandLogoFront"
-              >
-
-                <!-- VISA -->
-
-                <svg
-                  class="logo-visa"
-                  viewBox="0 0 60 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-
-                  <text
-                    x="0"
-                    y="16"
-                    font-family="Arial, sans-serif"
-                    font-style="italic"
-                    font-weight="800"
-                    font-size="18"
-                    fill="#1434CB"
-                  >
-                    VISA
-                  </text>
-
-                </svg>
-
-
-                <!-- MASTERCARD -->
-
-                <svg
-                  class="logo-mastercard"
-                  viewBox="0 0 40 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-
-                  <circle
-                    cx="15"
-                    cy="12"
-                    r="10"
-                    fill="#EB001B"
-                  ></circle>
-
-                  <circle
-                    cx="25"
-                    cy="12"
-                    r="10"
-                    fill="#F79E1B"
-                  ></circle>
-
-                  <path
-                    d="M20 4.3a10 10 0 0 1 0 15.4 10 10 0 0 1 0-15.4z"
-                    fill="#FF5F00"
-                  ></path>
-
-                </svg>
-
-              </div>
-
-
-              <!-- CARD NUMBER -->
-
-              <div
-                class="card-number"
-                id="cardNumberDisplay"
-              >
-                &bull;&bull;&bull;&bull;
-                &bull;&bull;&bull;&bull;
-                &bull;&bull;&bull;&bull;
-                &bull;&bull;&bull;&bull;
-              </div>
-
-
-              <div class="card-bottom-row">
-
-                <!-- HOLDER -->
-
-                <div class="card-field">
-
-                  <span class="mini-label">
-                    Card holder
-                  </span>
-
-                  <span
-                    class="mini-value"
-                    id="cardNameDisplay"
-                  >
-                    YOUR NAME
-                  </span>
-
-                </div>
-
-
-                <!-- EXPIRY -->
-
-                <div class="card-field align-right">
-
-                  <span class="mini-label">
-                    Expires
-                  </span>
-
-                  <span
-                    class="mini-value"
-                    id="cardExpiryDisplay"
-                  >
-                    MM/YY
-                  </span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <!-- ================= BACK ================= -->
-
-            <div class="card-face card-back">
-
-              <div class="magnetic-stripe"></div>
-
-
-              <div class="signature-row">
-
-                <div class="signature-strip"></div>
-
-                <div
-                  class="cvv-box"
-                  id="cardCvvDisplay"
-                >
-                  &bull;&bull;&bull;
-                </div>
-
-              </div>
-
-
-              <div class="brand-logo back-logo">
-
-                <!-- VISA -->
-
-                <svg
-                  class="logo-visa"
-                  viewBox="0 0 60 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-
-                  <text
-                    x="0"
-                    y="16"
-                    font-family="Arial, sans-serif"
-                    font-style="italic"
-                    font-weight="800"
-                    font-size="18"
-                    fill="#1434CB"
-                  >
-                    VISA
-                  </text>
-
-                </svg>
-
-
-                <!-- MASTERCARD -->
-
-                <svg
-                  class="logo-mastercard"
-                  viewBox="0 0 40 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-
-                  <circle
-                    cx="15"
-                    cy="12"
-                    r="10"
-                    fill="#EB001B"
-                  ></circle>
-
-                  <circle
-                    cx="25"
-                    cy="12"
-                    r="10"
-                    fill="#F79E1B"
-                  ></circle>
-
-                  <path
-                    d="M20 4.3a10 10 0 0 1 0 15.4 10 10 0 0 1 0-15.4z"
-                    fill="#FF5F00"
-                  ></path>
-
-                </svg>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- ==================================================
-             PAYMENT FORM
-             ================================================== -->
-
-        <div class="payment-form details-bar">
-
-
-          <!-- CARD HOLDER -->
-
-          <div class="input-group">
-
-            <label for="cardHolderInput">
-              Card Holder Name
-            </label>
-
-            <input
-              type="text"
-              id="cardHolderInput"
-              placeholder="JATHURSHAN"
-              autocomplete="cc-name"
-            >
-
-          </div>
-
-
-          <!-- CARD NUMBER -->
-
-          <div class="input-group">
-
-            <label for="cardNumberInput">
-              Card Number
-            </label>
-
-            <input
-              type="text"
-              id="cardNumberInput"
-              placeholder="1234 5678 1234 5678"
-              inputmode="numeric"
-              maxlength="19"
-              autocomplete="cc-number"
-            >
-
-          </div>
-
-
-          <!-- EXPIRY -->
-
-          <div class="input-group">
-
-            <label for="cardExpiryInput">
-              Expiry
-            </label>
-
-            <input
-              type="text"
-              id="cardExpiryInput"
-              placeholder="MM/YY"
-              inputmode="numeric"
-              maxlength="5"
-              autocomplete="cc-exp"
-            >
-
-          </div>
-
-
-          <!-- CVV -->
-
-          <div class="input-group">
-
-            <label for="cardCvvInput">
-              CVV
-            </label>
-
-            <input
-              type="password"
-              id="cardCvvInput"
-              placeholder="123"
-              inputmode="numeric"
-              maxlength="3"
-              autocomplete="cc-csc"
-            >
-
-          </div>
-
-        </div>
-
+      <!-- HOLD TIMER -->
+      <div
+        id="holdTimer"
+        class="hold-timer"
+      >
+        <i class="fa-regular fa-clock"></i>
+        Seats held for: 15:00
       </div>
 
 
-      <!-- ==================================================
-           TOTAL AMOUNT
-           ================================================== -->
+      <!-- AMOUNT -->
+      <div class="amount-card">
 
-      <div class="fare-box">
-
-        Total Amount
+        <span>Total Amount</span>
 
         <h2 id="paymentAmount">
           Rs. 0
@@ -443,35 +73,99 @@
       </div>
 
 
-      <!-- ==================================================
-           PAYMENT BUTTON
-           ================================================== -->
+      <!-- SECURITY FEATURES -->
+      <div class="security-grid">
 
+        <div class="security-item">
+
+          <div class="security-icon green">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+
+          <div>
+            <h3>Secure Payment</h3>
+            <p>Payment is processed securely through PayHere.</p>
+          </div>
+
+        </div>
+
+
+        <div class="security-item">
+
+          <div class="security-icon blue">
+            <i class="fa-solid fa-credit-card"></i>
+          </div>
+
+          <div>
+            <h3>Card Protection</h3>
+            <p>
+              Card number and CVV are entered only inside PayHere.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="security-item">
+
+          <div class="security-icon orange">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+
+          <div>
+            <h3>15 Minute Hold</h3>
+            <p>
+              Your seats remain reserved until the timer expires.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- SANDBOX -->
+      <div class="sandbox-message">
+
+        <i class="fa-solid fa-flask"></i>
+
+        <div>
+          <strong>PayHere Sandbox</strong>
+          <span>This is a test payment. No real money will be charged.</span>
+        </div>
+
+      </div>
+
+
+      <!-- PAYMENT BUTTON -->
       <button
-        class="pay-btn"
         id="payBtn"
+        class="pay-btn"
         type="button"
       >
         <i class="fa-solid fa-lock"></i>
-        Confirm Payment
+        Pay with PayHere
       </button>
 
-    </div>
 
-  </div>
+      <p class="bottom-note">
+        <i class="fa-solid fa-shield"></i>
+        You will enter your payment details in the secure PayHere window.
+      </p>
+
+    </section>
+
+  </main>
 
 
-  <!-- ==================================================
-       JAVASCRIPT
-       ================================================== -->
+  <!-- PAYHERE SDK - MUST LOAD FIRST -->
+  <script
+    type="text/javascript"
+    src="https://www.payhere.lk/lib/payhere-2.0.js"
+  ></script>
 
   <script src="toast.js"></script>
-
   <script src="payment.js"></script>
-
-  <script src="navbar-profile.js?v=50"></script>
-
-  <script src="theme.js"></script>
 
 </body>
 

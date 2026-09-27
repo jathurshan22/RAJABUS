@@ -1,18 +1,20 @@
 {
-    "[ampscript]": {
-        "editor.defaultFormatter": "joernberkefeld.sfmc-language"
-    },
-    "[ssjs]": {
-        "editor.defaultFormatter": "joernberkefeld.sfmc-language"
-    },
-    "[sfmc]": {
-        "editor.defaultFormatter": "joernberkefeld.sfmc-language"
-    },
-    "[handlebars]": {
-        "editor.defaultFormatter": "joernberkefeld.sfmc-language"
-    },
-    "[sql]": {
-        "editor.defaultFormatter": "joernberkefeld.sfmc-language"
-    },
-    "liveServer.settings.port": 5501
+  "[ampscript]": {
+    "editor.defaultFormatter": "joernberkefeld.sfmc-language"
+  },
+  "[ssjs]": {
+    "editor.defaultFormatter": "joernberkefeld.sfmc-language"
+  },
+  "[sfmc]": {
+    "editor.defaultFormatter": "joernberkefeld.sfmc-language"
+  },
+  "[handlebars]": {
+    "editor.defaultFormatter": "joernberkefeld.sfmc-language"
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "joernberkefeld.sfmc-language"
+  },
+
+  "liveServer.settings.host": "localhost",
+  "liveServer.settings.port": 5501
 }
