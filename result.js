@@ -1,52 +1,160 @@
 // API_BASE is already declared in seat.js,
 // which loads before this file on result.html
 
-const params = new URLSearchParams(window.location.search);
 
-const district = params.get("district") || "";
-const travelDate = params.get("date") || "";
-const busType = params.get("bus") || "";
+// ==================================================
+// SEARCH PARAMETERS
+// ==================================================
 
-document.getElementById("districtName").textContent =
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+
+// User currently selects destination only.
+// Starting point is fixed as Mihintale.
+const fromLocation =
+  "Mihintale";
+
+const district =
+  params.get("district") || "";
+
+const travelDate =
+  params.get("date") || "";
+
+const busType =
+  params.get("bus") || "";
+
+
+// ==================================================
+// SEARCH SUMMARY
+// ==================================================
+
+document.getElementById(
+  "districtName"
+).textContent =
   district || "-";
 
-document.getElementById("travelDate").textContent =
+
+document.getElementById(
+  "travelDate"
+).textContent =
   travelDate || "-";
 
-document.getElementById("busType").textContent =
+
+document.getElementById(
+  "busType"
+).textContent =
   busType || "Any";
 
+
 const resultsSection =
-  document.getElementById("resultsSection");
+  document.getElementById(
+    "resultsSection"
+  );
 
 
-// --------------------------------------------------
+// ==================================================
 // ESCAPE HTML
-// --------------------------------------------------
-function escapeHtml(s) {
-  return String(s || "").replace(
+// ==================================================
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  ).replace(
     /[&<>"']/g,
-    (m) =>
+    (character) =>
       ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#039;",
-      }[m])
+      }[character])
   );
 }
 
 
-// --------------------------------------------------
-// BUILD BUS CARD
-// --------------------------------------------------
+// ==================================================
+// FORMAT DATE
+// ==================================================
+
+function formatDate(dateString) {
+
+  if (!dateString) {
+    return "-";
+  }
+
+  const date =
+    new Date(
+      `${dateString}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return dateString;
+  }
+
+
+  return date.toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+}
+
+
+// ==================================================
+// FORMAT FARE
+// ==================================================
+
+function formatFare(value) {
+
+  const fare =
+    Number(value);
+
+
+  if (
+    Number.isNaN(fare)
+  ) {
+    return "0";
+  }
+
+
+  return fare.toLocaleString(
+    "en-LK"
+  );
+}
+
+
+// ==================================================
+// BUILD TRIP CARD
+// ==================================================
+
 function busCardHtml(bus) {
+
+  // Public Trip API currently may not return
+  // availableSeats.
+  // Keep compatibility if added later.
   const seatCount =
-    bus.availableSeats ?? 40;
+    bus.availableSeats ??
+    40;
+
 
   const low =
-    seatCount <= 10 ? " low" : "";
+    seatCount <= 10
+      ? " low"
+      : "";
+
 
   return `
     <div class="bus-card">
@@ -54,63 +162,168 @@ function busCardHtml(bus) {
       <div class="card-top">
 
         <div>
+
           <h2>
-            ${escapeHtml(bus.from)}
+
+            ${escapeHtml(
+              bus.from
+            )}
+
             <i class="fa-solid fa-arrow-right-long"></i>
-            ${escapeHtml(bus.to)}
+
+            ${escapeHtml(
+              bus.to
+            )}
+
           </h2>
 
+
           <p>
+
             Bus No:
-            <b>${escapeHtml(bus.busNo)}</b>
+
+            <b>
+              ${escapeHtml(
+                bus.busNo
+              )}
+            </b>
+
             &middot;
-            ${escapeHtml(bus.type)}
+
+            ${escapeHtml(
+              bus.type
+            )}
+
+            ${
+              bus.regNo
+                ? `
+                  &middot;
+                  ${escapeHtml(
+                    bus.regNo
+                  )}
+                `
+                : ""
+            }
+
           </p>
+
         </div>
 
+
         <span class="seat-badge${low}">
-          ${seatCount} Seats
+
+          ${
+            seatCount <= 0
+              ? "Fully Booked"
+              : `${seatCount} Seats`
+          }
+
         </span>
 
       </div>
 
 
+
       <div class="bus-info">
 
+
         <div>
+
           <i class="fa-regular fa-clock"></i>
-          <span>Departure</span>
-          <b>${escapeHtml(bus.depart)}</b>
+
+          <span>
+            Departure
+          </span>
+
+          <b>
+            ${escapeHtml(
+              bus.depart
+            )}
+          </b>
+
         </div>
 
+
         <div>
+
           <i class="fa-solid fa-clock"></i>
-          <span>Arrival</span>
-          <b>${escapeHtml(bus.arrive)}</b>
+
+          <span>
+            Arrival
+          </span>
+
+          <b>
+            ${escapeHtml(
+              bus.arrive
+            )}
+          </b>
+
         </div>
 
-        <div>
-          <i class="fa-solid fa-road"></i>
-          <span>Distance</span>
-          <b>${bus.distanceKm} KM</b>
-        </div>
 
         <div>
+
+          <i class="fa-regular fa-calendar"></i>
+
+          <span>
+            Journey Date
+          </span>
+
+          <b>
+            ${escapeHtml(
+              formatDate(
+                bus.journeyDate
+              )
+            )}
+          </b>
+
+        </div>
+
+
+        <div>
+
           <i class="fa-solid fa-ticket"></i>
-          <span>Fare</span>
-          <b>Rs. ${bus.fareMin}</b>
+
+          <span>
+            Fare
+          </span>
+
+          <b>
+            Rs.
+            ${formatFare(
+              bus.fare
+            )}
+          </b>
+
         </div>
 
       </div>
 
 
+
       <button
         class="book-btn"
 
-        data-bus-id="${bus.id || bus._id}"
+        data-trip-id="${escapeHtml(
+          bus.tripId
+        )}"
+
+        data-bus-id="${escapeHtml(
+          bus.id ||
+          bus.busId ||
+          bus._id
+        )}"
 
         data-bus-no="${escapeHtml(
           bus.busNo
+        )}"
+
+        data-reg-no="${escapeHtml(
+          bus.regNo
+        )}"
+
+        data-type="${escapeHtml(
+          bus.type
         )}"
 
         data-from="${escapeHtml(
@@ -129,7 +342,14 @@ function busCardHtml(bus) {
           bus.arrive
         )}"
 
-        data-fare="${bus.fareMin}"
+        data-fare="${Number(
+          bus.fare || 0
+        )}"
+
+        data-date="${escapeHtml(
+          bus.journeyDate ||
+          travelDate
+        )}"
 
         ${
           seatCount <= 0
@@ -137,11 +357,13 @@ function busCardHtml(bus) {
             : ""
         }
       >
+
         ${
           seatCount <= 0
             ? "Fully Booked"
             : "Book Now"
         }
+
       </button>
 
     </div>
@@ -149,15 +371,78 @@ function busCardHtml(bus) {
 }
 
 
-// --------------------------------------------------
-// LOAD BUSES
-// --------------------------------------------------
+// ==================================================
+// BUS TYPE FILTER
+// ==================================================
+
+function filterTripsByType(
+  trips
+) {
+
+  if (
+    !busType ||
+    String(
+      busType
+    ).toLowerCase() ===
+      "any"
+  ) {
+
+    return trips;
+  }
+
+
+  return trips.filter(
+    (trip) =>
+
+      String(
+        trip.type || ""
+      )
+        .trim()
+        .toLowerCase() ===
+
+      String(
+        busType
+      )
+        .trim()
+        .toLowerCase()
+  );
+}
+
+
+// ==================================================
+// LOAD TRIPS
+// ==================================================
+
 async function loadBuses() {
+
+
+  // ----------------------------------------------
+  // DESTINATION VALIDATION
+  // ----------------------------------------------
 
   if (!district) {
 
-    resultsSection.innerHTML =
-      `<p>Please go back and choose a destination district.</p>`;
+    resultsSection.innerHTML = `
+      <p>
+        Please go back and choose a destination district.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  // ----------------------------------------------
+  // DATE VALIDATION
+  // ----------------------------------------------
+
+  if (!travelDate) {
+
+    resultsSection.innerHTML = `
+      <p>
+        Please go back and choose a travel date.
+      </p>
+    `;
 
     return;
   }
@@ -165,49 +450,49 @@ async function loadBuses() {
 
   try {
 
-    // --------------------------------------------------
-    // BUILD SEARCH QUERY
-    // --------------------------------------------------
+    resultsSection.innerHTML = `
+      <p>
+        Searching available trips...
+      </p>
+    `;
+
+
+    // ==================================================
+    // BUILD TRIP SEARCH QUERY
+    // ==================================================
+
     const qs =
       new URLSearchParams({
-        to: district,
+
+        from:
+          fromLocation,
+
+        to:
+          district,
+
+        date:
+          travelDate,
       });
 
 
-    // IMPORTANT:
-    // journey date backend-ku send pannum
-    if (travelDate) {
-      qs.set(
-        "date",
-        travelDate
-      );
-    }
-
-
-    // optional bus type
-    if (busType) {
-      qs.set(
-        "type",
-        busType
-      );
-    }
-
-
     const url =
-      `${API_BASE}/buses/search?${qs.toString()}`;
+      `${API_BASE}/trips/search?${qs.toString()}`;
 
 
     console.log(
-      "Bus Search URL:",
+      "Trip Search URL:",
       url
     );
 
 
-    // --------------------------------------------------
-    // FETCH BUSES
-    // --------------------------------------------------
+    // ==================================================
+    // FETCH TRIPS
+    // ==================================================
+
     const res =
-      await fetch(url);
+      await fetch(
+        url
+      );
 
 
     const data =
@@ -215,161 +500,282 @@ async function loadBuses() {
 
 
     console.log(
-      "Bus Search Data:",
+      "Trip Search Data:",
       data
     );
 
 
-    // --------------------------------------------------
-    // NO BUSES
-    // --------------------------------------------------
+    // ==================================================
+    // BACKEND ERROR
+    // ==================================================
+
     if (
-      !data.success ||
-      !data.buses ||
-      data.buses.length === 0
+      !res.ok ||
+      !data.success
     ) {
 
-      resultsSection.innerHTML =
-        `<p>No buses found for Mihintale → ${escapeHtml(
-          district
-        )}.</p>`;
+      resultsSection.innerHTML = `
+        <p>
+          ${
+            escapeHtml(
+              data.message
+            ) ||
+            "Could not search trips."
+          }
+        </p>
+      `;
 
       return;
     }
 
 
-    // --------------------------------------------------
-    // SHOW BUS CARDS
-    // --------------------------------------------------
+    // ==================================================
+    // GET TRIPS
+    // ==================================================
+
+    let trips =
+      Array.isArray(
+        data.trips
+      )
+        ? data.trips
+        : [];
+
+
+    // ==================================================
+    // OPTIONAL BUS TYPE FILTER
+    // ==================================================
+
+    trips =
+      filterTripsByType(
+        trips
+      );
+
+
+    // ==================================================
+    // NO TRIPS
+    // ==================================================
+
+    if (
+      trips.length === 0
+    ) {
+
+      resultsSection.innerHTML = `
+        <p>
+          No scheduled buses found for
+          ${escapeHtml(
+            fromLocation
+          )}
+          →
+          ${escapeHtml(
+            district
+          )}
+          on
+          ${escapeHtml(
+            travelDate
+          )}.
+        </p>
+      `;
+
+      return;
+    }
+
+
+    // ==================================================
+    // SHOW TRIP CARDS
+    // ==================================================
+
     resultsSection.innerHTML =
-      data.buses
-        .map(busCardHtml)
+      trips
+        .map(
+          busCardHtml
+        )
         .join("");
 
 
-    // --------------------------------------------------
-    // BOOK NOW BUTTON
-    // --------------------------------------------------
+    // ==================================================
+    // BOOK NOW BUTTONS
+    // ==================================================
+
     document
       .querySelectorAll(
         ".book-btn"
       )
-      .forEach((btn) => {
+      .forEach(
+        (btn) => {
 
-        btn.addEventListener(
-          "click",
-          () => {
-
-            const bus = {
-
-              id:
-                btn.dataset.busId,
-
-              busNo:
-                btn.dataset.busNo,
-
-              from:
-                btn.dataset.from,
-
-              to:
-                btn.dataset.to,
-
-              depart:
-                btn.dataset.depart,
-
-              arrive:
-                btn.dataset.arrive,
-
-              fare:
-                Number(
-                  btn.dataset.fare
-                ),
-            };
+          btn.addEventListener(
+            "click",
+            () => {
 
 
-            console.log(
-              "Selected Bus:",
-              bus
-            );
+              // ========================================
+              // BUILD SELECTED TRIP/BUS OBJECT
+              // ========================================
+
+              const bus = {
+
+                tripId:
+                  btn.dataset.tripId,
+
+                id:
+                  btn.dataset.busId,
+
+                busId:
+                  btn.dataset.busId,
+
+                busNo:
+                  btn.dataset.busNo,
+
+                regNo:
+                  btn.dataset.regNo,
+
+                type:
+                  btn.dataset.type,
+
+                from:
+                  btn.dataset.from,
+
+                to:
+                  btn.dataset.to,
+
+                depart:
+                  btn.dataset.depart,
+
+                arrive:
+                  btn.dataset.arrive,
+
+                fare:
+                  Number(
+                    btn.dataset.fare
+                  ),
+
+                journeyDate:
+                  btn.dataset.date,
+              };
 
 
-            console.log(
-              "Travel Date:",
-              travelDate
-            );
-
-
-            // Save bus
-            localStorage.setItem(
-              "selectedBus",
-              JSON.stringify(
+              console.log(
+                "Selected Trip:",
                 bus
-              )
-            );
-
-
-            // Save date
-            localStorage.setItem(
-              "travelDate",
-              travelDate
-            );
-
-
-            // --------------------------------------------------
-            // OPEN SEAT MODAL
-            // --------------------------------------------------
-            if (
-              typeof window.openSeatModal ===
-              "function"
-            ) {
-
-              window.openSeatModal(
-                bus,
-                travelDate
               );
 
-            } else {
+
+              console.log(
+                "Trip ID:",
+                bus.tripId
+              );
+
+
+              console.log(
+                "Bus ID:",
+                bus.id
+              );
+
+
+              console.log(
+                "Travel Date:",
+                bus.journeyDate
+              );
+
+
+              // ========================================
+              // SAVE SELECTED TRIP
+              // ========================================
+
+              localStorage.setItem(
+                "selectedBus",
+                JSON.stringify(
+                  bus
+                )
+              );
+
+
+              // Save trip separately too
+              localStorage.setItem(
+                "selectedTrip",
+                JSON.stringify(
+                  bus
+                )
+              );
+
+
+              // ========================================
+              // SAVE DATE
+              // ========================================
+
+              localStorage.setItem(
+                "travelDate",
+                bus.journeyDate
+              );
+
+
+              // ========================================
+              // OPEN EXISTING SEAT MODAL
+              // ========================================
 
               if (
-                typeof showToast ===
+                typeof
+                  window
+                    .openSeatModal ===
                 "function"
               ) {
 
-                showToast(
-                  "Seat selection file not loaded",
-                  "error"
+                window.openSeatModal(
+                  bus,
+                  bus.journeyDate
                 );
 
               } else {
 
-                alert(
-                  "Seat selection file not loaded"
-                );
+                if (
+                  typeof showToast ===
+                  "function"
+                ) {
+
+                  showToast(
+                    "Seat selection file not loaded",
+                    "error"
+                  );
+
+                } else {
+
+                  alert(
+                    "Seat selection file not loaded"
+                  );
+
+                }
+
               }
+
             }
-          }
-        );
-      });
+          );
+
+        }
+      );
 
 
   } catch (error) {
 
     console.error(
-      "Bus search error:",
+      "Trip search error:",
       error
     );
 
 
-    resultsSection.innerHTML =
-      `<p>
+    resultsSection.innerHTML = `
+      <p>
         Could not reach the booking server.
         Please make sure backend is running.
-      </p>`;
+      </p>
+    `;
+
   }
+
 }
 
 
-// --------------------------------------------------
+// ==================================================
 // START
-// --------------------------------------------------
+// ==================================================
+
 loadBuses();

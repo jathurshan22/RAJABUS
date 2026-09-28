@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Bus Operator | RajaBus</title>
+
+  <link
+    rel="stylesheet"
+    href="operator-login.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="toast.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+</head>
+
+
+<body>
+
+  <div
+    id="toastContainer"
+    class="toast-container"
+  ></div>
+
+
+  <main class="operator-page">
+
+    <section class="operator-card">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-bus"></i>
+        </div>
+
+        <h1>
+          Raja<span>Bus</span>
+        </h1>
+
+        <p>
+          Bus Operator Portal
+        </p>
+      </div>
+
+
+      <div class="tabs">
+
+        <button
+          id="loginTab"
+          class="tab active"
+          type="button"
+        >
+          Login
+        </button>
+
+        <button
+          id="registerTab"
+          class="tab"
+          type="button"
+        >
+          Register
+        </button>
+
+      </div>
+
+
+      <!-- =========================
+           LOGIN
+           ========================= -->
+
+      <form
+        id="loginForm"
+        class="form active-form"
+      >
+
+        <div class="input-group">
+          <label>Email</label>
+
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="operator@example.com"
+            required
+          >
+        </div>
+
+
+        <div class="input-group">
+          <label>Password</label>
+
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="Enter password"
+            required
+          >
+        </div>
+
+
+        <button
+          class="main-btn"
+          type="submit"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          Operator Login
+        </button>
+
+      </form>
+
+
+      <!-- =========================
+           REGISTER
+           ========================= -->
+
+      <form
+        id="registerForm"
+        class="form"
+      >
+
+        <div class="two-column">
+
+          <div class="input-group">
+            <label>Travels / Company Name</label>
+
+            <input
+              id="companyName"
+              type="text"
+              placeholder="Raja Travels"
+              required
+            >
+          </div>
+
+
+          <div class="input-group">
+            <label>Owner Name</label>
+
+            <input
+              id="ownerName"
+              type="text"
+              placeholder="Owner name"
+              required
+            >
+          </div>
+
+        </div>
+
+
+        <div class="two-column">
+
+          <div class="input-group">
+            <label>Email</label>
+
+            <input
+              id="registerEmail"
+              type="email"
+              placeholder="operator@example.com"
+              required
+            >
+          </div>
+
+
+          <div class="input-group">
+            <label>Phone</label>
+
+            <input
+              id="registerPhone"
+              type="text"
+              placeholder="0771234567"
+              required
+            >
+          </div>
+
+        </div>
+
+
+        <div class="input-group">
+          <label>Office / Depot Address</label>
+
+          <input
+            id="registerAddress"
+            type="text"
+            placeholder="Anuradhapura"
+          >
+        </div>
+
+
+        <div class="input-group">
+          <label>Password</label>
+
+          <input
+            id="registerPassword"
+            type="password"
+            placeholder="Minimum 6 characters"
+            minlength="6"
+            required
+          >
+        </div>
+
+
+        <button
+          class="main-btn"
+          type="submit"
+        >
+          <i class="fa-solid fa-user-plus"></i>
+          Create Operator Account
+        </button>
+
+      </form>
+
+
+      <a
+        href="home.html"
+        class="back-home"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to RajaBus
+      </a>
+
+    </section>
+
+  </main>
+
+
+  <script src="toast.js"></script>
+  <script src="operator-login.js"></script>
+
+</body>
+
+</html>

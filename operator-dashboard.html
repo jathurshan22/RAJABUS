@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Operator Dashboard | RajaBus</title>
+
+  <link
+    rel="stylesheet"
+    href="operator-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="toast.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+</head>
+
+
+<body>
+
+  <div
+    id="toastContainer"
+    class="toast-container"
+  ></div>
+
+
+  <div class="dashboard-layout">
+
+
+    <!-- =========================================
+         SIDEBAR
+         ========================================= -->
+
+    <aside class="sidebar">
+
+      <div class="logo">
+        Raja<span>Bus</span>
+      </div>
+
+      <p class="portal-name">
+        Operator Portal
+      </p>
+
+
+      <nav class="sidebar-menu">
+
+        <a
+          href="operator-dashboard.html"
+          class="menu-item active"
+        >
+          <i class="fa-solid fa-chart-line"></i>
+          Dashboard
+        </a>
+
+
+        <a
+          href="operator-buses.html"
+          class="menu-item"
+        >
+          <i class="fa-solid fa-bus"></i>
+          My Buses
+        </a>
+
+
+        <a
+          href="operator-trips.html"
+          class="menu-item"
+        >
+          <i class="fa-solid fa-route"></i>
+          Trips
+        </a>
+
+
+        <a
+          href="operator-bookings.html"
+          class="menu-item"
+        >
+          <i class="fa-solid fa-ticket"></i>
+          Bookings
+        </a>
+
+
+        <a
+          href="operator-profile.html"
+          class="menu-item"
+        >
+          <i class="fa-solid fa-user"></i>
+          Profile
+        </a>
+
+      </nav>
+
+
+      <button
+        id="logoutBtn"
+        class="logout-btn"
+        type="button"
+      >
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+      </button>
+
+    </aside>
+
+
+    <!-- =========================================
+         MAIN
+         ========================================= -->
+
+    <main class="main-content">
+
+
+      <!-- HEADER -->
+
+      <header class="top-header">
+
+        <div>
+          <p class="welcome-text">
+            Welcome back
+          </p>
+
+          <h1 id="operatorCompany">
+            Bus Operator
+          </h1>
+        </div>
+
+
+        <div class="operator-profile">
+
+          <div class="avatar">
+            <i class="fa-solid fa-user"></i>
+          </div>
+
+          <div>
+            <strong id="operatorName">
+              Operator
+            </strong>
+
+            <span id="operatorEmail">
+              Loading...
+            </span>
+          </div>
+
+        </div>
+
+      </header>
+
+
+      <!-- =========================================
+           DASHBOARD CARDS
+           ========================================= -->
+
+      <section class="stats-grid">
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon orange">
+            <i class="fa-solid fa-bus"></i>
+          </div>
+
+          <div>
+            <span>Total Buses</span>
+
+            <h2 id="totalBuses">
+              0
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon blue">
+            <i class="fa-solid fa-route"></i>
+          </div>
+
+          <div>
+            <span>Today's Trips</span>
+
+            <h2 id="todayTrips">
+              0
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon purple">
+            <i class="fa-solid fa-ticket"></i>
+          </div>
+
+          <div>
+            <span>Total Bookings</span>
+
+            <h2 id="totalBookings">
+              0
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+          <div class="stat-icon green">
+            <i class="fa-solid fa-users"></i>
+          </div>
+
+          <div>
+            <span>Confirmed Passengers</span>
+
+            <h2 id="confirmedPassengers">
+              0
+            </h2>
+          </div>
+
+        </div>
+
+
+        <div class="stat-card revenue-card">
+
+          <div class="stat-icon money">
+            <i class="fa-solid fa-money-bill-wave"></i>
+          </div>
+
+          <div>
+            <span>Total Revenue</span>
+
+            <h2 id="totalRevenue">
+              Rs. 0
+            </h2>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           QUICK ACTIONS
+           ========================================= -->
+
+      <section class="dashboard-section">
+
+        <div class="section-header">
+
+          <div>
+            <h2>Quick Actions</h2>
+
+            <p>
+              Manage your buses and passenger bookings.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="quick-grid">
+
+
+          <a
+            href="operator-buses.html"
+            class="quick-card"
+          >
+
+            <div class="quick-icon">
+              <i class="fa-solid fa-bus"></i>
+            </div>
+
+            <h3>Add / Manage Buses</h3>
+
+            <p>
+              Register and manage buses belonging to your travels company.
+            </p>
+
+            <span>
+              Manage Buses
+              <i class="fa-solid fa-arrow-right"></i>
+            </span>
+
+          </a>
+
+
+          <a
+            href="operator-trips.html"
+            class="quick-card"
+          >
+
+            <div class="quick-icon">
+              <i class="fa-solid fa-calendar-days"></i>
+            </div>
+
+            <h3>Create Trips</h3>
+
+            <p>
+              Create journey schedules, routes, fares and departure times.
+            </p>
+
+            <span>
+              Manage Trips
+              <i class="fa-solid fa-arrow-right"></i>
+            </span>
+
+          </a>
+
+
+          <a
+            href="operator-bookings.html"
+            class="quick-card"
+          >
+
+            <div class="quick-icon">
+              <i class="fa-solid fa-ticket"></i>
+            </div>
+
+            <h3>View Bookings</h3>
+
+            <p>
+              View passengers, seats and payment status for your trips.
+            </p>
+
+            <span>
+              View Bookings
+              <i class="fa-solid fa-arrow-right"></i>
+            </span>
+
+          </a>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================================
+           RECENT BOOKINGS
+           ========================================= -->
+
+      <section class="dashboard-section">
+
+        <div class="section-header">
+
+          <div>
+            <h2>Recent Bookings</h2>
+
+            <p>
+              Latest passenger reservations will appear here.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="table-container">
+
+          <table>
+
+            <thead>
+
+              <tr>
+                <th>Ticket ID</th>
+                <th>Passenger</th>
+                <th>Bus</th>
+                <th>Seat</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+
+            </thead>
+
+
+            <tbody id="recentBookings">
+
+              <tr>
+
+                <td
+                  colspan="6"
+                  class="empty-row"
+                >
+                  No bookings available yet.
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+
+    </main>
+
+  </div>
+
+
+  <script src="toast.js"></script>
+
+  <script src="operator-dashboard.js"></script>
+
+</body>
+
+</html>

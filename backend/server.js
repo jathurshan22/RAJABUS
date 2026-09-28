@@ -51,6 +51,18 @@ const paymentRoutes =
 
 const path = require("path");  
 
+const operatorRoutes =
+  require("./routes/operatorRoutes");
+
+const operatorBusRoutes =
+  require("./routes/operatorBusRoutes");
+
+const operatorTripRoutes =
+  require("./routes/operatorTripRoutes");
+
+const tripRoutes =
+  require("./routes/tripRoutes");
+
 
 // ======================================================
 // HOLD CLEANUP
@@ -133,7 +145,25 @@ app.use(
   paymentRoutes
 );
 
+app.use(
+  "/api/operators",
+  operatorRoutes
+);
 
+app.use(
+  "/api/operator-buses",
+  operatorBusRoutes
+);
+
+app.use(
+  "/api/operator-trips",
+  operatorTripRoutes
+);
+
+app.use(
+  "/api/trips",
+  tripRoutes
+);
 // ======================================================
 // ROOT TEST
 // ======================================================

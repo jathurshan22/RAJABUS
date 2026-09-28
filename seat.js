@@ -1,19 +1,40 @@
 const API_BASE = "http://localhost:5000/api";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const seatModal = document.getElementById("seatModal");
-  const closeSeat = document.getElementById("closeSeat");
-  const busLayout = document.getElementById("busLayout");
-  const selectedSeatsText = document.getElementById("selectedSeats");
-  const totalFareText = document.getElementById("totalFare");
-  const proceedBtn = document.getElementById("proceedBtn");
 
-  if (!seatModal || !busLayout) return;
+document.addEventListener("DOMContentLoaded", () => {
+
+  const seatModal =
+    document.getElementById("seatModal");
+
+  const closeSeat =
+    document.getElementById("closeSeat");
+
+  const busLayout =
+    document.getElementById("busLayout");
+
+  const selectedSeatsText =
+    document.getElementById("selectedSeats");
+
+  const totalFareText =
+    document.getElementById("totalFare");
+
+  const proceedBtn =
+    document.getElementById("proceedBtn");
+
+
+  if (!seatModal || !busLayout) {
+    return;
+  }
+
 
   let selectedSeats = [];
+
   let currentBus = null;
+
   let currentDate = null;
+
   let fare = 0;
+
 
   // =====================================================
   // REAL-TIME VARIABLES
@@ -31,16 +52,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
 
   function updateSummary() {
+
     if (selectedSeatsText) {
+
       selectedSeatsText.textContent =
         selectedSeats.length > 0
           ? `[ ${selectedSeats.join(", ")} ]`
           : "[ 00 ]";
     }
 
+
     if (totalFareText) {
+
       totalFareText.textContent =
-        selectedSeats.length * fare;
+        selectedSeats.length *
+        fare;
     }
   }
 
@@ -50,7 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
 
   function closeRealtimeConnection() {
+
     if (realtimeStream) {
+
       realtimeStream.close();
 
       realtimeStream = null;
@@ -66,12 +94,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // REMOVE SEAT FROM CURRENT SELECTION
   // =====================================================
 
-  function removeFromSelection(seatNumber) {
+  function removeFromSelection(
+    seatNumber
+  ) {
+
     if (
       selectedSeats.includes(
         String(seatNumber)
       )
     ) {
+
       selectedSeats =
         selectedSeats.filter(
           (seat) =>
@@ -79,10 +111,12 @@ document.addEventListener("DOMContentLoaded", () => {
             String(seatNumber)
         );
 
+
       updateSummary();
 
       return true;
     }
+
 
     return false;
   }
@@ -96,8 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // released → AVAILABLE
   // =====================================================
 
-  function applyRealtimeUpdate(update) {
-    if (!currentBus || !currentDate) {
+  function applyRealtimeUpdate(
+    update
+  ) {
+
+    if (
+      !currentBus ||
+      !currentDate
+    ) {
       return;
     }
 
@@ -111,17 +151,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // Same date only
+    // Same journey date only
     if (
-      String(update.journeyDate) !==
+      String(
+        update.journeyDate
+      ) !==
       String(currentDate)
     ) {
       return;
     }
 
 
-    // Seat map loading-na event queue pannuvom
+    // If seat map still loading,
+    // save event temporarily
     if (!seatMapReady) {
+
       queuedRealtimeUpdates.push(
         update
       );
@@ -131,159 +175,197 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     const seats =
-      Array.isArray(update.seats)
+      Array.isArray(
+        update.seats
+      )
         ? update.seats
         : [];
 
 
-    seats.forEach((seatNo) => {
-      const seatNumber =
-        String(seatNo);
+    seats.forEach(
+      (seatNo) => {
+
+        const seatNumber =
+          String(seatNo);
 
 
-      const seatElement =
-        busLayout.querySelector(
-          `[data-seat="${seatNumber}"]`
-        );
-
-
-      if (!seatElement) {
-        return;
-      }
-
-
-      // Counter seats cannot change
-      if (
-        seatElement.classList.contains(
-          "counter"
-        )
-      ) {
-        return;
-      }
-
-
-      // =================================================
-      // HELD
-      // Passenger details submitted
-      // ORANGE
-      // =================================================
-
-      if (update.action === "held") {
-        const wasSelected =
-          removeFromSelection(
-            seatNumber
+        const seatElement =
+          busLayout.querySelector(
+            `[data-seat="${seatNumber}"]`
           );
 
 
-        // Remove green selected state
-        seatElement.classList.remove(
-          "processing"
-        );
+        if (!seatElement) {
+          return;
+        }
 
 
-        // Remove old booked state if any
-        seatElement.classList.remove(
-          "booked"
-        );
+        // Counter seat cannot change
+        if (
+          seatElement
+            .classList
+            .contains("counter")
+        ) {
+          return;
+        }
 
 
-        // Add held state
-        seatElement.classList.add(
+        // =================================================
+        // HELD
+        // Passenger details submitted
+        // ORANGE
+        // =================================================
+
+        if (
+          update.action ===
           "held"
-        );
+        ) {
+
+          const wasSelected =
+            removeFromSelection(
+              seatNumber
+            );
 
 
-        if (wasSelected) {
-          if (
-            typeof showToast ===
-            "function"
-          ) {
-            showToast(
-              `Seat ${seatNumber} is temporarily held by another passenger.`,
-              "error"
+          // Remove green selected
+          seatElement
+            .classList
+            .remove(
+              "processing"
             );
-          } else {
-            alert(
-              `Seat ${seatNumber} is temporarily held by another passenger.`
+
+
+          // Remove booked if any
+          seatElement
+            .classList
+            .remove(
+              "booked"
             );
+
+
+          // Orange held
+          seatElement
+            .classList
+            .add(
+              "held"
+            );
+
+
+          if (wasSelected) {
+
+            if (
+              typeof showToast ===
+              "function"
+            ) {
+
+              showToast(
+                `Seat ${seatNumber} is temporarily held by another passenger.`,
+                "error"
+              );
+
+            } else {
+
+              alert(
+                `Seat ${seatNumber} is temporarily held by another passenger.`
+              );
+            }
           }
         }
-      }
 
 
-      // =================================================
-      // BOOKED
-      // Payment successful
-      // RED
-      // =================================================
+        // =================================================
+        // BOOKED
+        // Payment successful
+        // RED
+        // =================================================
 
-      if (
-        update.action ===
-        "booked"
-      ) {
-        const wasSelected =
-          removeFromSelection(
-            seatNumber
-          );
-
-
-        // Remove temporary states
-        seatElement.classList.remove(
-          "processing"
-        );
-
-        seatElement.classList.remove(
-          "held"
-        );
-
-
-        // Final booked
-        seatElement.classList.add(
+        if (
+          update.action ===
           "booked"
-        );
+        ) {
+
+          const wasSelected =
+            removeFromSelection(
+              seatNumber
+            );
 
 
-        if (wasSelected) {
-          if (
-            typeof showToast ===
-            "function"
-          ) {
-            showToast(
-              `Seat ${seatNumber} has been booked by another passenger.`,
-              "error"
+          seatElement
+            .classList
+            .remove(
+              "processing"
             );
-          } else {
-            alert(
-              `Seat ${seatNumber} has been booked by another passenger.`
+
+
+          seatElement
+            .classList
+            .remove(
+              "held"
             );
+
+
+          seatElement
+            .classList
+            .add(
+              "booked"
+            );
+
+
+          if (wasSelected) {
+
+            if (
+              typeof showToast ===
+              "function"
+            ) {
+
+              showToast(
+                `Seat ${seatNumber} has been booked by another passenger.`,
+                "error"
+              );
+
+            } else {
+
+              alert(
+                `Seat ${seatNumber} has been booked by another passenger.`
+              );
+            }
           }
         }
+
+
+        // =================================================
+        // RELEASED
+        // Cancel / expiry
+        // AVAILABLE
+        // =================================================
+
+        if (
+          update.action ===
+          "released"
+        ) {
+
+          seatElement
+            .classList
+            .remove(
+              "held"
+            );
+
+
+          seatElement
+            .classList
+            .remove(
+              "booked"
+            );
+
+
+          seatElement
+            .classList
+            .remove(
+              "processing"
+            );
+        }
       }
-
-
-      // =================================================
-      // RELEASED
-      // Cancel / expiry
-      // AVAILABLE AGAIN
-      // =================================================
-
-      if (
-        update.action ===
-        "released"
-      ) {
-        seatElement.classList.remove(
-          "held"
-        );
-
-        seatElement.classList.remove(
-          "booked"
-        );
-
-        seatElement.classList.remove(
-          "processing"
-        );
-      }
-    });
+    );
 
 
     updateSummary();
@@ -298,6 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
     busId,
     journeyDate
   ) {
+
     closeRealtimeConnection();
 
 
@@ -330,7 +413,9 @@ document.addEventListener("DOMContentLoaded", () => {
     realtimeStream.addEventListener(
       "connected",
       (event) => {
+
         try {
+
           const data =
             JSON.parse(
               event.data
@@ -343,6 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
           );
 
         } catch (error) {
+
           console.log(
             "Real-time connected"
           );
@@ -358,7 +444,9 @@ document.addEventListener("DOMContentLoaded", () => {
     realtimeStream.addEventListener(
       "seat-update",
       (event) => {
+
         try {
+
           const update =
             JSON.parse(
               event.data
@@ -376,6 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
           );
 
         } catch (error) {
+
           console.error(
             "Failed to parse real-time update:",
             error
@@ -391,6 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     realtimeStream.onerror =
       (error) => {
+
         console.warn(
           "Real-time connection interrupted. Browser will reconnect automatically.",
           error
@@ -402,9 +492,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   // RENDER SEATS
   //
-  // counterSeats → fixed counter
+  // counterSeats → ORANGE
   // heldSeats    → ORANGE
   // bookedSeats  → RED
+  // selected     → GREEN
   // =====================================================
 
   function renderSeats(
@@ -413,9 +504,13 @@ document.addEventListener("DOMContentLoaded", () => {
     heldSeats,
     bookedSeats
   ) {
-    busLayout.innerHTML = "";
+
+    busLayout.innerHTML =
+      "";
+
 
     selectedSeats = [];
+
 
     updateSummary();
 
@@ -435,159 +530,185 @@ document.addEventListener("DOMContentLoaded", () => {
         .map(String);
 
 
-    pattern.forEach((no) => {
-      const seat =
-        document.createElement(
-          "div"
+    pattern.forEach(
+      (no) => {
+
+        const seat =
+          document.createElement(
+            "div"
+          );
+
+
+        // ---------------------------------------------
+        // EMPTY / AISLE
+        // ---------------------------------------------
+
+        if (no === "x") {
+
+          seat.className =
+            "seat empty";
+
+
+          busLayout.appendChild(
+            seat
+          );
+
+
+          return;
+        }
+
+
+        const seatNo =
+          String(no);
+
+
+        seat.className =
+          "seat";
+
+
+        // Used for real-time lookup
+        seat.dataset.seat =
+          seatNo;
+
+
+        seat.innerHTML =
+          `${seatNo}<span class="handle"></span>`;
+
+
+        // ---------------------------------------------
+        // COUNTER SEAT
+        // ---------------------------------------------
+
+        if (
+          counterList.includes(
+            seatNo
+          )
+        ) {
+
+          seat
+            .classList
+            .add(
+              "counter"
+            );
+        }
+
+
+        // ---------------------------------------------
+        // BOOKED SEAT
+        // Payment successful
+        // RED
+        // ---------------------------------------------
+
+        if (
+          bookedList.includes(
+            seatNo
+          )
+        ) {
+
+          seat
+            .classList
+            .add(
+              "booked"
+            );
+        }
+
+
+        // ---------------------------------------------
+        // HELD SEAT
+        // Payment pending
+        // ORANGE
+        // ---------------------------------------------
+
+        else if (
+          heldList.includes(
+            seatNo
+          ) &&
+          !counterList.includes(
+            seatNo
+          )
+        ) {
+
+          seat
+            .classList
+            .add(
+              "held"
+            );
+        }
+
+
+        // ---------------------------------------------
+        // SEAT CLICK
+        // ---------------------------------------------
+
+        seat.addEventListener(
+          "click",
+          () => {
+
+            // Cannot select:
+            // booked / held / counter
+            if (
+              seat
+                .classList
+                .contains(
+                  "booked"
+                ) ||
+
+              seat
+                .classList
+                .contains(
+                  "held"
+                ) ||
+
+              seat
+                .classList
+                .contains(
+                  "counter"
+                )
+            ) {
+
+              return;
+            }
+
+
+            // Green selected state
+            seat
+              .classList
+              .toggle(
+                "processing"
+              );
+
+
+            if (
+              selectedSeats.includes(
+                seatNo
+              )
+            ) {
+
+              selectedSeats =
+                selectedSeats.filter(
+                  (selectedSeat) =>
+                    selectedSeat !==
+                    seatNo
+                );
+
+            } else {
+
+              selectedSeats.push(
+                seatNo
+              );
+            }
+
+
+            updateSummary();
+          }
         );
 
-
-      // -------------------------------------------------
-      // EMPTY / AISLE
-      // -------------------------------------------------
-
-      if (no === "x") {
-        seat.className =
-          "seat empty";
 
         busLayout.appendChild(
           seat
         );
-
-        return;
       }
-
-
-      const seatNo =
-        String(no);
-
-
-      seat.className =
-        "seat";
-
-
-      // Important for real-time lookup
-      seat.dataset.seat =
-        seatNo;
-
-
-      seat.innerHTML =
-        `${seatNo}<span class="handle"></span>`;
-
-
-      // -------------------------------------------------
-      // COUNTER SEAT
-      // -------------------------------------------------
-
-      if (
-        counterList.includes(
-          seatNo
-        )
-      ) {
-        seat.classList.add(
-          "counter"
-        );
-      }
-
-
-      // -------------------------------------------------
-      // BOOKED SEAT
-      // Payment complete
-      // RED
-      // -------------------------------------------------
-
-      if (
-        bookedList.includes(
-          seatNo
-        )
-      ) {
-        seat.classList.add(
-          "booked"
-        );
-      }
-
-
-      // -------------------------------------------------
-      // HELD SEAT
-      // Payment pending
-      // ORANGE
-      //
-      // Only if not already booked/counter
-      // -------------------------------------------------
-
-      else if (
-        heldList.includes(
-          seatNo
-        ) &&
-        !counterList.includes(
-          seatNo
-        )
-      ) {
-        seat.classList.add(
-          "held"
-        );
-      }
-
-
-      // -------------------------------------------------
-      // CLICK
-      // -------------------------------------------------
-
-      seat.addEventListener(
-        "click",
-        () => {
-
-          // Cannot select:
-          // booked / held / counter
-          if (
-            seat.classList.contains(
-              "booked"
-            ) ||
-            seat.classList.contains(
-              "held"
-            ) ||
-            seat.classList.contains(
-              "counter"
-            )
-          ) {
-            return;
-          }
-
-
-          // Green selected state
-          seat.classList.toggle(
-            "processing"
-          );
-
-
-          if (
-            selectedSeats.includes(
-              seatNo
-            )
-          ) {
-            selectedSeats =
-              selectedSeats.filter(
-                (selectedSeat) =>
-                  selectedSeat !==
-                  seatNo
-              );
-
-          } else {
-            selectedSeats.push(
-              seatNo
-            );
-          }
-
-
-          updateSummary();
-        }
-      );
-
-
-      busLayout.appendChild(
-        seat
-      );
-    });
+    );
 
 
     // Seat map ready
@@ -595,7 +716,8 @@ document.addEventListener("DOMContentLoaded", () => {
       true;
 
 
-    // Apply SSE events received while loading
+    // Apply SSE events that arrived
+    // while map was loading
     const pendingUpdates = [
       ...queuedRealtimeUpdates,
     ];
@@ -607,6 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     pendingUpdates.forEach(
       (update) => {
+
         applyRealtimeUpdate(
           update
         );
@@ -617,6 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // =====================================================
   // OPEN SEAT MODAL
+  // Called from result.js
   // =====================================================
 
   window.openSeatModal =
@@ -624,22 +748,46 @@ document.addEventListener("DOMContentLoaded", () => {
       bus,
       journeyDate
     ) {
+
       currentBus =
         bus;
+
 
       currentDate =
         journeyDate;
 
+
       fare =
-        Number(bus.fare) ||
-        0;
+        Number(
+          bus.fare
+        ) || 0;
 
 
       seatMapReady =
         false;
 
+
       queuedRealtimeUpdates =
         [];
+
+
+      selectedSeats =
+        [];
+
+
+      updateSummary();
+
+
+      console.log(
+        "Selected Trip / Bus:",
+        currentBus
+      );
+
+
+      console.log(
+        "Trip ID:",
+        currentBus.tripId
+      );
 
 
       const modalBoarding =
@@ -655,12 +803,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
       if (modalBoarding) {
+
         modalBoarding.textContent =
           bus.from;
       }
 
 
       if (modalDropping) {
+
         modalDropping.textContent =
           bus.to;
       }
@@ -670,26 +820,44 @@ document.addEventListener("DOMContentLoaded", () => {
         "<p>Loading seats...</p>";
 
 
-      seatModal.classList.add(
-        "show"
-      );
+      seatModal
+        .classList
+        .add(
+          "show"
+        );
 
 
-      // -------------------------------------------------
+      // ---------------------------------------------
       // DATE REQUIRED
-      // -------------------------------------------------
+      // ---------------------------------------------
 
       if (!journeyDate) {
+
         busLayout.innerHTML =
           "<p>Please go back and pick a travel date first.</p>";
+
 
         return;
       }
 
 
-      // -------------------------------------------------
+      // ---------------------------------------------
+      // BUS ID REQUIRED
+      // ---------------------------------------------
+
+      if (!bus.id) {
+
+        busLayout.innerHTML =
+          "<p>Bus information is missing.</p>";
+
+
+        return;
+      }
+
+
+      // ---------------------------------------------
       // START REAL-TIME
-      // -------------------------------------------------
+      // ---------------------------------------------
 
       connectRealtimeUpdates(
         bus.id,
@@ -697,11 +865,12 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
 
-      // -------------------------------------------------
+      // ---------------------------------------------
       // LOAD CURRENT SEAT MAP
-      // -------------------------------------------------
+      // ---------------------------------------------
 
       try {
+
         const res =
           await fetch(
             `${API_BASE}/buses/${bus.id}/seats?date=${encodeURIComponent(
@@ -714,20 +883,26 @@ document.addEventListener("DOMContentLoaded", () => {
           await res.json();
 
 
-        if (!data.success) {
+        if (
+          !res.ok ||
+          !data.success
+        ) {
+
           busLayout.innerHTML =
             `<p>${
               data.message ||
               "Could not load seats."
             }</p>`;
 
+
           return;
         }
 
 
         /*
-          Backend now sends:
+          Backend sends:
 
+          pattern
           counterSeats
           heldSeats
           bookedSeats
@@ -740,7 +915,9 @@ document.addEventListener("DOMContentLoaded", () => {
           data.bookedSeats || []
         );
 
+
       } catch (error) {
+
         busLayout.innerHTML =
           "<p>Could not reach the booking server.</p>";
 
@@ -754,15 +931,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =====================================================
-  // CLOSE MODAL
+  // CLOSE SEAT MODAL
   // =====================================================
 
   closeSeat?.addEventListener(
     "click",
     () => {
-      seatModal.classList.remove(
-        "show"
-      );
+
+      seatModal
+        .classList
+        .remove(
+          "show"
+        );
 
 
       seatMapReady =
@@ -773,7 +953,56 @@ document.addEventListener("DOMContentLoaded", () => {
         [];
 
 
+      selectedSeats =
+        [];
+
+
+      updateSummary();
+
+
       closeRealtimeConnection();
+    }
+  );
+
+
+  // =====================================================
+  // OPTIONAL:
+  // CLICK OUTSIDE MODAL TO CLOSE
+  // =====================================================
+
+  seatModal.addEventListener(
+    "click",
+    (event) => {
+
+      if (
+        event.target ===
+        seatModal
+      ) {
+
+        seatModal
+          .classList
+          .remove(
+            "show"
+          );
+
+
+        seatMapReady =
+          false;
+
+
+        queuedRealtimeUpdates =
+          [];
+
+
+        selectedSeats =
+          [];
+
+
+        updateSummary();
+
+
+        closeRealtimeConnection();
+      }
     }
   );
 
@@ -785,36 +1014,60 @@ document.addEventListener("DOMContentLoaded", () => {
   proceedBtn?.addEventListener(
     "click",
     () => {
+
       if (
         !currentBus ||
         selectedSeats.length ===
           0
       ) {
+
         if (
           typeof showToast ===
           "function"
         ) {
+
           showToast(
             "Please select at least one seat.",
             "error"
           );
 
         } else {
+
           alert(
             "Please select at least one seat."
           );
         }
 
+
         return;
       }
 
 
+      // ---------------------------------------------
+      // BUILD PENDING BOOKING
+      // ---------------------------------------------
+
       const pendingBooking = {
+
+        // Scheduled Trip ID
+        tripId:
+          currentBus.tripId ||
+          null,
+
+        // Physical Bus ID
         busId:
           currentBus.id,
 
         busNo:
           currentBus.busNo,
+
+        regNo:
+          currentBus.regNo ||
+          "",
+
+        type:
+          currentBus.type ||
+          "",
 
         from:
           currentBus.from,
@@ -835,7 +1088,8 @@ document.addEventListener("DOMContentLoaded", () => {
           ...selectedSeats,
         ],
 
-        fare,
+        fare:
+          fare,
 
         totalFare:
           selectedSeats.length *
@@ -849,10 +1103,29 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
 
+      console.log(
+        "Pending Booking:",
+        pendingBooking
+      );
+
+
+      // ---------------------------------------------
+      // SAVE BOOKING
+      // ---------------------------------------------
+
       localStorage.setItem(
         "pendingBooking",
         JSON.stringify(
           pendingBooking
+        )
+      );
+
+
+      // Also keep selected trip
+      localStorage.setItem(
+        "selectedTrip",
+        JSON.stringify(
+          currentBus
         )
       );
 
@@ -868,13 +1141,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // =====================================================
-  // PAGE CLOSE
+  // PAGE CLOSE / REFRESH
   // =====================================================
 
   window.addEventListener(
     "beforeunload",
     () => {
+
       closeRealtimeConnection();
     }
   );
+
 });

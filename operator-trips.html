@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Trips | RajaBus</title>
+
+  <link
+    rel="stylesheet"
+    href="operator-trips.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="toast.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+</head>
+
+
+<body>
+
+<div
+  id="toastContainer"
+  class="toast-container"
+></div>
+
+
+<div class="layout">
+
+
+  <aside class="sidebar">
+
+    <div class="logo">
+      Raja<span>Bus</span>
+    </div>
+
+    <p class="portal">
+      Operator Portal
+    </p>
+
+
+    <nav>
+
+      <a href="operator-dashboard.html">
+
+        <i class="fa-solid fa-chart-line"></i>
+
+        Dashboard
+
+      </a>
+
+
+      <a href="operator-buses.html">
+
+        <i class="fa-solid fa-bus"></i>
+
+        My Buses
+
+      </a>
+
+
+      <a
+        href="operator-trips.html"
+        class="active"
+      >
+
+        <i class="fa-solid fa-route"></i>
+
+        Trips
+
+      </a>
+
+
+      <a href="operator-bookings.html">
+
+        <i class="fa-solid fa-ticket"></i>
+
+        Bookings
+
+      </a>
+
+
+      <a href="operator-profile.html">
+
+        <i class="fa-solid fa-user"></i>
+
+        Profile
+
+      </a>
+
+    </nav>
+
+
+    <button
+      id="logoutBtn"
+      class="logout-btn"
+    >
+
+      <i class="fa-solid fa-right-from-bracket"></i>
+
+      Logout
+
+    </button>
+
+  </aside>
+
+
+
+  <main class="main">
+
+
+    <header class="page-header">
+
+      <div>
+
+        <p>
+          Schedule Management
+        </p>
+
+        <h1>
+          Trips
+        </h1>
+
+      </div>
+
+
+      <button
+        id="openTripBtn"
+        class="primary-btn"
+      >
+
+        <i class="fa-solid fa-plus"></i>
+
+        Create Trip
+
+      </button>
+
+    </header>
+
+
+
+    <section class="summary-grid">
+
+
+      <div class="summary-card">
+
+        <i class="fa-solid fa-route"></i>
+
+        <div>
+
+          <span>
+            Total Trips
+          </span>
+
+          <h2 id="totalTrips">
+            0
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="summary-card">
+
+        <i class="fa-solid fa-circle-check"></i>
+
+        <div>
+
+          <span>
+            Active Trips
+          </span>
+
+          <h2 id="activeTrips">
+            0
+          </h2>
+
+        </div>
+
+      </div>
+
+
+    </section>
+
+
+
+    <section class="content-card">
+
+      <div class="section-title">
+
+        <h2>
+          Scheduled Trips
+        </h2>
+
+        <p>
+          Manage journey schedules for your buses.
+        </p>
+
+      </div>
+
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+          <tr>
+
+            <th>Date</th>
+            <th>Bus</th>
+            <th>Route</th>
+            <th>Departure</th>
+            <th>Arrival</th>
+            <th>Fare</th>
+            <th>Status</th>
+            <th>Actions</th>
+
+          </tr>
+
+          </thead>
+
+
+          <tbody id="tripTableBody">
+
+          <tr>
+
+            <td
+              colspan="8"
+              class="empty-row"
+            >
+              Loading trips...
+            </td>
+
+          </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+
+<!-- CREATE / EDIT MODAL -->
+
+<div
+  id="tripModal"
+  class="modal"
+>
+
+  <div class="modal-card">
+
+
+    <div class="modal-header">
+
+      <div>
+
+        <p>
+          Schedule
+        </p>
+
+        <h2 id="modalTitle">
+          Create Trip
+        </h2>
+
+      </div>
+
+
+      <button
+        id="closeModalBtn"
+        class="close-btn"
+      >
+
+        <i class="fa-solid fa-xmark"></i>
+
+      </button>
+
+    </div>
+
+
+
+    <form id="tripForm">
+
+
+      <input
+        id="editTripId"
+        type="hidden"
+      >
+
+
+      <div class="form-grid">
+
+
+        <div class="input-group">
+
+          <label>
+            Select Bus
+          </label>
+
+          <select
+            id="busId"
+            required
+          >
+
+            <option value="">
+              Select a bus
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Journey Date
+          </label>
+
+          <input
+            id="journeyDate"
+            type="date"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            From
+          </label>
+
+          <input
+            id="from"
+            type="text"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            To
+          </label>
+
+          <input
+            id="to"
+            type="text"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Departure
+          </label>
+
+          <input
+            id="departureTime"
+            type="time"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Arrival
+          </label>
+
+          <input
+            id="arrivalTime"
+            type="time"
+            required
+          >
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label>
+            Fare (LKR)
+          </label>
+
+          <input
+            id="fare"
+            type="number"
+            min="0"
+            required
+          >
+
+        </div>
+
+
+        <div
+          id="statusGroup"
+          class="input-group"
+        >
+
+          <label>
+            Status
+          </label>
+
+          <select id="status">
+
+            <option value="Active">
+              Active
+            </option>
+
+            <option value="Cancelled">
+              Cancelled
+            </option>
+
+            <option value="Completed">
+              Completed
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          id="cancelBtn"
+          type="button"
+          class="secondary-btn"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+
+          <i class="fa-solid fa-floppy-disk"></i>
+
+          Save Trip
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<script src="toast.js"></script>
+<script src="operator-trips.js"></script>
+
+</body>
+
+</html>

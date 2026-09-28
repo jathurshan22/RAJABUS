@@ -2,6 +2,13 @@ const mongoose = require("mongoose");
 
 const busSchema = new mongoose.Schema(
   {
+
+    operatorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Operator",
+      default: null,
+      index: true,
+    },
     from: {
       type: String,
       required: true,
