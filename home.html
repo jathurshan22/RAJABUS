@@ -17,6 +17,316 @@
 
   <title>RAJA BUS</title>
   <link rel="stylesheet" href="dark-responsive.css">
+
+  <style>
+
+/* ==================================================
+   RAJABUS HOME RESPONSIVE FIX
+   ================================================== */
+
+
+/* ---------- TABLET ---------- */
+
+@media (max-width: 900px) {
+
+  /* NAVBAR */
+
+  .navbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 14px !important;
+
+    padding: 15px 20px !important;
+  }
+
+
+  .logo {
+    padding-left: 0 !important;
+    margin: 0 !important;
+
+    font-size: 22px !important;
+
+    text-align: center !important;
+  }
+
+
+  /* Keep navigation visible */
+
+  .nav-links {
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    flex-wrap: wrap !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    gap: 18px !important;
+
+    margin: 0 !important;
+
+    width: 100% !important;
+  }
+
+
+  .nav-links a {
+    margin-left: 0 !important;
+
+    font-size: 14px !important;
+  }
+
+
+  /* We don't use hamburger */
+
+  .menu-toggle {
+    display: none !important;
+  }
+
+
+  /* Theme + Profile */
+
+  .nav-right {
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    gap: 12px !important;
+  }
+
+
+  .theme-toggle {
+    position: static !important;
+
+    top: auto !important;
+
+    left: auto !important;
+
+    right: auto !important;
+
+    margin: 0 !important;
+  }
+
+
+  /* ==================================================
+     SEARCH BOX
+     ================================================== */
+
+  .search-box {
+    position: static !important;
+
+    left: auto !important;
+    top: auto !important;
+
+    transform: none !important;
+
+    width: calc(100% - 40px) !important;
+
+    max-width: 700px !important;
+
+    margin: 35px auto !important;
+
+    padding: 25px !important;
+
+    border-radius: 25px !important;
+  }
+
+
+  .search-box h3 {
+    margin-bottom: 20px !important;
+  }
+
+
+  /* 2 column layout */
+
+  .form-container {
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+
+    gap: 15px !important;
+
+    align-items: stretch !important;
+  }
+
+
+  .custom-select,
+  .custom-input {
+    width: 100% !important;
+  }
+
+
+  .csel {
+    width: 100% !important;
+  }
+
+
+  .csel__btn {
+    width: 100% !important;
+  }
+
+
+  .custom-input .js-date {
+    width: 100% !important;
+  }
+
+
+  .search-btn {
+    width: 100% !important;
+
+    height: 48px !important;
+
+    margin: 0 !important;
+
+    border-radius: 18px !important;
+  }
+
+
+  /* CITY IMAGE */
+
+  .city-container {
+    position: relative !important;
+
+    margin-top: 20px !important;
+  }
+
+
+  .city-bg {
+    width: 100% !important;
+
+    height: auto !important;
+
+    display: block !important;
+  }
+}
+
+
+
+/* ==================================================
+   MOBILE
+   ================================================== */
+
+@media (max-width: 600px) {
+
+  .navbar {
+    padding: 12px 15px !important;
+
+    gap: 12px !important;
+  }
+
+
+  .logo {
+    padding-left: 0 !important;
+
+    margin-top: 0 !important;
+
+    margin-left: 0 !important;
+
+    font-size: 20px !important;
+  }
+
+
+  .nav-links {
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    flex-wrap: wrap !important;
+
+    justify-content: center !important;
+
+    gap: 10px 15px !important;
+  }
+
+
+  .nav-links a {
+    margin: 0 !important;
+
+    font-size: 12px !important;
+  }
+
+
+  .nav-right {
+    position: static !important;
+
+    margin: 0 !important;
+  }
+
+
+  .theme-toggle {
+    position: static !important;
+
+    left: auto !important;
+
+    top: auto !important;
+  }
+
+
+  /* SEARCH */
+
+  .search-box {
+    width: calc(100% - 30px) !important;
+
+    max-width: 420px !important;
+
+    margin: 25px auto !important;
+
+    padding: 20px 18px !important;
+  }
+
+
+  .form-container {
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    gap: 14px !important;
+  }
+
+
+  .custom-select,
+  .custom-input,
+  .csel,
+  .csel__btn,
+  .custom-input .js-date,
+  .search-btn {
+
+    width: 100% !important;
+  }
+
+
+  .search-btn {
+    margin-top: 5px !important;
+  }
+
+
+  .city-container {
+    margin-top: 15px !important;
+
+    padding-bottom: 0 !important;
+  }
+
+
+  .city-bg {
+    height: auto !important;
+
+    object-fit: contain !important;
+  }
+
+
+  .bus {
+    width: 70px !important;
+  }
+}
+
+</style>
 </head>
 <body>
   
