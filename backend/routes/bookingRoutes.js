@@ -36,22 +36,38 @@ const HOLD_MINUTES = 15;
 const HOLD_DURATION_MS =
   HOLD_MINUTES * 60 * 1000;
 
+const TEMP_HOLD_DURATION_MS =
+  2 * 60 * 1000;
+
 
 // ======================================================
 // TEST
+//
 // GET /api/bookings/test
 // ======================================================
 
-router.get("/test", (req, res) => {
-  res.json({
-    message: "Booking route working",
-  });
-});
+router.get(
+  "/test",
+  (req, res) => {
+
+    res.json({
+      message:
+        "Booking route working",
+    });
+  }
+);
 
 
 // ======================================================
 // HELPER
 // RELEASE EXPIRED HOLDS FOR REQUESTED SEATS
+//
+// Supports:
+// 1. click-time temporary holds
+//    bookingId = null
+//
+// 2. payment holds
+//    bookingId = Booking ID
 // ======================================================
 
 async function releaseExpiredSeatLocks(
@@ -59,96 +75,240 @@ async function releaseExpiredSeatLocks(
   journeyDate,
   seats
 ) {
-  const now = new Date();
+
+  const now =
+    new Date();
+
 
   const expiredLocks =
     await SeatLock.find({
+
       busId,
+
       journeyDate,
 
       seat: {
-        $in: seats,
+        $in:
+          seats,
       },
 
-      status: "held",
+      status:
+        "held",
 
       expiresAt: {
-        $lte: now,
+        $lte:
+          now,
       },
     });
 
 
-  if (expiredLocks.length === 0) {
+  if (
+    expiredLocks.length ===
+    0
+  ) {
     return;
   }
 
 
+  // ====================================================
+  // FIND ONLY REAL BOOKING IDs
+  //
+  // Click-time locks have bookingId = null
+  // ====================================================
+
   const bookingIds = [
     ...new Set(
-      expiredLocks.map(
-        (lock) =>
-          String(lock.bookingId)
-      )
+
+      expiredLocks
+
+        .filter(
+          (lock) =>
+            lock.bookingId
+        )
+
+        .map(
+          (lock) =>
+            String(
+              lock.bookingId
+            )
+        )
     ),
   ];
 
 
-  // Mark old pending bookings as expired
-  await Booking.updateMany(
-    {
-      _id: {
-        $in: bookingIds,
+  // ====================================================
+  // EXPIRE PENDING BOOKINGS
+  // ====================================================
+
+  if (
+    bookingIds.length >
+    0
+  ) {
+
+    await Booking.updateMany(
+      {
+        _id: {
+          $in:
+            bookingIds,
+        },
+
+        status:
+          "Pending",
       },
 
-      status: "Pending",
+      {
+        $set: {
+          status:
+            "Expired",
+
+          holdExpiresAt:
+            null,
+        },
+      }
+    );
+  }
+
+
+  // ====================================================
+  // DELETE EXPIRED LOCKS
+  // ====================================================
+
+  await SeatLock.deleteMany({
+    _id: {
+      $in:
+        expiredLocks.map(
+          (lock) =>
+            lock._id
+        ),
     },
+  });
 
-    {
-      $set: {
-        status: "Expired",
-      },
+
+  // ====================================================
+  // GROUP RELEASE EVENTS
+  //
+  // selectionId important because own passenger
+  // can identify his own expired temporary hold.
+  // ====================================================
+
+  const releaseGroups =
+    new Map();
+
+
+  expiredLocks.forEach(
+    (lock) => {
+
+      const selectionId =
+        lock.selectionId
+          ? String(
+              lock.selectionId
+            )
+          : "";
+
+      const bookingId =
+        lock.bookingId
+          ? String(
+              lock.bookingId
+            )
+          : "";
+
+      const key =
+        `${selectionId}|${bookingId}`;
+
+
+      if (
+        !releaseGroups.has(
+          key
+        )
+      ) {
+
+        releaseGroups.set(
+          key,
+          {
+            selectionId:
+              selectionId ||
+              null,
+
+            bookingId:
+              bookingId ||
+              null,
+
+            seats: [],
+          }
+        );
+      }
+
+
+      releaseGroups
+        .get(key)
+        .seats
+        .push(
+          String(
+            lock.seat
+          )
+        );
     }
   );
 
 
-  // Delete expired seat holds
-  await SeatLock.deleteMany({
-    _id: {
-      $in: expiredLocks.map(
-        (lock) => lock._id
-      ),
-    },
-  });
+  // ====================================================
+  // REAL-TIME RELEASE
+  // ====================================================
 
+  for (
+    const group
+    of releaseGroups.values()
+  ) {
 
-  // Tell all connected users
-  broadcastSeatUpdate({
-    busId,
-    journeyDate,
+    broadcastSeatUpdate({
 
-    seats:
-      expiredLocks.map(
-        (lock) =>
-          String(lock.seat)
-      ),
+      busId,
 
-    action: "released",
+      journeyDate,
 
-    status: "Expired",
-  });
+      seats:
+        group.seats,
+
+      action:
+        "released",
+
+      selectionId:
+        group.selectionId,
+
+      bookingId:
+        group.bookingId,
+
+      status:
+        "Expired",
+    });
+  }
 }
 
 
 // ======================================================
-// CREATE TEMPORARY BOOKING HOLD
+// CREATE BOOKING
+//
 // POST /api/bookings/create
 //
-// Passenger details submit panna:
-// GREEN selected seat
-//       ↓
-// ORANGE held seat
+// NEW FLOW:
 //
-// Hold = 15 minutes
+// User clicks seat
+//      ↓
+// seatHoldRoutes creates SeatLock immediately
+//
+// bookingId = null
+// selectionId = browser session ID
+// status = held
+//
+// Passenger details submit
+//      ↓
+// This route verifies those locks
+//      ↓
+// Creates Booking
+//      ↓
+// Attaches existing locks to Booking
+//      ↓
+// Extends expiry to 15 minutes
 // ======================================================
 
 router.post(
@@ -156,148 +316,277 @@ router.post(
   protect,
   async (req, res) => {
 
-    let booking = null;
+    let booking =
+      null;
+
 
     try {
+
       const {
         userId,
+
         busId,
+
         journeyDate,
+
         passengerName,
+
         mobileNo,
+
         nicNo,
+
         email,
+
         seats,
+
         boardingPoint,
+
         droppingPoint,
+
         totalFare,
+
+        selectionId,
+
       } = req.body;
 
 
-      // --------------------------------------------------
+      // ==================================================
       // BASIC VALIDATION
-      // --------------------------------------------------
+      // ==================================================
 
       if (
         !userId ||
         !busId ||
-        !journeyDate
+        !journeyDate ||
+        !selectionId
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "userId, busId and journeyDate are required",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "userId, busId, journeyDate and selectionId are required",
+          });
       }
 
+
+      // ==================================================
+      // USER OWNERSHIP
+      // ==================================================
 
       if (
-        String(req.user.id) !==
-        String(userId)
+        String(
+          req.user.id
+        ) !==
+        String(
+          userId
+        )
       ) {
-        return res.status(403).json({
-          success: false,
 
-          message:
-            "You can only create a booking for your own account",
-        });
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You can only create a booking for your own account",
+          });
       }
 
+
+      // ==================================================
+      // SEAT VALIDATION
+      // ==================================================
 
       if (
-        !Array.isArray(seats) ||
-        seats.length === 0
+        !Array.isArray(
+          seats
+        ) ||
+        seats.length ===
+          0
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "At least one seat must be selected",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "At least one seat must be selected",
+          });
       }
 
+
+      // ==================================================
+      // PASSENGER VALIDATION
+      // ==================================================
 
       if (
         !passengerName ||
         !mobileNo ||
         !email
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "Passenger name, mobile number and email are required",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Passenger name, mobile number and email are required",
+          });
       }
 
 
-      // --------------------------------------------------
+      // ==================================================
       // NORMALIZE SEATS
-      // --------------------------------------------------
+      // ==================================================
 
       const normalizedSeats = [
         ...new Set(
-          seats.map(
-            (seat) =>
-              String(seat).trim()
-          )
+
+          seats
+
+            .map(
+              (seat) =>
+                String(
+                  seat
+                ).trim()
+            )
+
+            .filter(
+              Boolean
+            )
         ),
       ];
 
 
-      // --------------------------------------------------
-      // FIND BUS
-      // --------------------------------------------------
+      if (
+        normalizedSeats.length ===
+        0
+      ) {
 
-      const bus =
-        await Bus.findById(busId);
+        return res
+          .status(400)
+          .json({
 
+            success:
+              false,
 
-      if (!bus) {
-        return res.status(404).json({
-          success: false,
-
-          message:
-            "Selected bus was not found",
-        });
+            message:
+              "No valid seats were provided",
+          });
       }
 
 
-      // --------------------------------------------------
+      // ==================================================
+      // NORMALIZE SELECTION ID
+      // ==================================================
+
+      const cleanSelectionId =
+        String(
+          selectionId
+        ).trim();
+
+
+      if (
+        !cleanSelectionId
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Seat selection session is invalid",
+          });
+      }
+
+
+      // ==================================================
+      // FIND BUS
+      // ==================================================
+
+      const bus =
+        await Bus.findById(
+          busId
+        );
+
+
+      if (!bus) {
+
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Selected bus was not found",
+          });
+      }
+
+
+      // ==================================================
       // COUNTER SEAT CHECK
-      // --------------------------------------------------
+      // ==================================================
 
       const counterSeatStrings =
-        COUNTER_SEATS.map(String);
+        (COUNTER_SEATS || [])
+          .map(
+            String
+          );
 
 
       const invalidSeats =
         normalizedSeats.filter(
           (seat) =>
-            counterSeatStrings.includes(
-              String(seat)
-            )
+            counterSeatStrings
+              .includes(
+                String(
+                  seat
+                )
+              )
         );
 
 
       if (
-        invalidSeats.length > 0
+        invalidSeats.length >
+        0
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            `Seats ${invalidSeats.join(
-              ", "
-            )} are counter seats and cannot be booked online`,
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              `Seats ${invalidSeats.join(
+                ", "
+              )} are counter seats and cannot be booked online`,
+          });
       }
 
 
-      // --------------------------------------------------
-      // REMOVE ANY OLD EXPIRED HOLDS
-      // --------------------------------------------------
+      // ==================================================
+      // RELEASE EXPIRED OLD HOLDS
+      // ==================================================
 
       await releaseExpiredSeatLocks(
         bus._id,
@@ -306,20 +595,138 @@ router.post(
       );
 
 
-      // --------------------------------------------------
-      // HOLD EXPIRY
-      // --------------------------------------------------
+      // ==================================================
+      // VERIFY CLICK-TIME TEMPORARY LOCKS
+      //
+      // Must belong to:
+      // same user
+      // same selectionId
+      // same bus
+      // same date
+      // selected seats
+      // ==================================================
+
+      const temporaryLocks =
+        await SeatLock.find({
+
+          busId:
+            bus._id,
+
+          journeyDate,
+
+          seat: {
+            $in:
+              normalizedSeats,
+          },
+
+          userId:
+            req.user.id,
+
+          selectionId:
+            cleanSelectionId,
+
+          status:
+            "held",
+
+          bookingId:
+            null,
+
+          expiresAt: {
+            $gt:
+              new Date(),
+          },
+        });
+
+
+      // ==================================================
+      // CHECK WHICH SEATS STILL BELONG TO USER
+      // ==================================================
+
+      const lockedSeatSet =
+        new Set(
+
+          temporaryLocks.map(
+            (lock) =>
+              String(
+                lock.seat
+              )
+          )
+        );
+
+
+      const missingSeats =
+        normalizedSeats.filter(
+          (seat) =>
+            !lockedSeatSet.has(
+              String(
+                seat
+              )
+            )
+        );
+
+
+      if (
+        missingSeats.length >
+        0
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            expired:
+              true,
+
+            conflicts:
+              missingSeats,
+
+            message:
+              `Seats ${missingSeats.join(
+                ", "
+              )} are no longer held by you. Please go back and select the seats again.`,
+          });
+      }
+
+
+      // Extra safety
+      if (
+        temporaryLocks.length !==
+        normalizedSeats.length
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            expired:
+              true,
+
+            message:
+              "One or more selected seats are no longer available. Please select the seats again.",
+          });
+      }
+
+
+      // ==================================================
+      // CREATE FULL 15 MINUTE PAYMENT HOLD
+      // ==================================================
 
       const holdExpiresAt =
         new Date(
           Date.now() +
-            HOLD_DURATION_MS
+          HOLD_DURATION_MS
         );
 
 
-      // --------------------------------------------------
+      // ==================================================
       // GENERATE TICKET ID
-      // --------------------------------------------------
+      // ==================================================
 
       const seqNumber =
         await getNextSequence(
@@ -329,19 +736,25 @@ router.post(
 
       const ticketId =
         "RB" +
-        String(seqNumber)
-          .padStart(6, "0");
+        String(
+          seqNumber
+        ).padStart(
+          6,
+          "0"
+        );
 
 
-      // --------------------------------------------------
+      // ==================================================
       // CREATE PENDING BOOKING
-      // --------------------------------------------------
+      // ==================================================
 
       booking =
         await Booking.create({
+
           ticketId,
 
-          userId,
+          userId:
+            req.user.id,
 
           busId:
             bus._id,
@@ -364,18 +777,26 @@ router.post(
           journeyDate,
 
           passengerName:
-            passengerName.trim(),
+            String(
+              passengerName
+            ).trim(),
 
           mobileNo:
-            mobileNo.trim(),
+            String(
+              mobileNo
+            ).trim(),
 
           nicNo:
             nicNo
-              ? nicNo.trim()
+              ? String(
+                  nicNo
+                ).trim()
               : "",
 
           email:
-            email
+            String(
+              email
+            )
               .trim()
               .toLowerCase(),
 
@@ -383,9 +804,8 @@ router.post(
             normalizedSeats,
 
           selectedSeats:
-            normalizedSeats.join(
-              ","
-            ),
+            normalizedSeats
+              .join(","),
 
           boardingPoint:
             boardingPoint ||
@@ -396,8 +816,9 @@ router.post(
             bus.to,
 
           totalFare:
-
-            Number(totalFare),
+            Number(
+              totalFare
+            ),
 
           status:
             "Pending",
@@ -409,132 +830,143 @@ router.post(
         });
 
 
-      // --------------------------------------------------
-      // CREATE SEAT HOLDS
-      // --------------------------------------------------
+      // ==================================================
+      // ATTACH EXISTING TEMP LOCKS TO BOOKING
+      //
+      // IMPORTANT:
+      // No new SeatLock insertion here.
+      // ==================================================
 
-      const lockDocs =
-        normalizedSeats.map(
-          (seat) => ({
+      const lockIds =
+        temporaryLocks.map(
+          (lock) =>
+            lock._id
+        );
+
+
+      const attachResult =
+        await SeatLock.updateMany(
+
+          {
+            _id: {
+              $in:
+                lockIds,
+            },
+
             busId:
               bus._id,
 
             journeyDate,
 
-            seat,
-
-            bookingId:
-              booking._id,
-
             userId:
               req.user.id,
+
+            selectionId:
+              cleanSelectionId,
 
             status:
               "held",
 
-            expiresAt:
-              holdExpiresAt,
-          })
+            bookingId:
+              null,
+
+            expiresAt: {
+              $gt:
+                new Date(),
+            },
+          },
+
+          {
+            $set: {
+
+              bookingId:
+                booking._id,
+
+              expiresAt:
+                holdExpiresAt,
+            },
+          }
         );
 
 
-      try {
-        await SeatLock.collection
-          .insertMany(
-            lockDocs,
-            {
-              ordered: false,
-            }
-          );
+      // ==================================================
+      // ATTACH FAILED
+      //
+      // Example:
+      // hold expired exactly while user submitted form.
+      // ==================================================
 
-      } catch (bulkError) {
+      if (
+        attachResult.modifiedCount !==
+        normalizedSeats.length
+      ) {
 
-        // Remove any locks created for
-        // this booking
-        await SeatLock.deleteMany({
-          bookingId:
-            booking._id,
-        });
+        // Return any successfully attached locks
+        // to temporary selection state.
 
+        await SeatLock.updateMany(
 
-        // Delete pending booking
-        await Booking.findByIdAndDelete(
-          booking._id
+          {
+            bookingId:
+              booking._id,
+
+            status:
+              "held",
+          },
+
+          {
+            $set: {
+
+              bookingId:
+                null,
+
+              expiresAt:
+                new Date(
+                  Date.now() +
+                  TEMP_HOLD_DURATION_MS
+                ),
+            },
+          }
         );
 
 
-        const failedIndexes =
-          new Set(
-            (
-              bulkError.writeErrors ||
-              []
-            ).map(
-              (error) =>
-                error.index
-            )
+        await Booking
+          .findByIdAndDelete(
+            booking._id
           );
 
 
-        let conflicts =
-          normalizedSeats.filter(
-            (_, index) =>
-              failedIndexes.has(
-                index
-              )
-          );
+        booking =
+          null;
 
 
-        // Fallback if driver didn't provide indexes
-        if (
-          conflicts.length === 0
-        ) {
-          const existingLocks =
-            await SeatLock.find({
-              busId:
-                bus._id,
+        return res
+          .status(409)
+          .json({
 
-              journeyDate,
+            success:
+              false,
 
-              seat: {
-                $in:
-                  normalizedSeats,
-              },
-            }).select(
-              "seat"
-            );
+            expired:
+              true,
 
-
-          conflicts =
-            existingLocks.map(
-              (lock) =>
-                String(
-                  lock.seat
-                )
-            );
-        }
-
-
-        return res.status(409).json({
-          success: false,
-
-          message:
-            `Seats ${conflicts.join(
-              ", "
-            )} are currently held or already booked. Please select different seats.`,
-
-          conflicts,
-        });
+            message:
+              "Your temporary seat hold changed while submitting. Please go back and select the seats again.",
+          });
       }
 
 
-      // --------------------------------------------------
-      // REAL-TIME:
-      // PASSENGER DETAILS COMPLETE
+      // ==================================================
+      // REAL-TIME UPDATE
       //
-      // ORANGE
-      // --------------------------------------------------
+      // Other passengers already see ORANGE.
+      //
+      // This event updates:
+      // bookingId + longer expiry information.
+      // ==================================================
 
       broadcastSeatUpdate({
+
         busId:
           bus._id,
 
@@ -546,8 +978,14 @@ router.post(
         action:
           "held",
 
+        selectionId:
+          cleanSelectionId,
+
         bookingId:
           booking._id,
+
+        userId:
+          req.user.id,
 
         status:
           "Pending",
@@ -557,20 +995,28 @@ router.post(
       });
 
 
-      // --------------------------------------------------
+      // ==================================================
       // SUCCESS
-      // --------------------------------------------------
+      // ==================================================
 
       return res
         .status(201)
         .json({
-          success: true,
+
+          success:
+            true,
 
           message:
             `Seats held for ${HOLD_MINUTES} minutes. Complete payment to confirm your booking.`,
 
           booking,
+
+          holdExpiresAt,
+
+          selectionId:
+            cleanSelectionId,
         });
+
 
     } catch (error) {
 
@@ -580,32 +1026,76 @@ router.post(
       );
 
 
-      // Roll back only this booking
-      if (booking?._id) {
+      // ==================================================
+      // SAFE ROLLBACK
+      //
+      // Booking creation succeeded but later step failed:
+      //
+      // bookingId → null
+      // return temporary hold for 2 mins
+      // ==================================================
 
-        await SeatLock.deleteMany({
-          bookingId:
-            booking._id,
-        }).catch(() => {});
+      if (
+        booking?._id
+      ) {
+
+        await SeatLock.updateMany(
+
+          {
+            bookingId:
+              booking._id,
+
+            status:
+              "held",
+          },
+
+          {
+            $set: {
+
+              bookingId:
+                null,
+
+              expiresAt:
+                new Date(
+                  Date.now() +
+                  TEMP_HOLD_DURATION_MS
+                ),
+            },
+          }
+        ).catch(
+          (rollbackError) => {
+
+            console.error(
+              "Seat lock rollback failed:",
+              rollbackError
+            );
+          }
+        );
 
 
         await Booking
           .findByIdAndDelete(
             booking._id
           )
-          .catch(() => {});
+          .catch(
+            () => {}
+          );
       }
 
 
-      return res.status(500).json({
-        success: false,
+      return res
+        .status(500)
+        .json({
 
-        message:
-          "Booking failed",
+          success:
+            false,
 
-        error:
-          error.message,
-      });
+          message:
+            "Booking failed",
+
+          error:
+            error.message,
+        });
     }
   }
 );
@@ -613,6 +1103,7 @@ router.post(
 
 // ======================================================
 // USER BOOKING HISTORY
+//
 // GET /api/bookings/user/:userId
 // ======================================================
 
@@ -622,44 +1113,72 @@ router.get(
   async (req, res) => {
 
     try {
-      if (
-        String(req.user.id) !==
-        String(req.params.userId)
-      ) {
-        return res.status(403).json({
-          success: false,
 
-          message:
-            "You can only view your own bookings",
-        });
+      if (
+        String(
+          req.user.id
+        ) !==
+        String(
+          req.params.userId
+        )
+      ) {
+
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You can only view your own bookings",
+          });
       }
 
 
       const bookings =
         await Booking.find({
+
           userId:
             req.params.userId,
+
         }).sort({
-          createdAt: -1,
+
+          createdAt:
+            -1,
         });
 
 
       return res.json({
-        success: true,
+
+        success:
+          true,
+
         bookings,
       });
 
+
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
+      console.error(
+        "Get bookings error:",
+        error
+      );
 
-        message:
-          "Failed to get bookings",
 
-        error:
-          error.message,
-      });
+      return res
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          message:
+            "Failed to get bookings",
+
+          error:
+            error.message,
+        });
     }
   }
 );
@@ -667,11 +1186,16 @@ router.get(
 
 // ======================================================
 // PAY / CONFIRM BOOKING
+//
 // PUT /api/bookings/pay/:id
 //
-// ORANGE held
-//       ↓ payment success
-// RED booked
+// ORANGE
+//    ↓
+// RED
+//
+// NOTE:
+// PayHere verified notify route is still the proper
+// payment authority in your main payment flow.
 // ======================================================
 
 router.put(
@@ -680,6 +1204,7 @@ router.put(
   async (req, res) => {
 
     try {
+
       const booking =
         await Booking.findById(
           req.params.id
@@ -687,42 +1212,59 @@ router.put(
 
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
 
-          message:
-            "Booking not found",
-        });
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found",
+          });
       }
 
 
-      // --------------------------------------------------
-      // OWNERSHIP CHECK
-      // --------------------------------------------------
+      // ==================================================
+      // OWNER CHECK
+      // ==================================================
 
       if (
-        String(booking.userId) !==
-        String(req.user.id)
+        String(
+          booking.userId
+        ) !==
+        String(
+          req.user.id
+        )
       ) {
-        return res.status(403).json({
-          success: false,
 
-          message:
-            "You can only pay for your own booking",
-        });
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You can only pay for your own booking",
+          });
       }
 
 
-      // --------------------------------------------------
+      // ==================================================
       // ALREADY PAID
-      // --------------------------------------------------
+      // ==================================================
 
       if (
         booking.status ===
         "Paid"
       ) {
+
         return res.json({
-          success: true,
+
+          success:
+            true,
 
           message:
             "Booking is already paid",
@@ -732,46 +1274,55 @@ router.put(
       }
 
 
-      // --------------------------------------------------
+      // ==================================================
       // INVALID STATUS
-      // --------------------------------------------------
+      // ==================================================
 
       if (
         booking.status ===
           "Cancelled" ||
+
         booking.status ===
           "Expired"
       ) {
-        return res.status(400).json({
-          success: false,
 
-          expired:
-            booking.status ===
-            "Expired",
+        return res
+          .status(400)
+          .json({
 
-          message:
-            booking.status ===
-            "Expired"
-              ? "Your seat hold has expired. Please select the seats again."
-              : "This booking has been cancelled.",
-        });
+            success:
+              false,
+
+            expired:
+              booking.status ===
+              "Expired",
+
+            message:
+              booking.status ===
+              "Expired"
+
+                ? "Your seat hold has expired. Please select the seats again."
+
+                : "This booking has been cancelled.",
+          });
       }
 
 
-      // --------------------------------------------------
-      // CHECK 15-MINUTE EXPIRY
-      // --------------------------------------------------
+      // ==================================================
+      // CHECK 15 MINUTE EXPIRY
+      // ==================================================
 
       if (
         !booking.holdExpiresAt ||
+
         new Date(
           booking.holdExpiresAt
         ).getTime() <=
           Date.now()
       ) {
 
-        // Release seat locks
         await SeatLock.deleteMany({
+
           bookingId:
             booking._id,
 
@@ -783,13 +1334,15 @@ router.put(
         booking.status =
           "Expired";
 
+        booking.holdExpiresAt =
+          null;
+
 
         await booking.save();
 
 
-        // Real-time:
-        // Orange → available
         broadcastSeatUpdate({
+
           busId:
             booking.busId,
 
@@ -811,23 +1364,29 @@ router.put(
         });
 
 
-        return res.status(410).json({
-          success: false,
+        return res
+          .status(410)
+          .json({
 
-          expired: true,
+            success:
+              false,
 
-          message:
-            "Your 15-minute seat hold has expired. Please select the seats again.",
-        });
+            expired:
+              true,
+
+            message:
+              "Your 15-minute seat hold has expired. Please select the seats again.",
+          });
       }
 
 
-      // --------------------------------------------------
-      // VERIFY SEAT HOLDS STILL EXIST
-      // --------------------------------------------------
+      // ==================================================
+      // VERIFY HELD SEATS STILL EXIST
+      // ==================================================
 
       const locks =
         await SeatLock.find({
+
           bookingId:
             booking._id,
 
@@ -842,6 +1401,7 @@ router.put(
       ) {
 
         await SeatLock.deleteMany({
+
           bookingId:
             booking._id,
         });
@@ -850,11 +1410,15 @@ router.put(
         booking.status =
           "Expired";
 
+        booking.holdExpiresAt =
+          null;
+
 
         await booking.save();
 
 
         broadcastSeatUpdate({
+
           busId:
             booking.busId,
 
@@ -876,33 +1440,39 @@ router.put(
         });
 
 
-        return res.status(409).json({
-          success: false,
+        return res
+          .status(409)
+          .json({
 
-          expired: true,
+            success:
+              false,
 
-          message:
-            "Your seat hold is no longer valid. Please select the seats again.",
-        });
+            expired:
+              true,
+
+            message:
+              "Your seat hold is no longer valid. Please select the seats again.",
+          });
       }
 
 
-      // --------------------------------------------------
-      // PAYMENT SUCCESS
-      //
-      // SeatLock:
-      // held → booked
-      // expiry removed
-      // --------------------------------------------------
+      // ==================================================
+      // HELD → BOOKED
+      // ==================================================
 
       await SeatLock.updateMany(
+
         {
           bookingId:
             booking._id,
+
+          status:
+            "held",
         },
 
         {
           $set: {
+
             status:
               "booked",
 
@@ -913,10 +1483,9 @@ router.put(
       );
 
 
-      // --------------------------------------------------
-      // BOOKING:
-      // Pending → Paid
-      // --------------------------------------------------
+      // ==================================================
+      // BOOKING → PAID
+      // ==================================================
 
       booking.status =
         "Paid";
@@ -931,12 +1500,14 @@ router.put(
       await booking.save();
 
 
-      // --------------------------------------------------
-      // REAL-TIME:
+      // ==================================================
+      // REAL-TIME
+      //
       // ORANGE → RED
-      // --------------------------------------------------
+      // ==================================================
 
       broadcastSeatUpdate({
+
         busId:
           booking.busId,
 
@@ -959,13 +1530,16 @@ router.put(
 
 
       return res.json({
-        success: true,
+
+        success:
+          true,
 
         message:
           "Payment successful. Your seats are confirmed.",
 
         booking,
       });
+
 
     } catch (error) {
 
@@ -975,15 +1549,19 @@ router.put(
       );
 
 
-      return res.status(500).json({
-        success: false,
+      return res
+        .status(500)
+        .json({
 
-        message:
-          "Payment failed",
+          success:
+            false,
 
-        error:
-          error.message,
-      });
+          message:
+            "Payment failed",
+
+          error:
+            error.message,
+        });
     }
   }
 );
@@ -991,6 +1569,7 @@ router.put(
 
 // ======================================================
 // CANCEL BOOKING
+//
 // PUT /api/bookings/cancel/:id
 // ======================================================
 
@@ -1000,6 +1579,7 @@ router.put(
   async (req, res) => {
 
     try {
+
       const booking =
         await Booking.findById(
           req.params.id
@@ -1007,25 +1587,43 @@ router.put(
 
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
 
-          message:
-            "Booking not found",
-        });
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found",
+          });
       }
 
 
-      if (
-        String(booking.userId) !==
-        String(req.user.id)
-      ) {
-        return res.status(403).json({
-          success: false,
+      // ==================================================
+      // OWNERSHIP
+      // ==================================================
 
-          message:
-            "You are not allowed to cancel this booking",
-        });
+      if (
+        String(
+          booking.userId
+        ) !==
+        String(
+          req.user.id
+        )
+      ) {
+
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You are not allowed to cancel this booking",
+          });
       }
 
 
@@ -1033,12 +1631,17 @@ router.put(
         booking.status ===
         "Cancelled"
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "This booking is already cancelled",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "This booking is already cancelled",
+          });
       }
 
 
@@ -1046,17 +1649,26 @@ router.put(
         booking.status ===
         "Expired"
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "This booking has already expired",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "This booking has already expired",
+          });
       }
 
 
-      // Release seats
+      // ==================================================
+      // RELEASE SEATS
+      // ==================================================
+
       await SeatLock.deleteMany({
+
         bookingId:
           booking._id,
       });
@@ -1072,9 +1684,12 @@ router.put(
       await booking.save();
 
 
-      // Real-time:
-      // Orange/Red → available
+      // ==================================================
+      // REAL-TIME RELEASE
+      // ==================================================
+
       broadcastSeatUpdate({
+
         busId:
           booking.busId,
 
@@ -1097,13 +1712,16 @@ router.put(
 
 
       return res.json({
-        success: true,
+
+        success:
+          true,
 
         message:
           "Booking cancelled",
 
         booking,
       });
+
 
     } catch (error) {
 
@@ -1113,15 +1731,19 @@ router.put(
       );
 
 
-      return res.status(500).json({
-        success: false,
+      return res
+        .status(500)
+        .json({
 
-        message:
-          "Cancellation failed",
+          success:
+            false,
 
-        error:
-          error.message,
-      });
+          message:
+            "Cancellation failed",
+
+          error:
+            error.message,
+        });
     }
   }
 );
@@ -1129,6 +1751,7 @@ router.put(
 
 // ======================================================
 // SINGLE BOOKING
+//
 // GET /api/bookings/:id
 // ======================================================
 
@@ -1138,6 +1761,7 @@ router.get(
   async (req, res) => {
 
     try {
+
       const booking =
         await Booking.findById(
           req.params.id
@@ -1145,44 +1769,72 @@ router.get(
 
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
 
-          message:
-            "Booking not found",
-        });
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found",
+          });
       }
 
 
       if (
-        String(booking.userId) !==
-        String(req.user.id)
+        String(
+          booking.userId
+        ) !==
+        String(
+          req.user.id
+        )
       ) {
-        return res.status(403).json({
-          success: false,
 
-          message:
-            "You can only view your own bookings",
-        });
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You can only view your own bookings",
+          });
       }
 
 
       return res.json({
-        success: true,
+
+        success:
+          true,
+
         booking,
       });
 
+
     } catch (error) {
 
-      return res.status(500).json({
-        success: false,
+      console.error(
+        "Get booking error:",
+        error
+      );
 
-        message:
-          "Failed to get booking",
 
-        error:
-          error.message,
-      });
+      return res
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          message:
+            "Failed to get booking",
+
+          error:
+            error.message,
+        });
     }
   }
 );
@@ -1190,6 +1842,7 @@ router.get(
 
 // ======================================================
 // DOWNLOAD TICKET PDF
+//
 // GET /api/bookings/:id/pdf
 // ======================================================
 
@@ -1199,6 +1852,7 @@ router.get(
   async (req, res) => {
 
     try {
+
       const booking =
         await Booking.findById(
           req.params.id
@@ -1206,25 +1860,39 @@ router.get(
 
 
       if (!booking) {
-        return res.status(404).json({
-          success: false,
 
-          message:
-            "Booking not found",
-        });
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found",
+          });
       }
 
 
       if (
-        String(booking.userId) !==
-        String(req.user.id)
+        String(
+          booking.userId
+        ) !==
+        String(
+          req.user.id
+        )
       ) {
-        return res.status(403).json({
-          success: false,
 
-          message:
-            "You can only download your own ticket",
-        });
+        return res
+          .status(403)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "You can only download your own ticket",
+          });
       }
 
 
@@ -1233,12 +1901,17 @@ router.get(
         booking.status !==
         "Paid"
       ) {
-        return res.status(400).json({
-          success: false,
 
-          message:
-            "Ticket is available only after successful payment",
-        });
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Ticket is available only after successful payment",
+          });
       }
 
 
@@ -1247,19 +1920,32 @@ router.get(
         res
       );
 
+
     } catch (error) {
 
-      if (!res.headersSent) {
+      console.error(
+        "Ticket PDF error:",
+        error
+      );
 
-        return res.status(500).json({
-          success: false,
 
-          message:
-            "Failed to generate ticket PDF",
+      if (
+        !res.headersSent
+      ) {
 
-          error:
-            error.message,
-        });
+        return res
+          .status(500)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Failed to generate ticket PDF",
+
+            error:
+              error.message,
+          });
       }
     }
   }

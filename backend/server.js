@@ -49,7 +49,10 @@ const realtimeRoutes =
 const paymentRoutes =
   require("./routes/paymentRoutes");
 
-const path = require("path");  
+const path = require("path");
+
+const seatHoldRoutes =
+  require("./routes/seatHoldRoutes");
 
 
 // ======================================================
@@ -133,6 +136,10 @@ app.use(
   paymentRoutes
 );
 
+app.use(
+  "/api/seat-holds",
+  seatHoldRoutes
+);
 
 // ======================================================
 // ROOT TEST

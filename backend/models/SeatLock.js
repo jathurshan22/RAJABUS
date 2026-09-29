@@ -1,16 +1,31 @@
 const mongoose = require("mongoose");
 
-// One document = one seat for one bus on one journey date.
+// ======================================================
+// SEAT LOCK
 //
-// Unique index:
-// same bus + same date + same seat
-// rendu users ஒரே நேரத்தில் reserve panna prevent pannum.
+// One document = one seat for one bus + journey date.
+//
+// AVAILABLE
+//    ↓ user clicks
+// HELD
+//    ↓ payment successful
+// BOOKED
+//
+// HELD:
+// temporary online selection
+// UI for other users = ORANGE
+//
+// BOOKED:
+// payment completed
+// UI = RED
+// ======================================================
 
 const seatLockSchema = new mongoose.Schema(
   {
     // --------------------------------------------------
     // BUS
     // --------------------------------------------------
+
     busId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bus",
@@ -18,39 +33,43 @@ const seatLockSchema = new mongoose.Schema(
       index: true,
     },
 
+
     // --------------------------------------------------
     // JOURNEY DATE
-    // Example: "2026-09-30"
+    //
+    // Example:
+    // "2026-09-30"
     // --------------------------------------------------
+
     journeyDate: {
       type: String,
       required: true,
+      trim: true,
       index: true,
     },
 
+
     // --------------------------------------------------
     // SEAT NUMBER
-    // Example: "18", "A1"
+    //
+    // Example:
+    // "18"
+    // "A1"
     // --------------------------------------------------
+
     seat: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // --------------------------------------------------
-    // BOOKING
-    // --------------------------------------------------
-    bookingId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Booking",
-      required: true,
-      index: true,
-    },
 
     // --------------------------------------------------
-    // USER WHO HOLDS / BOOKS THIS SEAT
+    // USER
+    //
+    // Which logged-in user selected this seat.
     // --------------------------------------------------
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -58,38 +77,107 @@ const seatLockSchema = new mongoose.Schema(
       index: true,
     },
 
+
     // --------------------------------------------------
-    // SEAT STATUS
+    // SELECTION ID
     //
-    // held:
-    // Passenger details submitted.
-    // Payment not completed yet.
-    // UI = ORANGE
+    // Browser generates this when seat modal opens.
     //
-    // booked:
-    // Payment successfully completed.
-    // UI = RED
+    // Example:
+    // crypto.randomUUID()
+    //
+    // Important:
+    // Same user's own SSE event identify panna use aagum.
+    //
+    // Passenger 1:
+    // selectionId matches → keep seat GREEN
+    //
+    // Passenger 2:
+    // selectionId different → show ORANGE
     // --------------------------------------------------
-    status: {
+
+    selectionId: {
       type: String,
-      enum: ["held", "booked"],
-      default: "held",
       required: true,
+      trim: true,
       index: true,
     },
+
+
+    // --------------------------------------------------
+    // BOOKING
+    //
+    // Seat click pannumbodhu booking இன்னும் create
+    // aagala.
+    //
+    // So initially:
+    // bookingId = null
+    //
+    // Passenger details submit pannumbodhu:
+    // bookingId = created Booking ID
+    // --------------------------------------------------
+
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+      default: null,
+      index: true,
+    },
+
+
+    // --------------------------------------------------
+    // STATUS
+    //
+    // held:
+    // User seat click pannirukkar.
+    // Payment not completed.
+    //
+    // Other users UI = ORANGE
+    //
+    // booked:
+    // PayHere payment verified.
+    //
+    // All users UI = RED
+    // --------------------------------------------------
+
+    status: {
+      type: String,
+
+      enum: [
+        "held",
+        "booked",
+      ],
+
+      default: "held",
+
+      required: true,
+
+      index: true,
+    },
+
 
     // --------------------------------------------------
     // HOLD EXPIRY
     //
-    // When status = held:
-    // current time + 15 minutes
+    // held:
+    // temporary expiry time
     //
-    // When status = booked:
+    // booked:
     // null
+    //
+    // IMPORTANT:
+    // Initial seat-click hold can be shorter.
+    // Example: 2 minutes while user is selecting.
+    //
+    // After passenger details:
+    // extend to full 15 minutes for payment.
     // --------------------------------------------------
+
     expiresAt: {
       type: Date,
+
       default: null,
+
       index: true,
     },
   },
@@ -100,15 +188,26 @@ const seatLockSchema = new mongoose.Schema(
 
 
 // ======================================================
-// PREVENT DOUBLE BOOKING / DOUBLE HOLD
+// PREVENT DOUBLE HOLD / DOUBLE BOOKING
 // ======================================================
 //
 // Example:
-// Bus A + 2026-09-30 + Seat 18
-// can only have ONE SeatLock document.
 //
-// User 2 trying same seat gets duplicate-key error.
+// Bus A
+// Date 2026-09-30
+// Seat 18
 //
+// Only ONE SeatLock document allowed.
+//
+// Passenger 1 gets seat first:
+// SeatLock inserted ✅
+//
+// Passenger 2 tries same seat:
+// duplicate key error ❌
+//
+// This is what prevents race condition.
+// ======================================================
+
 seatLockSchema.index(
   {
     busId: 1,
@@ -122,14 +221,50 @@ seatLockSchema.index(
 
 
 // ======================================================
-// FAST EXPIRED-HOLD SEARCH
+// FIND LOCKS BY SELECTION
 // ======================================================
 //
-// holdCleanup.js later use pannum:
+// Used when:
+// - user deselects seats
+// - modal closes
+// - passenger details submitted
+// - attach temporary locks to booking
+// ======================================================
+
+seatLockSchema.index({
+  selectionId: 1,
+  status: 1,
+});
+
+
+// ======================================================
+// FIND USER'S SELECTION
+// ======================================================
+
+seatLockSchema.index({
+  userId: 1,
+  selectionId: 1,
+});
+
+
+// ======================================================
+// FAST EXPIRED HOLD SEARCH
+// ======================================================
 //
-// status = held
-// expiresAt <= current time
+// holdCleanup.js:
 //
+// {
+//   status: "held",
+//   expiresAt: { $lte: new Date() }
+// }
+//
+// Expired seat:
+//
+// HELD → DELETE
+// SSE → released
+// UI → WHITE
+// ======================================================
+
 seatLockSchema.index({
   status: 1,
   expiresAt: 1,
