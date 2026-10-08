@@ -1,255 +1,278 @@
+
+"use strict";
+
+// ======================================================
+// RAJABUS - TRIP BASED REAL-TIME SEAT UPDATES
+//
+// Each scheduled trip has its own SSE client group.
+//
+// Trip A + Seat 12 -> held
+// Trip B + Seat 12 -> unaffected
+//
+// Actions:
+// held     -> ORANGE
+// booked   -> RED
+// released -> AVAILABLE
+// ======================================================
+
 const clientsByTrip = new Map();
 
 
 // ======================================================
-// CREATE UNIQUE KEY FOR BUS + JOURNEY DATE
+// CREATE TRIP KEY
 // ======================================================
 
-function tripKey(busId, journeyDate) {
-  return `${String(busId)}::${String(journeyDate)}`;
+function tripKey(tripId) {
+  return tripId == null
+    ? ""
+    : String(tripId).trim();
 }
 
 
 // ======================================================
-// SUBSCRIBE USER TO REAL-TIME SEAT UPDATES
+// SUBSCRIBE USER
+//
+// Called from realtimeRoutes.js:
+//
+// subscribe(tripId, res)
 // ======================================================
 
-function subscribe(busId, journeyDate, res) {
-  const key =
-    tripKey(
-      busId,
-      journeyDate
-    );
+function subscribe(tripId, res) {
+  const key = tripKey(tripId);
 
-
-  if (
-    !clientsByTrip.has(key)
-  ) {
-    clientsByTrip.set(
-      key,
-      new Set()
+  if (!key) {
+    throw new Error(
+      "tripId is required for real-time subscription"
     );
   }
 
+  // Create a new client group for this trip.
+  if (!clientsByTrip.has(key)) {
+    clientsByTrip.set(key, new Set());
+  }
 
-  const clients =
-    clientsByTrip.get(key);
+  const clients = clientsByTrip.get(key);
 
-
+  // Register this browser connection.
   clients.add(res);
 
+  console.log(
+    `[SSE] Client subscribed to trip ${key}. ` +
+    `Connected clients: ${clients.size}`
+  );
 
-  // ----------------------------------------------------
-  // CONNECTION SUCCESS MESSAGE
-  // ----------------------------------------------------
+  // The connected event and heartbeat are handled
+  // by realtimeRoutes.js, so they are not duplicated here.
 
-  try {
-    res.write(
-      `event: connected\ndata: ${JSON.stringify({
-        busId:
-          String(busId),
+  let unsubscribed = false;
 
-        journeyDate:
-          String(journeyDate),
-
-        timestamp:
-          new Date().toISOString(),
-      })}\n\n`
-    );
-
-  } catch (error) {
-    clients.delete(res);
-  }
-
-
-  // ----------------------------------------------------
+  // ====================================================
   // UNSUBSCRIBE
-  // ----------------------------------------------------
+  // ====================================================
 
-  return () => {
+  return function unsubscribe() {
+    if (unsubscribed) {
+      return;
+    }
+
+    unsubscribed = true;
+
     clients.delete(res);
 
-
-    if (
-      clients.size === 0
-    ) {
-      clientsByTrip.delete(
-        key
-      );
+    if (clients.size === 0) {
+      clientsByTrip.delete(key);
     }
+
+    console.log(
+      `[SSE] Client disconnected from trip ${key}`
+    );
   };
 }
 
 
 // ======================================================
-// BROADCAST SEAT UPDATE
+// BROADCAST REAL-TIME SEAT UPDATE
 //
-// action:
-// held     → ORANGE
-// booked   → RED
-// released → AVAILABLE
+// Usage:
+//
+// broadcastSeatUpdate({
+//   tripId,
+//   busId,
+//   journeyDate,
+//   seats: ["12"],
+//   action: "held",
+//   bookingId,
+//   status: "Pending",
+//   expiresAt
+// });
+//
+// IMPORTANT:
+// tripId is REQUIRED.
+// No fallback to busId + journeyDate.
 // ======================================================
 
 function broadcastSeatUpdate({
+  tripId,
   busId,
   journeyDate,
   seats,
   action,
-  bookingId,
-  status,
+  bookingId = null,
+  status = null,
   expiresAt = null,
-}) {
-  if (
-    !busId ||
-    !journeyDate
-  ) {
-    return;
-  }
+} = {}) {
 
+  // ====================================================
+  // VALIDATE TRIP
+  // ====================================================
 
-  const key =
-    tripKey(
-      busId,
-      journeyDate
+  const key = tripKey(tripId);
+
+  if (!key) {
+    console.warn(
+      "[SSE] Broadcast skipped: tripId is missing"
     );
-
-
-  const clients =
-    clientsByTrip.get(key);
-
-
-  if (
-    !clients ||
-    clients.size === 0
-  ) {
-    return;
+    return 0;
   }
 
+  // ====================================================
+  // VALIDATE ACTION
+  // ====================================================
 
-  // ----------------------------------------------------
-  // PAYLOAD
-  // ----------------------------------------------------
+  const validActions = [
+    "held",
+    "booked",
+    "released",
+  ];
 
-  const payload =
-    JSON.stringify({
-      busId:
-        String(busId),
+  if (!validActions.includes(action)) {
+    console.warn(
+      `[SSE] Invalid seat action: ${action}`
+    );
+    return 0;
+  }
 
-      journeyDate:
-        String(journeyDate),
+  // ====================================================
+  // NORMALIZE SEATS
+  // ====================================================
 
-      seats:
-        Array.isArray(seats)
-          ? seats.map(String)
-          : [],
+  const normalizedSeats = [
+    ...new Set(
+      (Array.isArray(seats) ? seats : [])
+        .filter((seat) => seat != null)
+        .map((seat) => String(seat).trim())
+        .filter(Boolean)
+    ),
+  ];
 
-      action,
+  if (normalizedSeats.length === 0) {
+    return 0;
+  }
 
-      bookingId:
-        bookingId
-          ? String(bookingId)
-          : null,
+  // ====================================================
+  // FIND CLIENTS VIEWING THIS SPECIFIC TRIP
+  // ====================================================
 
-      status:
-        status || null,
+  const clients = clientsByTrip.get(key);
 
-      // Useful for held seats
-      expiresAt:
-        expiresAt
-          ? new Date(
-              expiresAt
-            ).toISOString()
-          : null,
+  if (!clients || clients.size === 0) {
+    return 0;
+  }
 
-      timestamp:
-        new Date().toISOString(),
-    });
+  // ====================================================
+  // FORMAT EXPIRY TIME
+  // ====================================================
 
+  let formattedExpiresAt = null;
 
-  // ----------------------------------------------------
-  // SEND TO ALL USERS VIEWING SAME BUS + DATE
-  // ----------------------------------------------------
+  if (expiresAt) {
+    const expiryDate = new Date(expiresAt);
 
-  for (
-    const res
-    of [...clients]
-  ) {
+    if (!Number.isNaN(expiryDate.getTime())) {
+      formattedExpiresAt = expiryDate.toISOString();
+    }
+  }
+
+  // ====================================================
+  // BUILD PAYLOAD
+  // ====================================================
+
+  const payload = JSON.stringify({
+    tripId: key,
+
+    busId: busId
+      ? String(busId)
+      : null,
+
+    journeyDate: journeyDate
+      ? String(journeyDate)
+      : null,
+
+    seats: normalizedSeats,
+
+    action,
+
+    bookingId: bookingId
+      ? String(bookingId)
+      : null,
+
+    status: status || null,
+
+    expiresAt: formattedExpiresAt,
+
+    timestamp: new Date().toISOString(),
+  });
+
+  // ====================================================
+  // SEND UPDATE TO ALL CLIENTS IN THIS TRIP
+  // ====================================================
+
+  let delivered = 0;
+
+  for (const res of [...clients]) {
+    // Remove disconnected browser connections.
+    if (
+      res.destroyed ||
+      res.writableEnded
+    ) {
+      clients.delete(res);
+      continue;
+    }
+
     try {
       res.write(
-        `event: seat-update\ndata: ${payload}\n\n`
+        `event: seat-update\n` +
+        `data: ${payload}\n\n`
       );
 
+      delivered++;
+
     } catch (error) {
-      // Dead connection
+      console.error(
+        `[SSE] Failed to send update for trip ${key}:`,
+        error.message
+      );
+
       clients.delete(res);
     }
   }
 
+  // ====================================================
+  // REMOVE EMPTY GROUP
+  // ====================================================
 
-  // Remove empty trip group
-  if (
-    clients.size === 0
-  ) {
-    clientsByTrip.delete(
-      key
-    );
+  if (clients.size === 0) {
+    clientsByTrip.delete(key);
   }
-}
 
-
-// ======================================================
-// HEARTBEAT
-//
-// Keeps SSE connection alive.
-// ======================================================
-
-const heartbeat =
-  setInterval(
-    () => {
-
-      for (
-        const [
-          key,
-          clients,
-        ]
-        of clientsByTrip.entries()
-      ) {
-
-        for (
-          const res
-          of [...clients]
-        ) {
-
-          try {
-            res.write(
-              `: heartbeat ${Date.now()}\n\n`
-            );
-
-          } catch (error) {
-            clients.delete(res);
-          }
-        }
-
-
-        if (
-          clients.size === 0
-        ) {
-          clientsByTrip.delete(
-            key
-          );
-        }
-      }
-
-    },
-    25000
+  console.log(
+    `[SSE] Trip ${key} | ` +
+    `Action: ${action} | ` +
+    `Seats: ${normalizedSeats.join(", ")} | ` +
+    `Connections: ${delivered}`
   );
 
-
-if (
-  typeof heartbeat.unref ===
-  "function"
-) {
-  heartbeat.unref();
+  return delivered;
 }
 
 

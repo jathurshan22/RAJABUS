@@ -1,4 +1,9 @@
+
 const mongoose = require("mongoose");
+
+// ======================================================
+// TRIP MODEL - RAJABUS
+// ======================================================
 
 const tripSchema = new mongoose.Schema(
   {
@@ -67,9 +72,12 @@ const tripSchema = new mongoose.Schema(
   }
 );
 
+// ======================================================
+// PREVENT DUPLICATE TRIPS
+//
+// Same bus + same date + same departure time
+// ======================================================
 
-// Same bus + same date + same departure
-// duplicate trip prevent
 tripSchema.index(
   {
     busId: 1,
@@ -81,9 +89,8 @@ tripSchema.index(
   }
 );
 
+// ======================================================
+// EXPORT MONGOOSE MODEL
+// ======================================================
 
-module.exports =
-  mongoose.model(
-    "Trip",
-    tripSchema
-  );
+module.exports = mongoose.model("Trip", tripSchema);

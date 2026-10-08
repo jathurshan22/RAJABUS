@@ -1,35 +1,66 @@
+
 const API_BASE =
   "http://localhost:5000/api/operators";
 
-
 const token =
-  localStorage.getItem(
-    "operatorToken"
-  );
-
+  localStorage.getItem("operatorToken");
 
 const companyElement =
-  document.getElementById(
-    "operatorCompany"
-  );
-
+  document.getElementById("operatorCompany");
 
 const operatorNameElement =
-  document.getElementById(
-    "operatorName"
-  );
-
+  document.getElementById("operatorName");
 
 const operatorEmailElement =
-  document.getElementById(
-    "operatorEmail"
-  );
-
+  document.getElementById("operatorEmail");
 
 const logoutBtn =
-  document.getElementById(
-    "logoutBtn"
-  );
+  document.getElementById("logoutBtn");
+
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+function setText(id, value) {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.textContent = String(value);
+  }
+}
+
+function notify(message, type = "error") {
+  if (typeof showToast === "function") {
+    showToast(message, type);
+  } else {
+    console.log(message);
+  }
+}
+
+function formatCurrency(amount) {
+  return `Rs. ${Number(amount || 0).toLocaleString(
+    "en-LK",
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }
+  )}`;
+}
+
+function logoutOperator(message) {
+  localStorage.removeItem("operatorToken");
+  localStorage.removeItem("operatorData");
+
+  if (message) {
+    notify(message);
+  }
+
+  setTimeout(() => {
+    window.location.href =
+      "operator-login.html";
+  }, 700);
+}
 
 
 // ==========================================
@@ -37,140 +68,200 @@ const logoutBtn =
 // ==========================================
 
 if (!token) {
-
-  window.location.href =
-    "operator-login.html";
-
+  window.location.replace(
+    "operator-login.html"
+  );
 }
 
 
 // ==========================================
-// LOAD PROFILE
+// LOAD OPERATOR PROFILE
 // ==========================================
 
 async function loadOperatorProfile() {
-
   try {
+    const response = await fetch(
+      `${API_BASE}/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    const response =
-      await fetch(
-        `${API_BASE}/profile`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
+    const data = await response.json();
 
-
-    const data =
-      await response.json();
-
-
-    if (
-      !response.ok ||
-      !data.success
-    ) {
+    if (!response.ok || !data.success) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        logoutOperator(
+          "Session expired. Please login again."
+        );
+        return;
+      }
 
       throw new Error(
-        data.message ||
-        "Authentication failed"
+        data.message || "Failed to load profile"
       );
     }
 
+    const operator = data.operator;
 
-    const operator =
-      data.operator;
+    if (companyElement) {
+      companyElement.textContent =
+        operator.companyName || "";
+    }
 
+    if (operatorNameElement) {
+      operatorNameElement.textContent =
+        operator.ownerName || "";
+    }
 
-    companyElement.textContent =
-      operator.companyName;
-
-
-    operatorNameElement.textContent =
-      operator.ownerName;
-
-
-    operatorEmailElement.textContent =
-      operator.email;
-
+    if (operatorEmailElement) {
+      operatorEmailElement.textContent =
+        operator.email || "";
+    }
 
     localStorage.setItem(
       "operatorData",
-      JSON.stringify(
-        operator
-      )
+      JSON.stringify(operator)
     );
 
-
   } catch (error) {
-
     console.error(
       "Operator profile error:",
       error
     );
 
-
-    localStorage.removeItem(
-      "operatorToken"
+    notify(
+      "Could not load operator profile."
     );
-
-
-    localStorage.removeItem(
-      "operatorData"
-    );
-
-
-    showToast(
-      "Session expired. Please login again.",
-      "error"
-    );
-
-
-    setTimeout(() => {
-
-      window.location.href =
-        "operator-login.html";
-
-    }, 1200);
   }
 }
 
 
 // ==========================================
-// INITIAL DASHBOARD VALUES
-//
-// Next Bus Management phase-la backend
-// stats endpoint connect pannuvom.
+// DASHBOARD LOADING STATE
 // ==========================================
 
-function loadInitialStats() {
-
-  document.getElementById(
-    "totalBuses"
-  ).textContent = "0";
-
-
-  document.getElementById(
-    "todayTrips"
-  ).textContent = "0";
+function showStatsLoading() {
+  setText("totalBuses", "...");
+  setText("todayTrips", "...");
+  setText("totalBookings", "...");
+  setText("confirmedPassengers", "...");
+  setText("totalRevenue", "...");
+}
 
 
-  document.getElementById(
-    "totalBookings"
-  ).textContent = "0";
+// ==========================================
+// DASHBOARD ERROR STATE
+// ==========================================
+
+function showStatsError() {
+  setText("totalBuses", "-");
+  setText("todayTrips", "-");
+  setText("totalBookings", "-");
+  setText("confirmedPassengers", "-");
+  setText("totalRevenue", "-");
+}
 
 
-  document.getElementById(
-    "confirmedPassengers"
-  ).textContent = "0";
+// ==========================================
+// LOAD ACTUAL DASHBOARD STATISTICS
+// ==========================================
 
+async function loadDashboardStats() {
+  showStatsLoading();
 
-  document.getElementById(
-    "totalRevenue"
-  ).textContent = "Rs. 0";
+  try {
+    const response = await fetch(
+      `${API_BASE}/dashboard/stats`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
 
+        cache: "no-store",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message ||
+        "Failed to load dashboard statistics"
+      );
+    }
+
+    const stats = data.stats;
+
+    // ====================================
+    // TOTAL BUSES
+    // ====================================
+
+    setText(
+      "totalBuses",
+      stats.totalBuses ?? 0
+    );
+
+    // ====================================
+    // TODAY'S TRIPS
+    // ====================================
+
+    setText(
+      "todayTrips",
+      stats.todayTrips ?? 0
+    );
+
+    // ====================================
+    // TOTAL BOOKINGS
+    // ====================================
+
+    setText(
+      "totalBookings",
+      stats.totalBookings ?? 0
+    );
+
+    // ====================================
+    // CONFIRMED PASSENGERS
+    // ====================================
+
+    setText(
+      "confirmedPassengers",
+      stats.confirmedPassengers ?? 0
+    );
+
+    // ====================================
+    // TOTAL REVENUE
+    // ====================================
+
+    setText(
+      "totalRevenue",
+      formatCurrency(
+        stats.totalRevenue
+      )
+    );
+
+    console.log(
+      "Dashboard statistics loaded:",
+      stats
+    );
+
+  } catch (error) {
+    console.error(
+      "Dashboard statistics error:",
+      error
+    );
+
+    showStatsError();
+
+    notify(
+      "Could not load dashboard statistics."
+    );
+  }
 }
 
 
@@ -181,38 +272,27 @@ function loadInitialStats() {
 logoutBtn?.addEventListener(
   "click",
   () => {
+    localStorage.removeItem("operatorToken");
+    localStorage.removeItem("operatorData");
 
-    localStorage.removeItem(
-      "operatorToken"
-    );
-
-
-    localStorage.removeItem(
-      "operatorData"
-    );
-
-
-    showToast(
+    notify(
       "Logged out successfully",
       "success"
     );
 
-
     setTimeout(() => {
-
       window.location.href =
         "operator-login.html";
-
     }, 700);
-
   }
 );
 
 
 // ==========================================
-// START
+// START DASHBOARD
 // ==========================================
 
-loadOperatorProfile();
-
-loadInitialStats();
+if (token) {
+  loadOperatorProfile();
+  loadDashboardStats();
+}

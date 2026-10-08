@@ -11,6 +11,7 @@ body {
 
 body {
   font-family: "Poppins", sans-serif;
+
   background:
     radial-gradient(
       circle at top left,
@@ -99,6 +100,12 @@ body {
 }
 
 
+/* Top icon inside orange box stays white */
+.pay-icon i {
+  color: #ffffff;
+}
+
+
 /* ==============================
    TITLE
    ============================== */
@@ -154,8 +161,12 @@ body {
   font-weight: 700;
 }
 
+
+/* Clock icon orange */
 .hold-timer i {
   font-size: 18px;
+
+  color: #ea580c;
 }
 
 
@@ -248,7 +259,10 @@ body {
 }
 
 
-/* icons */
+/* ==============================
+   SECURITY ICONS
+   ALL SAME ORANGE
+   ============================== */
 
 .security-icon {
   min-width: 43px;
@@ -263,21 +277,49 @@ body {
   border-radius: 12px;
 
   font-size: 18px;
+
+  /* Same orange theme */
+  color: #ea580c !important;
+
+  background: #ffedd5 !important;
 }
 
+
+/* Override previous green */
 .security-icon.green {
-  color: #15803d;
-  background: #dcfce7;
+  color: #ea580c !important;
+
+  background: #ffedd5 !important;
 }
 
+
+/* Override previous blue */
 .security-icon.blue {
-  color: #2563eb;
-  background: #dbeafe;
+  color: #ea580c !important;
+
+  background: #ffedd5 !important;
 }
 
+
+/* Orange stays orange */
 .security-icon.orange {
-  color: #ea580c;
-  background: #ffedd5;
+  color: #ea580c !important;
+
+  background: #ffedd5 !important;
+}
+
+
+/* Font Awesome icon inside */
+.security-icon i {
+  color: #ea580c !important;
+}
+
+
+/* SVG icon inside if any */
+.security-icon svg {
+  color: #ea580c !important;
+
+  fill: #ea580c !important;
 }
 
 
@@ -307,8 +349,12 @@ body {
   color: #1d4ed8;
 }
 
+
+/* PayHere Sandbox flask icon orange */
 .sandbox-message > i {
   font-size: 23px;
+
+  color: #ea580c !important;
 }
 
 .sandbox-message strong {
@@ -380,6 +426,12 @@ body {
 }
 
 
+/* PayHere button lock stays white */
+.pay-btn i {
+  color: #ffffff !important;
+}
+
+
 /* ==============================
    BOTTOM TEXT
    ============================== */
@@ -392,8 +444,10 @@ body {
   color: #888;
 }
 
+
+/* Bottom shield/icon also orange */
 .bottom-note i {
-  color: #16a34a;
+  color: #ea580c;
 
   margin-right: 4px;
 }

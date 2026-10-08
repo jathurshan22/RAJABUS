@@ -164,6 +164,11 @@ app.use(
   "/api/trips",
   tripRoutes
 );
+
+app.use(
+  "/api/operators",
+  require("./routes/operatorDashboardStatsRoutes")
+);
 // ======================================================
 // ROOT TEST
 // ======================================================
