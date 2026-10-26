@@ -1,0 +1,145 @@
+/* ==========================================
+   CUSTOMER PAGE TRANSITION
+   ========================================== */
+
+.rb-page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+
+  display: none;
+  overflow: hidden;
+
+  background: rgba(255, 248, 241, 0.96);
+  pointer-events: none;
+}
+
+.rb-page-transition.is-active {
+  display: block;
+  pointer-events: auto;
+
+  animation: rb-transition-appear 80ms ease-out both;
+}
+
+
+/* ==========================================
+   CENTRE POSITION — BIGGER WHEEL
+   ========================================== */
+
+.rb-wheel-travel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: 88px;
+  height: 88px;
+  margin-top: 0;
+
+  transform: translate(-50%, -50%);
+}
+
+.rb-page-transition.is-active .rb-wheel-travel {
+  animation: none;
+}
+
+
+/* ==========================================
+   TYRE AND ORANGE SPOKES
+   ========================================== */
+
+.rb-transition-wheel {
+  position: relative;
+
+  width: 88px;
+  height: 88px;
+  box-sizing: border-box;
+
+  border: 10px solid #272727;
+  border-radius: 50%;
+
+  background: repeating-conic-gradient(
+    #ff7a18 0deg 35deg,
+    #ffe7d4 35deg 60deg
+  );
+
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 3px #f26522;
+}
+
+
+/* Tyre tread */
+
+.rb-transition-wheel::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+
+  border: 2px dashed #696969;
+  border-radius: 50%;
+}
+
+
+/* Centre hub */
+
+.rb-transition-wheel::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+
+  border: 4px solid #f26522;
+  border-radius: 50%;
+  background: #fff8f1;
+
+  transform: translate(-50%, -50%);
+}
+
+
+/* ==========================================
+   SLOW SPIN IN PLACE
+   ========================================== */
+
+.rb-page-transition.is-active .rb-transition-wheel {
+  animation: rb-wheel-spin 1.2s linear infinite;
+}
+
+@keyframes rb-wheel-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+
+/* ==========================================
+   OVERLAY FADE
+   ========================================== */
+
+@keyframes rb-transition-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* ==========================================
+   REDUCED MOTION
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .rb-page-transition.is-active {
+    display: none;
+  }
+}

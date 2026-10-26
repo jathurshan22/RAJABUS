@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,6 +13,8 @@
 
   <title>My Buses | RajaBus</title>
 
+  <!-- CSS FILES -->
+
   <link
     rel="stylesheet"
     href="operator-buses.css"
@@ -22,10 +25,14 @@
     href="toast.css"
   >
 
+  <!-- FONT AWESOME -->
+
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   >
+
+  <!-- GOOGLE FONTS -->
 
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
@@ -34,8 +41,11 @@
 
 </head>
 
-
 <body>
+
+<!-- =====================================
+     TOAST NOTIFICATIONS
+     ===================================== -->
 
 <div
   id="toastContainer"
@@ -45,8 +55,9 @@
 
 <div class="layout">
 
-
-  <!-- SIDEBAR -->
+  <!-- =====================================
+       SIDEBAR
+       ===================================== -->
 
   <aside class="sidebar">
 
@@ -58,56 +69,71 @@
       Operator Portal
     </p>
 
-
     <nav>
 
       <a href="operator-dashboard.html">
+
         <i class="fa-solid fa-chart-line"></i>
         Dashboard
+
       </a>
 
       <a
         href="operator-buses.html"
         class="active"
       >
+
         <i class="fa-solid fa-bus"></i>
         My Buses
+
       </a>
 
       <a href="operator-trips.html">
+
         <i class="fa-solid fa-route"></i>
         Trips
+
       </a>
 
       <a href="operator-bookings.html">
+
         <i class="fa-solid fa-ticket"></i>
         Bookings
+
       </a>
 
       <a href="operator-profile.html">
+
         <i class="fa-solid fa-user"></i>
         Profile
+
       </a>
 
     </nav>
 
+    <!-- LOGOUT -->
 
     <button
       id="logoutBtn"
       class="logout-btn"
+      type="button"
     >
+
       <i class="fa-solid fa-right-from-bracket"></i>
       Logout
+
     </button>
 
   </aside>
 
 
-
-  <!-- MAIN -->
+  <!-- =====================================
+       MAIN CONTENT
+       ===================================== -->
 
   <main class="main">
 
+    <!-- PAGE HEADER -->
 
     <header class="page-header">
 
@@ -117,24 +143,29 @@
           Operator Management
         </p>
 
-        <h1>My Buses</h1>
+        <h1>
+          My Buses
+        </h1>
 
       </div>
-
 
       <button
         id="openAddBusBtn"
         class="primary-btn"
+        type="button"
       >
+
         <i class="fa-solid fa-plus"></i>
         Add New Bus
+
       </button>
 
     </header>
 
 
-
-    <!-- SUMMARY -->
+    <!-- =====================================
+         BUS SUMMARY
+         ===================================== -->
 
     <section class="summary-card">
 
@@ -143,7 +174,6 @@
         <i class="fa-solid fa-bus"></i>
 
       </div>
-
 
       <div>
 
@@ -160,8 +190,9 @@
     </section>
 
 
-
-    <!-- BUS LIST -->
+    <!-- =====================================
+         REGISTERED BUSES
+         ===================================== -->
 
     <section class="content-card">
 
@@ -181,7 +212,6 @@
 
       </div>
 
-
       <div
         id="busContainer"
         class="bus-grid"
@@ -200,9 +230,8 @@
 </div>
 
 
-
 <!-- =====================================
-     ADD / EDIT MODAL
+     ADD / EDIT BUS MODAL
      ===================================== -->
 
 <div
@@ -212,6 +241,7 @@
 
   <div class="modal-card">
 
+    <!-- MODAL HEADER -->
 
     <div class="modal-header">
 
@@ -227,11 +257,11 @@
 
       </div>
 
-
       <button
         id="closeModalBtn"
         class="close-btn"
         type="button"
+        aria-label="Close bus form"
       >
 
         <i class="fa-solid fa-xmark"></i>
@@ -241,9 +271,13 @@
     </div>
 
 
+    <!-- =====================================
+         ADD / EDIT BUS FORM
+         ===================================== -->
 
     <form id="busForm">
 
+      <!-- HIDDEN EDIT BUS ID -->
 
       <input
         type="hidden"
@@ -251,60 +285,130 @@
       >
 
 
-      
       <div class="form-grid">
 
+        <!-- =================================
+             BUS NUMBER
+             ================================= -->
+
         <div class="input-group">
-          <label for="busNo">Bus Number</label>
+
+          <label for="busNo">
+            Bus Number
+          </label>
+
           <input
             id="busNo"
             type="text"
             placeholder="RB-001"
+            maxlength="50"
             required
           >
+
         </div>
 
+
+        <!-- =================================
+             REGISTRATION NUMBER
+             ================================= -->
+
         <div class="input-group">
-          <label for="regNo">Registration Number</label>
+
+          <label for="regNo">
+            Registration Number
+          </label>
+
           <input
             id="regNo"
             type="text"
             placeholder="NC-1234"
+            maxlength="50"
             required
           >
+
         </div>
+
+
+        <!-- =================================
+             BUS TYPE
+             ================================= -->
 
         <div class="input-group">
-          <label for="type">Bus Type</label>
-          <select id="type" required>
-            <option value="">Select type</option>
-            <option value="Private">Private</option>
-            <option value="CTB">CTB</option>
+
+          <label for="type">
+            Bus Type
+          </label>
+
+          <select
+            id="type"
+            required
+          >
+
+            <option value="">
+              Select type
+            </option>
+
+            <option value="Private">
+              Private
+            </option>
+
+            <option value="CTB">
+              CTB
+            </option>
+
           </select>
+
         </div>
 
-        
-      <div class="input-group">
-        <label for="totalSeats">
-          Total Seats (Bus Capacity)
-        </label>
 
-        <select id="totalSeats" required>
-          <option value="52">52 Seats</option>
-          <option value="54" selected>54 Seats</option>
-          <option value="56">56 Seats</option>
-        </select>
+        <!-- =================================
+             TOTAL BUS SEAT CAPACITY
+             ================================= -->
 
-        <small>
-          Capacity can be changed only before
-          the bus has trips or bookings.
-        </small>
+        <div class="input-group">
+
+          <label for="totalSeats">
+            Total Seats (Bus Capacity)
+          </label>
+
+          <select
+            id="totalSeats"
+            required
+          >
+
+            <option value="50">
+              50 Seats
+            </option>
+
+            <option value="54" selected>
+              54 Seats
+            </option>
+
+          </select>
+
+          <small
+            style="
+              display: block;
+              margin-top: 8px;
+              font-size: 11px;
+              line-height: 1.6;
+              color: #777;
+            "
+          >
+            Select the actual seating capacity
+            of your bus. Capacity cannot be
+            changed after trips or bookings
+            are created.
+          </small>
+
+        </div>
+
       </div>
 
 
-      </div>
-
-
+      <!-- =====================================
+           MODAL ACTION BUTTONS
+           ===================================== -->
 
       <div class="modal-actions">
 
@@ -316,7 +420,6 @@
           Cancel
         </button>
 
-
         <button
           id="saveBusBtn"
           type="submit"
@@ -324,7 +427,6 @@
         >
 
           <i class="fa-solid fa-floppy-disk"></i>
-
           Save Bus
 
         </button>
@@ -338,7 +440,12 @@
 </div>
 
 
+<!-- =====================================
+     JAVASCRIPT FILES
+     ===================================== -->
+
 <script src="toast.js"></script>
+
 <script src="operator-buses.js"></script>
 
 </body>

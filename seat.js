@@ -2,39 +2,55 @@
 const API_BASE = "http://localhost:5000/api";
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // ==========================================
+  // DOM ELEMENTS
+  // ==========================================
+
   const seatModal = document.getElementById("seatModal");
   const closeSeat = document.getElementById("closeSeat");
   const busLayout = document.getElementById("busLayout");
+
   const selectedSeatsText =
     document.getElementById("selectedSeats");
+
   const totalFareText =
     document.getElementById("totalFare");
+
   const proceedBtn =
     document.getElementById("proceedBtn");
 
+  const modalBoarding =
+    document.getElementById("modalBoarding");
+
+  const modalDropping =
+    document.getElementById("modalDropping");
+
   if (!seatModal || !busLayout) return;
 
-  // =====================================================
+  // ==========================================
   // STATE
-  // =====================================================
+  // ==========================================
 
-  let selectedSeats = [];
   let currentBus = null;
-  let currentDate = null;
+  let currentDate = "";
   let fare = 0;
 
-  let realtimeStream = null;
+  let selectedSeats = [];
   let seatMapReady = false;
+
+  let realtimeStream = null;
+  let seatFetchController = null;
   let queuedRealtimeUpdates = [];
 
   let session = 0;
-  let seatFetchController = null;
 
-  // =====================================================
-  // NOTIFICATION
-  // =====================================================
+  // ==========================================
+  // NOTIFICATIONS
+  // ==========================================
 
   function notify(message, type = "error") {
+
     if (typeof showToast === "function") {
       showToast(message, type);
     } else {
@@ -42,52 +58,69 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =====================================================
-  // UPDATE SELECTION AND FARE
-  // =====================================================
+  // ==========================================
+  // UPDATE SELECTED SEATS & FARE
+  // ==========================================
 
   function updateSummary() {
+
     if (selectedSeatsText) {
-      selectedSeatsText.textContent = selectedSeats.length
-        ? `[ ${selectedSeats.join(", ")} ]`
-        : "[ 00 ]";
+
+      selectedSeatsText.textContent =
+        selectedSeats.length
+          ? `[ ${selectedSeats.join(", ")} ]`
+          : "[ 00 ]";
     }
 
     if (totalFareText) {
+
       totalFareText.textContent = String(
         selectedSeats.length * fare
       );
     }
 
     if (proceedBtn) {
+
       proceedBtn.disabled =
-        !seatMapReady || selectedSeats.length === 0;
+        !seatMapReady ||
+        selectedSeats.length === 0;
     }
   }
 
-  // =====================================================
-  // CLOSE SSE CONNECTION
-  // =====================================================
+  // ==========================================
+  // CLOSE REAL-TIME CONNECTION
+  // ==========================================
 
   function closeRealtimeConnection() {
+
     if (realtimeStream) {
+
       realtimeStream.close();
+
       realtimeStream = null;
     }
   }
 
-  // =====================================================
-  // CANCEL OLD FETCH REQUEST
-  // =====================================================
+  // ==========================================
+  // STOP PREVIOUS FETCH
+  // ==========================================
 
   function stopSeatFetch() {
+
     if (seatFetchController) {
+
       seatFetchController.abort();
+
       seatFetchController = null;
     }
   }
 
+  // ==========================================
+  // CHECK ACTIVE SESSION
+  // ==========================================
+
   function isActiveSession(openSession) {
+
     return (
       session === openSession &&
       seatModal.classList.contains("show") &&
@@ -95,309 +128,460 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // =====================================================
-  // REMOVE SEAT FROM GREEN SELECTION
-  // =====================================================
+  // ==========================================
+  // REMOVE SELECTED SEAT
+  // ==========================================
 
   function removeFromSelection(seatNumber) {
+
     const number = String(seatNumber);
 
-    if (!selectedSeats.includes(number)) {
-      return false;
-    }
+    const wasSelected =
+      selectedSeats.includes(number);
 
     selectedSeats = selectedSeats.filter(
       (seat) => seat !== number
     );
 
-    updateSummary();
-    return true;
+    return wasSelected;
   }
 
-  // =====================================================
-  // APPLY REAL-TIME SEAT UPDATE
-  //
-  // held     = ORANGE
-  // booked   = RED
-  // released = AVAILABLE
-  // =====================================================
+  // ==========================================
+  // REAL-TIME SEAT UPDATE
+  // ==========================================
 
   function applyRealtimeUpdate(update) {
+
     if (!currentBus || !currentDate || !update) {
       return;
     }
 
-    // Only accept updates from the selected trip.
+    // Accept updates only for current trip.
+
     if (
       String(update.tripId || "") !==
-        String(currentBus.tripId) ||
+        currentBus.tripId ||
+
       String(update.busId || "") !==
-        String(currentBus.id) ||
+        currentBus.id ||
+
       String(update.journeyDate || "") !==
-        String(currentDate)
+        currentDate
     ) {
       return;
     }
 
-    // Queue updates while seat map is loading.
+    // Queue updates while loading.
+
     if (!seatMapReady) {
+
       queuedRealtimeUpdates.push(update);
+
       return;
     }
+
+    const seatElements = [
+      ...busLayout.querySelectorAll(
+        ".seat[data-seat]"
+      )
+    ];
 
     const seats = Array.isArray(update.seats)
       ? update.seats
       : [];
 
-    for (const seatNo of seats) {
-      const seatNumber = String(seatNo);
+    for (const value of seats) {
 
-      const seatElement = [
-        ...busLayout.querySelectorAll(
-          ".seat[data-seat]"
-        ),
-      ].find(
-        (element) =>
-          element.dataset.seat === seatNumber
+      const number = String(value);
+
+      const element = seatElements.find(
+        (seat) =>
+          seat.dataset.seat === number
       );
 
-      if (!seatElement) continue;
+      if (!element) continue;
 
-      // Fixed counter seats cannot change.
       if (
-        seatElement.classList.contains("counter")
+        element.classList.contains("counter")
       ) {
         continue;
       }
 
-      // -----------------------------------------------
-      // HELD - ORANGE
-      // -----------------------------------------------
+      // ======================================
+      // HELD SEAT - ORANGE
+      // ======================================
 
       if (update.action === "held") {
-        // Never downgrade an already booked seat.
+
         if (
-          seatElement.classList.contains("booked")
+          element.classList.contains("booked")
         ) {
           continue;
         }
 
         const wasSelected =
-          removeFromSelection(seatNumber);
+          removeFromSelection(number);
 
-        seatElement.classList.remove("processing");
-        seatElement.classList.add("held");
+        element.classList.remove(
+          "processing"
+        );
+
+        element.classList.add("held");
 
         if (wasSelected) {
+
           notify(
-            `Seat ${seatNumber} is temporarily held by another passenger.`
+            `Seat ${number} is now held by another passenger.`
           );
         }
       }
 
-      // -----------------------------------------------
-      // BOOKED - RED
-      // -----------------------------------------------
+      // ======================================
+      // BOOKED SEAT - RED
+      // ======================================
 
       else if (update.action === "booked") {
-        const wasSelected =
-          removeFromSelection(seatNumber);
 
-        seatElement.classList.remove(
+        const wasSelected =
+          removeFromSelection(number);
+
+        element.classList.remove(
           "processing",
           "held"
         );
 
-        seatElement.classList.add("booked");
+        element.classList.add("booked");
 
         if (wasSelected) {
+
           notify(
-            `Seat ${seatNumber} has been booked by another passenger.`
+            `Seat ${number} has been booked by another passenger.`
           );
         }
       }
 
-      // -----------------------------------------------
-      // RELEASED - AVAILABLE
-      // -----------------------------------------------
+      // ======================================
+      // RELEASED SEAT
+      // ======================================
 
-      else if (update.action === "released") {
-        seatElement.classList.remove(
-          "held",
-          "booked",
-          "processing"
-        );
+      else if (
+        update.action === "released"
+      ) {
+
+        // Do not release a confirmed booked seat.
+
+        if (
+          !element.classList.contains("booked")
+        ) {
+
+          element.classList.remove("held");
+        }
       }
     }
 
     updateSummary();
   }
 
-  // =====================================================
-  // RENDER SEAT MAP
-  //
-  // processing = GREEN
-  // held       = ORANGE
-  // booked     = RED
-  // counter    = FIXED COUNTER SEAT
-  // =====================================================
+  // ==========================================
+  // VALIDATE DYNAMIC 50 / 54 LAYOUT
+  // ==========================================
+
+  function validateSeatLayout(data) {
+
+    const capacity =
+      Number(data.bus?.totalSeats);
+
+    const columns =
+      Number(data.columns);
+
+    // 50 Seats -> 13 Columns
+    // 54 Seats -> 11 Columns
+
+    const validConfiguration =
+
+      (capacity === 50 && columns === 13) ||
+
+      (capacity === 54 && columns === 11);
+
+    if (
+      !validConfiguration ||
+      !Array.isArray(data.pattern)
+    ) {
+      return null;
+    }
+
+    // Both reference layouts contain six rows.
+
+    if (
+      data.pattern.length !== columns * 6
+    ) {
+      return null;
+    }
+
+    // Count actual numbered seats.
+
+    const numbers = data.pattern
+
+      .filter(
+        (seat) => seat !== "x"
+      )
+
+      .map(String);
+
+    // Verify seat count and uniqueness.
+
+    if (
+      numbers.length !== capacity ||
+      new Set(numbers).size !== capacity
+    ) {
+      return null;
+    }
+
+    // Verify numbers 01 through capacity.
+
+    const seatSet = new Set(numbers);
+
+    for (
+      let index = 1;
+      index <= capacity;
+      index += 1
+    ) {
+
+      const expected =
+        String(index).padStart(2, "0");
+
+      if (!seatSet.has(expected)) {
+        return null;
+      }
+    }
+
+    return {
+      capacity,
+      columns
+    };
+  }
+
+  // ==========================================
+  // RENDER DYNAMIC SEAT MAP
+  // ==========================================
 
   function renderSeats(
     pattern,
     counterSeats,
     heldSeats,
     bookedSeats,
-    preserveSelection
+    preserveSelection = false
   ) {
-    const previousSelection = preserveSelection
-      ? [...selectedSeats]
-      : [];
+
+    const previousSelection =
+      preserveSelection
+        ? [...selectedSeats]
+        : [];
+
+    const counters = new Set(
+      counterSeats.map(String)
+    );
+
+    const held = new Set(
+      heldSeats.map(String)
+    );
+
+    const booked = new Set(
+      bookedSeats.map(String)
+    );
 
     selectedSeats = [];
+
     busLayout.innerHTML = "";
 
-    const counterSet = new Set(
-      (counterSeats || []).map(String)
-    );
+    // Pattern controls exact seat positions.
 
-    const heldSet = new Set(
-      (heldSeats || []).map(String)
-    );
+    for (const value of pattern) {
 
-    const bookedSet = new Set(
-      (bookedSeats || []).map(String)
-    );
+      const seat =
+        document.createElement("div");
 
-    for (const no of pattern || []) {
-      const seat = document.createElement("div");
+      // ======================================
+      // EMPTY SPACE / WALKING AISLE
+      // ======================================
 
-      // -----------------------------------------------
-      // EMPTY / AISLE
-      // -----------------------------------------------
+      if (value === "x") {
 
-      if (no === "x") {
         seat.className = "seat empty";
+
         busLayout.appendChild(seat);
+
         continue;
       }
 
-      const seatNo = String(no);
+      // ======================================
+      // CREATE PHYSICAL SEAT
+      // ======================================
+
+      const number = String(value);
 
       seat.className = "seat";
-      seat.dataset.seat = seatNo;
+
+      seat.dataset.seat = number;
 
       seat.appendChild(
-        document.createTextNode(seatNo)
+        document.createTextNode(number)
       );
 
       const handle =
         document.createElement("span");
 
       handle.className = "handle";
+
       seat.appendChild(handle);
 
-      // -----------------------------------------------
-      // EXISTING SEAT STATES
-      // -----------------------------------------------
+      // ======================================
+      // SET SEAT STATUS
+      // ======================================
 
-      if (counterSet.has(seatNo)) {
+      if (counters.has(number)) {
+
         seat.classList.add("counter");
-      } else if (bookedSet.has(seatNo)) {
+
+      } else if (booked.has(number)) {
+
         seat.classList.add("booked");
-      } else if (heldSet.has(seatNo)) {
+
+      } else if (held.has(number)) {
+
         seat.classList.add("held");
+
       } else if (
-        previousSelection.includes(seatNo)
+        previousSelection.includes(number)
       ) {
+
         seat.classList.add("processing");
-        selectedSeats.push(seatNo);
+
+        selectedSeats.push(number);
       }
 
-      // -----------------------------------------------
-      // SEAT CLICK
-      // -----------------------------------------------
+      // ======================================
+      // SEAT CLICK EVENT
+      // ======================================
 
-      seat.addEventListener("click", () => {
-        if (!seatMapReady) {
-          return;
+      seat.addEventListener(
+        "click",
+        () => {
+
+          if (!seatMapReady) {
+            return;
+          }
+
+          if (
+            seat.classList.contains("counter") ||
+            seat.classList.contains("held") ||
+            seat.classList.contains("booked")
+          ) {
+            return;
+          }
+
+          // Deselect seat.
+
+          if (
+            selectedSeats.includes(number)
+          ) {
+
+            removeFromSelection(number);
+
+            seat.classList.remove(
+              "processing"
+            );
+
+          } else {
+
+            // Select seat - Green.
+
+            selectedSeats.push(number);
+
+            seat.classList.add(
+              "processing"
+            );
+          }
+
+          updateSummary();
         }
-
-        if (
-          seat.classList.contains("counter") ||
-          seat.classList.contains("booked") ||
-          seat.classList.contains("held")
-        ) {
-          return;
-        }
-
-        if (selectedSeats.includes(seatNo)) {
-          removeFromSelection(seatNo);
-          seat.classList.remove("processing");
-        } else {
-          selectedSeats.push(seatNo);
-          seat.classList.add("processing");
-        }
-
-        updateSummary();
-      });
+      );
 
       busLayout.appendChild(seat);
     }
 
-    // -----------------------------------------------
-    // APPLY EVENTS RECEIVED WHILE LOADING
-    // -----------------------------------------------
+    // ======================================
+    // APPLY QUEUED REAL-TIME UPDATES
+    // ======================================
 
     seatMapReady = true;
 
-    const updates = queuedRealtimeUpdates;
+    const updates =
+      queuedRealtimeUpdates;
+
     queuedRealtimeUpdates = [];
 
-    for (const update of updates) {
-      applyRealtimeUpdate(update);
-    }
+    updates.forEach(
+      applyRealtimeUpdate
+    );
 
     updateSummary();
   }
 
-  // =====================================================
-  // LOAD SEATS FROM BACKEND
-  //
-  // IMPORTANT:
-  // Uses busId + date + tripId.
-  // =====================================================
+  // ==========================================
+  // LOAD SEAT MAP FROM BACKEND
+  // ==========================================
 
   async function loadSeatMap(
     openSession,
     preserveSelection = false
   ) {
-    if (!isActiveSession(openSession)) {
+
+    if (
+      !isActiveSession(openSession)
+    ) {
       return false;
     }
 
     stopSeatFetch();
 
-    const controller = new AbortController();
+    const controller =
+      new AbortController();
+
     seatFetchController = controller;
 
     seatMapReady = false;
+
     queuedRealtimeUpdates = [];
 
     updateSummary();
 
     const busId = currentBus.id;
+
     const tripId = currentBus.tripId;
-    const journeyDate = currentDate;
+
+    const date = currentDate;
+
+    // ======================================
+    // TRIP-SPECIFIC SEAT API
+    // ======================================
 
     const url =
+
       `${API_BASE}/buses/${encodeURIComponent(busId)}/seats` +
-      `?date=${encodeURIComponent(journeyDate)}` +
+
+      `?date=${encodeURIComponent(date)}` +
+
       `&tripId=${encodeURIComponent(tripId)}`;
 
     try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-      });
+
+      const response = await fetch(
+        url,
+        {
+          signal: controller.signal
+        }
+      );
 
       const data = await response.json();
 
@@ -408,70 +592,150 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
 
-      if (!response.ok || !data.success) {
+      // ======================================
+      // CHECK BACKEND RESPONSE
+      // ======================================
+
+      if (
+        !response.ok ||
+        !data.success
+      ) {
+
         busLayout.textContent =
-          data.message || "Could not load seats.";
+          data.message ||
+          "Could not load seats.";
 
         return false;
       }
 
-      // Verify backend returned the same trip.
+      // ======================================
+      // VERIFY SELECTED TRIP
+      // ======================================
+
       if (
         String(data.tripId || "") !==
-        String(tripId)
+        tripId
       ) {
+
         busLayout.textContent =
           "Seat data does not match the selected trip.";
 
         return false;
       }
 
-      // Use the fare returned by the server.
-      if (
-        Number.isFinite(Number(data.bus?.fare))
-      ) {
-        fare = Number(data.bus.fare);
+      // ======================================
+      // VALIDATE 50 / 54 SEAT LAYOUT
+      // ======================================
+
+      const config =
+        validateSeatLayout(data);
+
+      if (!config) {
+
+        busLayout.textContent =
+          "Seat layout does not match the bus capacity (50/54).";
+
+        return false;
       }
 
+      // ======================================
+      // DYNAMIC GRID COLUMNS
+      // ======================================
+
+      // 50 Seats -> 13 Columns
+      // 54 Seats -> 11 Columns
+
+      busLayout.style.gridTemplateColumns =
+        `repeat(${config.columns}, 46px)`;
+
+      busLayout.dataset.capacity =
+        String(config.capacity);
+
+      // ======================================
+      // GET SERVER TRIP FARE
+      // ======================================
+
+      const serverFare =
+        Number(data.bus?.fare);
+
+      if (
+        Number.isFinite(serverFare) &&
+        serverFare >= 0
+      ) {
+
+        fare = serverFare;
+      }
+
+      // ======================================
+      // RENDER EXACT BACKEND PATTERN
+      // ======================================
+
       renderSeats(
-        data.pattern || [],
+        data.pattern,
         data.counterSeats || [],
         data.heldSeats || [],
         data.bookedSeats || [],
         preserveSelection
       );
 
+      console.log(
+        "RAJABUS seat map loaded:",
+        {
+          busNo: data.bus?.busNo,
+
+          tripId,
+
+          capacity: config.capacity,
+
+          columns: config.columns
+        }
+      );
+
       return true;
 
     } catch (error) {
-      if (error.name === "AbortError") {
-        return false;
-      }
 
-      console.error(
-        "Seat loading error:",
-        error
-      );
+      if (
+        error.name !== "AbortError"
+      ) {
 
-      if (isActiveSession(openSession)) {
-        busLayout.textContent =
-          "Could not reach the booking server.";
+        console.error(
+          "Seat loading error:",
+          error
+        );
+
+        if (
+          isActiveSession(openSession)
+        ) {
+
+          busLayout.textContent =
+            "Could not reach the booking server.";
+        }
       }
 
       return false;
 
     } finally {
-      if (seatFetchController === controller) {
+
+      if (
+        seatFetchController === controller
+      ) {
+
         seatFetchController = null;
       }
+
+      updateSummary();
     }
   }
 
-  // =====================================================
-  // CONNECT TO TRIP-SPECIFIC REAL-TIME SERVER
-  // =====================================================
+  // ==========================================
+  // TRIP-SPECIFIC REAL-TIME SSE
+  // ==========================================
 
-  function connectRealtimeUpdates(openSession) {
+  function connectRealtimeUpdates(
+    openSession
+  ) {
+
     closeRealtimeConnection();
 
     if (
@@ -482,29 +746,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const url =
+
       `${API_BASE}/realtime/seats` +
+
       `?tripId=${encodeURIComponent(currentBus.tripId)}` +
+
       `&busId=${encodeURIComponent(currentBus.id)}` +
+
       `&date=${encodeURIComponent(currentDate)}`;
 
-    console.log(
-      "Connecting real-time:",
-      url
-    );
+    const stream =
+      new EventSource(url);
 
-    const stream = new EventSource(url);
     realtimeStream = stream;
 
-    // -----------------------------------------------
-    // CONNECTED
-    //
-    // Reload seats after connection/reconnection
-    // to recover updates missed while disconnected.
-    // -----------------------------------------------
+    // ======================================
+    // CONNECTED / RECONNECTED
+    // ======================================
 
     stream.addEventListener(
       "connected",
-      (event) => {
+      () => {
+
         if (
           !isActiveSession(openSession) ||
           realtimeStream !== stream
@@ -514,20 +777,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         console.log(
           "Real-time connected:",
-          event.data
+          currentBus.tripId
         );
 
-        loadSeatMap(openSession, true);
+        // Reload after reconnect.
+
+        loadSeatMap(
+          openSession,
+          true
+        );
       }
     );
 
-    // -----------------------------------------------
-    // SEAT UPDATE
-    // -----------------------------------------------
+    // ======================================
+    // REAL-TIME SEAT STATUS
+    // ======================================
 
     stream.addEventListener(
       "seat-update",
       (event) => {
+
         if (
           !isActiveSession(openSession) ||
           realtimeStream !== stream
@@ -536,9 +805,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-          const update = JSON.parse(event.data);
+
+          const update =
+            JSON.parse(event.data);
+
           applyRealtimeUpdate(update);
+
         } catch (error) {
+
           console.error(
             "Invalid real-time seat update:",
             error
@@ -548,7 +822,11 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     stream.onerror = () => {
-      if (isActiveSession(openSession)) {
+
+      if (
+        isActiveSession(openSession)
+      ) {
+
         console.warn(
           "Real-time connection interrupted; reconnecting..."
         );
@@ -556,192 +834,211 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // =====================================================
+  // ==========================================
   // CLOSE SEAT MODAL
-  // =====================================================
+  // ==========================================
 
   function closeModal() {
-    session++;
+
+    session += 1;
 
     stopSeatFetch();
+
     closeRealtimeConnection();
 
-    seatModal.classList.remove("show");
+    seatModal.classList.remove(
+      "show"
+    );
 
     seatMapReady = false;
+
     queuedRealtimeUpdates = [];
+
     selectedSeats = [];
 
     currentBus = null;
-    currentDate = null;
+
+    currentDate = "";
+
     fare = 0;
 
     updateSummary();
   }
 
-  // =====================================================
+  // ==========================================
   // OPEN SEAT MODAL
-  //
-  // Called by result.js:
-  // openSeatModal(bus, journeyDate)
-  // =====================================================
+  // CALLED FROM result.js
+  // ==========================================
 
-  window.openSeatModal = async function (
-    bus,
-    journeyDate
-  ) {
-    session++;
-    const openSession = session;
+  window.openSeatModal =
+    async function (bus, journeyDate) {
 
-    stopSeatFetch();
-    closeRealtimeConnection();
+      session += 1;
 
-    const busId =
-      bus?.id ?? bus?.busId ?? bus?._id;
+      const openSession = session;
 
-    const tripId = bus?.tripId;
+      stopSeatFetch();
 
-    currentBus = bus
-      ? {
-          ...bus,
+      closeRealtimeConnection();
 
-          id: busId
-            ? String(busId)
-            : "",
+      const busId =
+        bus?.id ??
+        bus?.busId ??
+        bus?._id;
 
-          tripId: tripId
-            ? String(tripId)
-            : "",
+      const tripId =
+        bus?.tripId;
+
+      currentBus = bus
+        ? {
+            ...bus,
+
+            id: String(
+              busId || ""
+            ),
+
+            tripId: String(
+              tripId || ""
+            )
+          }
+        : null;
+
+      currentDate = String(
+        journeyDate || ""
+      );
+
+      fare = Number(
+        bus?.fare ??
+        bus?.fareMin ??
+        0
+      );
+
+      if (
+        !Number.isFinite(fare) ||
+        fare < 0
+      ) {
+        fare = 0;
+      }
+
+      selectedSeats = [];
+
+      queuedRealtimeUpdates = [];
+
+      seatMapReady = false;
+
+      updateSummary();
+
+      // ====================================
+      // BOARDING & DROPPING
+      // ====================================
+
+      if (modalBoarding) {
+
+        modalBoarding.textContent =
+          bus?.from || "";
+      }
+
+      if (modalDropping) {
+
+        modalDropping.textContent =
+          bus?.to || "";
+      }
+
+      seatModal.classList.add(
+        "show"
+      );
+
+      busLayout.textContent =
+        "Loading seats...";
+
+      // ====================================
+      // VALIDATE BUS / TRIP / DATE
+      // ====================================
+
+      if (
+        !currentBus?.id ||
+        !currentBus.tripId ||
+        !currentDate
+      ) {
+
+        busLayout.textContent =
+          "Bus, scheduled Trip ID, or journey date is missing.";
+
+        return;
+      }
+
+      console.log(
+        "Opening seat map:",
+        {
+          busId: currentBus.id,
+
+          tripId: currentBus.tripId,
+
+          journeyDate: currentDate
         }
-      : null;
+      );
 
-    currentDate = journeyDate
-      ? String(journeyDate)
-      : "";
+      // ====================================
+      // INITIAL SEAT MAP LOAD
+      // ====================================
 
-    fare = Number(
-      bus?.fare ?? bus?.fareMin ?? 0
-    );
+      const loaded =
+        await loadSeatMap(
+          openSession,
+          false
+        );
 
-    if (
-      !Number.isFinite(fare) ||
-      fare < 0
-    ) {
-      fare = 0;
-    }
+      if (
+        loaded &&
+        isActiveSession(openSession)
+      ) {
 
-    selectedSeats = [];
-    queuedRealtimeUpdates = [];
-    seatMapReady = false;
+        connectRealtimeUpdates(
+          openSession
+        );
+      }
+    };
 
-    updateSummary();
-
-    // -----------------------------------------------
-    // BOARDING AND DROPPING
-    // -----------------------------------------------
-
-    const modalBoarding =
-      document.getElementById("modalBoarding");
-
-    const modalDropping =
-      document.getElementById("modalDropping");
-
-    if (modalBoarding) {
-      modalBoarding.textContent =
-        bus?.from || "";
-    }
-
-    if (modalDropping) {
-      modalDropping.textContent =
-        bus?.to || "";
-    }
-
-    seatModal.classList.add("show");
-    busLayout.textContent = "Loading seats...";
-
-    // -----------------------------------------------
-    // VALIDATE SELECTED TRIP
-    // -----------------------------------------------
-
-    if (!currentDate) {
-      busLayout.textContent =
-        "Please select a journey date first.";
-
-      return;
-    }
-
-    if (!currentBus?.id) {
-      busLayout.textContent =
-        "Bus information is missing.";
-
-      return;
-    }
-
-    if (!currentBus.tripId) {
-      busLayout.textContent =
-        "Trip ID is missing. Select a scheduled trip from search results.";
-
-      return;
-    }
-
-    console.log("Opening seat map:", {
-      tripId: currentBus.tripId,
-      busId: currentBus.id,
-      journeyDate: currentDate,
-    });
-
-    // -----------------------------------------------
-    // INITIAL SEAT MAP
-    // -----------------------------------------------
-
-    const loaded = await loadSeatMap(
-      openSession,
-      false
-    );
-
-    // Connect real-time only after the seat map loads.
-    if (
-      loaded &&
-      isActiveSession(openSession)
-    ) {
-      connectRealtimeUpdates(openSession);
-    }
-  };
-
-  // =====================================================
+  // ==========================================
   // CLOSE BUTTON
-  // =====================================================
+  // ==========================================
 
   closeSeat?.addEventListener(
     "click",
     closeModal
   );
 
-  // =====================================================
+  // ==========================================
   // CLICK OUTSIDE MODAL
-  // =====================================================
+  // ==========================================
 
   seatModal.addEventListener(
     "click",
     (event) => {
-      if (event.target === seatModal) {
+
+      if (
+        event.target === seatModal
+      ) {
+
         closeModal();
       }
     }
   );
 
-  // =====================================================
+  // ==========================================
   // PROCEED TO PASSENGER DETAILS
-  // =====================================================
+  // ==========================================
 
   proceedBtn?.addEventListener(
     "click",
     () => {
+
       if (
         !seatMapReady ||
         !currentBus?.tripId ||
         !currentDate
       ) {
+
         notify(
           "Please select a valid scheduled trip first."
         );
@@ -749,9 +1046,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      if (selectedSeats.length === 0) {
+      if (
+        selectedSeats.length === 0
+      ) {
+
         notify(
-          "Please select at least one seat."
+          "Please select at least one available seat."
         );
 
         return;
@@ -761,68 +1061,86 @@ document.addEventListener("DOMContentLoaded", () => {
         !Number.isFinite(fare) ||
         fare <= 0
       ) {
+
         notify(
-          "The selected trip does not have a valid payable fare."
+          "This trip does not have a valid payable fare."
         );
 
         return;
       }
 
-      // ---------------------------------------------
+      // ====================================
       // BUILD PENDING BOOKING
-      // ---------------------------------------------
+      // ====================================
 
       const pendingBooking = {
+
         tripId: currentBus.tripId,
 
         busId: currentBus.id,
+
         busNo: currentBus.busNo,
-        regNo: currentBus.regNo || "",
-        type: currentBus.type || "",
+
+        regNo:
+          currentBus.regNo || "",
+
+        type:
+          currentBus.type || "",
 
         from: currentBus.from,
+
         to: currentBus.to,
 
-        departTime: currentBus.depart,
-        arriveTime: currentBus.arrive,
+        departTime:
+          currentBus.depart,
+
+        arriveTime:
+          currentBus.arrive,
 
         journeyDate: currentDate,
 
-        seats: [...selectedSeats],
+        seats: [
+          ...selectedSeats
+        ],
 
         fare,
 
         totalFare:
           selectedSeats.length * fare,
 
-        boardingPoint: currentBus.from,
-        droppingPoint: currentBus.to,
+        boardingPoint:
+          currentBus.from,
+
+        droppingPoint:
+          currentBus.to
       };
 
-      console.log(
-        "Pending Booking:",
-        pendingBooking
-      );
-
-      // ---------------------------------------------
-      // SAVE SELECTED BOOKING
-      // ---------------------------------------------
+      // ====================================
+      // SAVE PENDING BOOKING
+      // ====================================
 
       localStorage.setItem(
         "pendingBooking",
-        JSON.stringify(pendingBooking)
+
+        JSON.stringify(
+          pendingBooking
+        )
       );
 
       localStorage.setItem(
         "selectedTrip",
-        JSON.stringify(currentBus)
+
+        JSON.stringify(
+          currentBus
+        )
       );
 
-      // ---------------------------------------------
-      // GO TO PASSENGER DETAILS
-      // ---------------------------------------------
+      // ====================================
+      // REDIRECT
+      // ====================================
 
       stopSeatFetch();
+
       closeRealtimeConnection();
 
       window.location.href =
@@ -830,15 +1148,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   );
 
-  // =====================================================
-  // PAGE CLOSE / REFRESH
-  // =====================================================
+  // ==========================================
+  // CLEANUP ON PAGE EXIT
+  // ==========================================
 
   window.addEventListener(
     "beforeunload",
     () => {
+
       stopSeatFetch();
+
       closeRealtimeConnection();
     }
   );
+
+  updateSummary();
 });

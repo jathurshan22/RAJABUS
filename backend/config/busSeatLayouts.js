@@ -1,14 +1,91 @@
 
-const { SEAT_PATTERN } = require("./seatLayout");
+const {
+  SEAT_PATTERN,
+  COUNTER_SEATS,
+} = require("./seatLayout");
 
-// Supported physical bus capacities
+// ==========================================
+// RAJABUS - SUPPORTED BUS CAPACITIES
+// ==========================================
+
 const SUPPORTED_CAPACITIES = Object.freeze([
-  52,
+  50,
   54,
-  56,
 ]);
 
+// ==========================================
+// EXACT 50-SEAT LAYOUT
+// Reference: User provided screenshot
+//
+// Driver is on the LEFT.
+// 13 Columns x 6 Rows.
+// Center walking aisle.
+// ==========================================
+
+const FIFTY_SEAT_ROWS = [
+
+  // Upper row 1
+  [
+    "04", "08", "12", "16", "20",
+    "24", "28", "32", "36", "40",
+    "42", "44", "50",
+  ],
+
+  // Upper row 2
+  [
+    "03", "07", "11", "15", "19",
+    "23", "27", "31", "35", "39",
+    "41", "43", "49",
+  ],
+
+  // Center aisle - rear seat 48
+  [
+    "x", "x", "x", "x", "x",
+    "x", "x", "x", "x", "x",
+    "x", "x", "48",
+  ],
+
+  // Center aisle - rear seat 47
+  [
+    "x", "x", "x", "x", "x",
+    "x", "x", "x", "x", "x",
+    "x", "x", "47",
+  ],
+
+  // Lower row 1
+  [
+    "02", "06", "10", "14", "18",
+    "22", "26", "30", "34", "38",
+    "x", "x", "46",
+  ],
+
+  // Lower row 2
+  [
+    "01", "05", "09", "13", "17",
+    "21", "25", "29", "33", "37",
+    "x", "x", "45",
+  ],
+
+];
+
+// ==========================================
+// 50-SEAT COUNTER SEATS
+// Orange seats in screenshot
+// ==========================================
+
+const FIFTY_COUNTER_SEATS = [
+  "01", "02", "03", "04",
+  "05", "06", "07", "08",
+  "44", "45", "46", "47",
+  "48", "49", "50",
+];
+
+// ==========================================
+// GET BUS SEAT LAYOUT
+// ==========================================
+
 function getBusSeatLayout(capacity = 54) {
+
   const count = Number(capacity);
 
   if (
@@ -16,86 +93,112 @@ function getBusSeatLayout(capacity = 54) {
     !SUPPORTED_CAPACITIES.includes(count)
   ) {
     throw new Error(
-      "Supported bus seat capacities: 52, 54, 56"
+      "Only 50 and 54 seat buses are supported"
     );
   }
 
-  // Preserve the existing 54-seat arrangement
-  const pattern = [...SEAT_PATTERN];
+  let pattern;
+  let columns;
+  let counterSeats;
 
-  // 52-seat layout
-  if (count === 52) {
-    for (const seat of ["53", "54"]) {
-      const index = pattern.indexOf(seat);
+  // ========================================
+  // 50 SEATS - EXACT SCREENSHOT LAYOUT
+  // ========================================
 
-      if (index === -1) {
-        throw new Error(
-          `Base layout missing seat ${seat}`
-        );
-      }
+  if (count === 50) {
 
-      pattern[index] = "x";
-    }
+    columns = 13;
+
+    pattern = FIFTY_SEAT_ROWS.flat();
+
+    counterSeats = [
+      ...FIFTY_COUNTER_SEATS,
+    ];
+
+  } else {
+
+    // ======================================
+    // 54 SEATS - EXISTING ORIGINAL LAYOUT
+    // ======================================
+
+    columns = 11;
+
+    pattern = [...SEAT_PATTERN];
+
+    counterSeats = [...COUNTER_SEATS];
   }
 
-  // 56-seat layout
-  if (count === 56) {
-    // Proposed additional positions in the
-    // existing 6-row, 11-column seat grid.
-    if (
-      pattern[53] !== "x" ||
-      pattern[64] !== "x"
-    ) {
-      throw new Error(
-        "Expected expansion positions not available"
-      );
-    }
-
-    pattern[53] = "55";
-    pattern[64] = "56";
-  }
+  // ========================================
+  // VALIDATE PHYSICAL SEATS
+  // ========================================
 
   const allSeats = pattern.filter(
     (seat) => seat !== "x"
   );
 
-  const formatSeat = (number) =>
-    String(number).padStart(2, "0");
+  const seatSet = new Set(allSeats);
 
-  // First 7 and last 8 seats are counter seats
-  const counterSeats = [
-    ...Array.from(
-      { length: 7 },
-      (_, i) => formatSeat(i + 1)
-    ),
-    ...Array.from(
-      { length: 8 },
-      (_, i) => formatSeat(count - 7 + i)
-    ),
-  ];
+  const expectedSeats = Array.from(
+    { length: count },
+    (_, index) =>
+      String(index + 1).padStart(2, "0")
+  );
+
+  if (
+    pattern.length % columns !== 0 ||
+    allSeats.length !== count ||
+    seatSet.size !== count ||
+    expectedSeats.some(
+      (seat) => !seatSet.has(seat)
+    )
+  ) {
+    throw new Error(
+      `Invalid ${count}-seat layout`
+    );
+  }
+
+  // ========================================
+  // VALIDATE COUNTER SEATS
+  // ========================================
 
   const counterSet = new Set(counterSeats);
+
+  if (
+    counterSeats.length !== 15 ||
+    counterSet.size !== 15 ||
+    counterSeats.some(
+      (seat) => !seatSet.has(seat)
+    )
+  ) {
+    throw new Error(
+      "Invalid counter seat configuration"
+    );
+  }
+
+  // ========================================
+  // ONLINE BOOKABLE SEATS
+  // ========================================
 
   const bookableSeats = allSeats.filter(
     (seat) => !counterSet.has(seat)
   );
 
-  if (
-    allSeats.length !== count ||
-    new Set(allSeats).size !== count
-  ) {
-    throw new Error(
-      "Invalid seat layout: missing or duplicate seats"
-    );
-  }
+  // ========================================
+  // RETURN BUS LAYOUT
+  // ========================================
 
   return {
     totalSeats: count,
+    columns,
     pattern,
     counterSeats,
     bookableSeats,
   };
 }
+
+// ==========================================
+// EXPORTS
+// ==========================================
 
 module.exports = {
   SUPPORTED_CAPACITIES,
