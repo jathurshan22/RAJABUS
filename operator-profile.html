@@ -1,0 +1,661 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Operator Profile | RajaBus</title>
+
+  <!-- Reuse existing Operator Portal design -->
+  <link
+    rel="stylesheet"
+    href="operator-bookings.css"
+  >
+
+  <link rel="stylesheet" href="operator-profile.css">
+
+  <link
+    rel="stylesheet"
+    href="toast.css"
+  >
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  >
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+</head>
+
+<body>
+
+<!-- ======================================
+     TOAST NOTIFICATIONS
+     ====================================== -->
+
+<div
+  id="toastContainer"
+  class="toast-container"
+></div>
+
+<div class="layout">
+
+  <!-- ======================================
+       SIDEBAR
+       ====================================== -->
+
+  <aside class="sidebar">
+
+    <div class="logo">
+      Raja<span>Bus</span>
+    </div>
+
+    <p class="portal">
+      Operator Portal
+    </p>
+
+    <nav>
+
+      <a href="operator-dashboard.html">
+        <i class="fa-solid fa-chart-line"></i>
+        Dashboard
+      </a>
+
+      <a href="operator-buses.html">
+        <i class="fa-solid fa-bus"></i>
+        My Buses
+      </a>
+
+      <a href="operator-trips.html">
+        <i class="fa-solid fa-route"></i>
+        Trips
+      </a>
+
+      <a href="operator-bookings.html">
+        <i class="fa-solid fa-ticket"></i>
+        Bookings
+      </a>
+
+      <a
+        href="operator-profile.html"
+        class="active"
+        aria-current="page"
+      >
+        <i class="fa-solid fa-user"></i>
+        Profile
+      </a>
+
+    </nav>
+
+    <!-- Logout Button -->
+
+    <button
+      id="logoutBtn"
+      type="button"
+      class="logout-btn"
+    >
+      <i class="fa-solid fa-right-from-bracket"></i>
+      Logout
+    </button>
+
+  </aside>
+
+
+  <!-- ======================================
+       MAIN CONTENT
+       ====================================== -->
+
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+
+    <header class="page-header">
+
+      <div>
+        <p>
+          Account Management
+        </p>
+
+        <h1>
+          My Profile
+        </h1>
+      </div>
+
+      <button
+        id="refreshProfileBtn"
+        type="button"
+        class="primary-btn"
+        disabled
+      >
+        <i class="fa-solid fa-rotate"></i>
+        Refresh Profile
+      </button>
+
+    </header>
+
+
+    <!-- ====================================
+         OPERATOR IDENTITY CARD
+         ==================================== -->
+
+    <section class="profile-hero">
+
+      <div class="profile-avatar">
+        <i class="fa-solid fa-building"></i>
+      </div>
+
+      <div class="profile-hero-info">
+
+        <p class="profile-eyebrow">
+          Registered Bus Operator
+        </p>
+
+        <h2 id="profileCompanyTitle">
+          Loading company...
+        </h2>
+
+        <p id="profileOwnerTitle">
+          Loading operator details...
+        </p>
+
+        <div class="profile-badges">
+
+          <span
+            id="profileStatus"
+            class="account-badge"
+          >
+            Checking status...
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="profile-hero-decoration">
+        <i class="fa-solid fa-bus"></i>
+      </div>
+
+    </section>
+
+
+    <!-- PROFILE NOTIFICATION -->
+
+    <p
+      id="profileMessage"
+      class="profile-message"
+      role="status"
+      aria-live="polite"
+    ></p>
+
+
+    <!-- ====================================
+         PROFILE CONTENT
+         ==================================== -->
+
+    <div class="profile-layout">
+
+      <!-- ==================================
+           LEFT: COMPANY DETAILS
+           ================================== -->
+
+      <section class="content-card profile-card">
+
+        <div class="profile-card-header">
+
+          <div>
+
+            <div class="profile-section-icon">
+              <i class="fa-solid fa-building"></i>
+            </div>
+
+            <h2>
+              Company Information
+            </h2>
+
+            <p>
+              Manage your registered
+              company and contact details.
+            </p>
+
+          </div>
+
+          <button
+            id="editProfileBtn"
+            type="button"
+            class="secondary-btn"
+            disabled
+          >
+            <i class="fa-solid fa-pen"></i>
+            Edit Profile
+          </button>
+
+        </div>
+
+
+        <!-- PROFILE FORM -->
+
+        <form id="operatorProfileForm">
+
+          <div class="profile-form-grid">
+
+            <!-- COMPANY NAME -->
+
+            <div class="profile-input-group">
+
+              <label for="companyName">
+                Company Name
+                <span class="required">*</span>
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-building"></i>
+
+                <input
+                  id="companyName"
+                  name="companyName"
+                  type="text"
+                  placeholder="Company name"
+                  maxlength="120"
+                  autocomplete="organization"
+                  required
+                  readonly
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- OWNER NAME -->
+
+            <div class="profile-input-group">
+
+              <label for="ownerName">
+                Owner Name
+                <span class="required">*</span>
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-user"></i>
+
+                <input
+                  id="ownerName"
+                  name="ownerName"
+                  type="text"
+                  placeholder="Owner name"
+                  maxlength="120"
+                  autocomplete="name"
+                  required
+                  readonly
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- EMAIL -->
+
+            <div class="profile-input-group">
+
+              <label for="operatorEmail">
+                Email Address
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-envelope"></i>
+
+                <input
+                  id="operatorEmail"
+                  name="email"
+                  type="email"
+                  placeholder="Email address"
+                  autocomplete="email"
+                  readonly
+                >
+
+              </div>
+
+              <small class="field-help">
+                Your login email cannot be
+                changed from this form.
+              </small>
+
+            </div>
+
+
+            <!-- PHONE NUMBER -->
+
+            <div class="profile-input-group">
+
+              <label for="operatorPhone">
+                Phone Number
+                <span class="required">*</span>
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-phone"></i>
+
+                <input
+                  id="operatorPhone"
+                  name="phone"
+                  type="tel"
+                  placeholder="Phone number"
+                  maxlength="20"
+                  autocomplete="tel"
+                  required
+                  readonly
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- BUSINESS ADDRESS -->
+
+            <div class="profile-input-group full-width">
+
+              <label for="operatorAddress">
+                Business Address
+              </label>
+
+              <div class="profile-textarea-wrap">
+
+                <textarea
+                  id="operatorAddress"
+                  name="address"
+                  rows="4"
+                  maxlength="500"
+                  placeholder="Enter business address"
+                  autocomplete="street-address"
+                  readonly
+                ></textarea>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- EDIT ACTION BUTTONS -->
+
+          <div
+            id="profileFormActions"
+            class="profile-form-actions"
+          >
+
+            <button
+              id="cancelProfileBtn"
+              type="button"
+              class="secondary-btn"
+              disabled
+            >
+              Cancel
+            </button>
+
+            <button
+              id="saveProfileBtn"
+              type="submit"
+              class="primary-btn"
+              disabled
+            >
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Changes
+            </button>
+
+          </div>
+
+        </form>
+
+      </section>
+
+
+      <!-- ==================================
+           RIGHT: ACCOUNT DETAILS & SECURITY
+           ================================== -->
+
+      <div class="profile-side-column">
+
+        <!-- ACCOUNT INFORMATION -->
+
+        <section class="content-card profile-card">
+
+          <div class="profile-card-header">
+
+            <div>
+
+              <div class="profile-section-icon">
+                <i class="fa-solid fa-circle-info"></i>
+              </div>
+
+              <h2>
+                Account Information
+              </h2>
+
+              <p>
+                Your RajaBus operator account.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="account-info-list">
+
+            <div class="account-info-row">
+
+              <span>
+                <i class="fa-solid fa-id-card"></i>
+                Account Type
+              </span>
+
+              <strong>
+                Bus Operator
+              </strong>
+
+            </div>
+
+            <div class="account-info-row">
+
+              <span>
+                <i class="fa-solid fa-shield-halved"></i>
+                Account Status
+              </span>
+
+              <strong id="accountStatusText">
+                Loading...
+              </strong>
+
+            </div>
+
+            <div class="account-info-row">
+
+              <span>
+                <i class="fa-solid fa-calendar-check"></i>
+                Member Since
+              </span>
+
+              <strong id="accountCreatedAt">
+                Loading...
+              </strong>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =================================
+             CHANGE PASSWORD
+             ================================= -->
+
+        <section class="content-card profile-card">
+
+          <div class="profile-card-header">
+
+            <div>
+
+              <div class="profile-section-icon">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+
+              <h2>
+                Change Password
+              </h2>
+
+              <p>
+                Keep your operator account secure.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <form
+            id="changePasswordForm"
+            autocomplete="on"
+          >
+
+            <!-- CURRENT PASSWORD -->
+
+            <div class="profile-input-group">
+
+              <label for="currentPassword">
+                Current Password
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-lock"></i>
+
+                <input
+                  id="currentPassword"
+                  name="currentPassword"
+                  type="password"
+                  placeholder="Enter current password"
+                  autocomplete="current-password"
+                  required
+                  disabled
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- NEW PASSWORD -->
+
+            <div class="profile-input-group">
+
+              <label for="newPassword">
+                New Password
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-key"></i>
+
+                <input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  placeholder="Enter new password"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                  disabled
+                >
+
+              </div>
+
+              <small class="field-help">
+                Use at least 8 characters.
+              </small>
+
+            </div>
+
+
+            <!-- CONFIRM PASSWORD -->
+
+            <div class="profile-input-group">
+
+              <label for="confirmPassword">
+                Confirm New Password
+              </label>
+
+              <div class="profile-input-wrap">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Re-enter new password"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                  disabled
+                >
+
+              </div>
+
+            </div>
+
+
+            <button
+              id="changePasswordBtn"
+              type="submit"
+              class="primary-btn password-submit-btn"
+              disabled
+            >
+              <i class="fa-solid fa-shield-halved"></i>
+              Update Password
+            </button>
+
+          </form>
+
+        </section>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- ======================================
+     JAVASCRIPT
+     ====================================== -->
+
+<script src="toast.js"></script>
+<script src="operator-profile.js"></script>
+
+<!-- Profile functionality will be connected
+     after the CSS and secure backend steps. -->
+
+</body>
+
+</html>

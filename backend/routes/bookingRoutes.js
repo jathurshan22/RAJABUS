@@ -619,15 +619,45 @@ router.post(
       // DYNAMIC BUS SEAT VALIDATION
       // ==================================================
 
-      const storedCapacity = Number(bus.totalSeats);
+      
+      // ==================================================
+      // SAFE BUS CAPACITY VALIDATION
+      // ==================================================
 
-      // Preserve original 54-seat booking behaviour
-      // for older buses with legacy capacity values.
-      const layoutCapacity = SUPPORTED_CAPACITIES.includes(
-        storedCapacity
-      )
-        ? storedCapacity
-        : 54;
+      const storedCapacity =
+        bus.totalSeats == null
+          ? null
+          : Number(bus.totalSeats);
+
+      let layoutCapacity;
+
+      // New supported 50 / 54-seat buses.
+      if (
+        SUPPORTED_CAPACITIES.includes(
+          storedCapacity
+        )
+      ) {
+        layoutCapacity = storedCapacity;
+      }
+
+      // Preserve legacy 40-seat bus behaviour.
+      else if (
+        bus.totalSeats == null ||
+        storedCapacity === 40
+      ) {
+        layoutCapacity = 54;
+      }
+
+      // Reject unsupported capacities.
+      else {
+        return res.status(409).json({
+          success: false,
+          message:
+            `Unsupported bus capacity: ${bus.totalSeats}. ` +
+            "Only 50 and 54-seat layouts are supported.",
+        });
+      }
+
 
       // Get seats according to this bus capacity.
       const {
