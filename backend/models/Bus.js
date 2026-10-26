@@ -1,66 +1,61 @@
+
 const mongoose = require("mongoose");
+const { TOTAL_SEATS } = require("../config/seatLayout");
 
 const busSchema = new mongoose.Schema(
   {
-
     operatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Operator",
       default: null,
       index: true,
     },
-    from: {
-      type: String,
-      required: true,
-      default: "Mihintale",
-    },
-    to: {
+
+    busNo: {
       type: String,
       required: true,
       trim: true,
     },
+
+    regNo: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     type: {
       type: String,
       enum: ["Private", "CTB"],
       required: true,
     },
-    busNo: {
-      type: String,
-      required: true,
+
+    
+totalSeats: {
+  type: Number,
+  default: TOTAL_SEATS,
+  validate: {
+    validator(value) {
+      return Number.isInteger(value) && value > 0;
     },
-    regNo: {
-      type: String,
-      required: true,
-    },
-    depart: {
-      type: String, // "HH:MM"
-      required: true,
-    },
-    arrive: {
-      type: String, // "HH:MM"
-      required: true,
-    },
-    distanceKm: {
-      type: Number,
-      required: true,
-    },
-    fareMin: {
-      type: Number,
-      required: true,
-    },
-    fareMax: {
-      type: Number,
-      required: true,
-    },
-    date: {
-      type: String, // "YYYY-MM-DD"
-    },
-    totalSeats: {
-      type: Number,
-      default: 40,
-    },
+    message: "Total seats must be a positive whole number",
   },
-  { timestamps: true }
+},
+
+
+    // Legacy fields retained for existing buses.
+    // New operator bus registration does not use these.
+    from: { type: String, trim: true },
+    to: { type: String, trim: true },
+    depart: { type: String },
+    arrive: { type: String },
+    distanceKm: { type: Number },
+    fareMin: { type: Number },
+    fareMax: { type: Number },
+    date: { type: String },
+  },
+  {
+    timestamps: true,
+  }
 );
 
 busSchema.index({ to: 1 });

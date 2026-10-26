@@ -6,7 +6,15 @@ const {
   operatorProtect,
 } = require("../middleware/operatorAuth");
 
+
+const {
+  SUPPORTED_CAPACITIES,
+} = require("../config/busSeatLayouts");
+
+
 const router = express.Router();
+
+
 
 
 // =====================================================
@@ -14,126 +22,61 @@ const router = express.Router();
 // POST /api/operator-buses
 // =====================================================
 
-router.post(
-  "/",
-  operatorProtect,
-  async (req, res) => {
-    try {
-      const {
-        busNo,
-        regNo,
-        from,
-        to,
-        type,
-        depart,
-        arrive,
-        distanceKm,
-        fareMin,
-        fareMax,
-      } = req.body;
+router.post("/", operatorProtect, async (req, res) => {
+  try {
+    const busNo = String(req.body.busNo ?? "").trim();
+    const regNo = String(req.body.regNo ?? "").trim();
+    const type = String(req.body.type ?? "").trim();
+    const totalSeats = Number(req.body.totalSeats);
 
-
-      if (
-        !busNo ||
-        !regNo ||
-        !from ||
-        !to ||
-        !type ||
-        !depart ||
-        !arrive
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Please fill all required bus details",
-        });
-      }
-
-
-      // -----------------------------------------------
-      // SAME REGISTRATION NUMBER CHECK
-      // -----------------------------------------------
-
-      const existingBus =
-        await Bus.findOne({
-          regNo: regNo.trim(),
-        });
-
-
-      if (existingBus) {
-        return res.status(409).json({
-          success: false,
-          message:
-            "A bus with this registration number already exists",
-        });
-      }
-
-
-      // -----------------------------------------------
-      // CREATE BUS
-      // -----------------------------------------------
-
-      const bus =
-        await Bus.create({
-          operatorId:
-            req.operator._id,
-
-          busNo:
-            busNo.trim(),
-
-          regNo:
-            regNo.trim(),
-
-          from:
-            from.trim(),
-
-          to:
-            to.trim(),
-
-          type:
-            type.trim(),
-
-          depart:
-            depart.trim(),
-
-          arrive:
-            arrive.trim(),
-
-          distanceKm:
-            Number(distanceKm) || 0,
-
-          fareMin:
-            Number(fareMin) || 0,
-
-          fareMax:
-            Number(fareMax) || 0,
-        });
-
-
-      return res.status(201).json({
-        success: true,
-        message:
-          "Bus added successfully",
-        bus,
-      });
-
-    } catch (error) {
-
-      console.error(
-        "Add operator bus error:",
-        error
-      );
-
-      return res.status(500).json({
+    if (!busNo || !regNo || !["Private", "CTB"].includes(type)) {
+      return res.status(400).json({
         success: false,
-        message:
-          "Failed to add bus",
-        error:
-          error.message,
+        message: "Enter valid bus details",
       });
     }
+
+    if (!SUPPORTED_CAPACITIES.includes(totalSeats)) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose 52, 54 or 56 seats",
+      });
+    }
+
+    const exists = await Bus.exists({ regNo });
+
+    if (exists) {
+      return res.status(409).json({
+        success: false,
+        message: "Registration number already exists",
+      });
+    }
+
+    const bus = await Bus.create({
+      operatorId: req.operator._id,
+      busNo,
+      regNo,
+      type,
+      totalSeats,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Bus added successfully",
+      bus,
+    });
+
+  } catch (error) {
+    console.error("Add bus error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add bus",
+    });
   }
-);
+});
+
+
 
 
 // =====================================================
@@ -226,116 +169,129 @@ router.get(
 );
 
 
+
+
 // =====================================================
 // UPDATE BUS
 // PUT /api/operator-buses/:id
 // =====================================================
 
-router.put(
-  "/:id",
-  operatorProtect,
-  async (req, res) => {
-    try {
+router.put("/:id", operatorProtect, async (req, res) => {
+  try {
+    const bus = await Bus.findOne({
+      _id: req.params.id,
+      operatorId: req.operator._id,
+    });
 
-      const bus =
-        await Bus.findOne({
-          _id:
-            req.params.id,
-
-          operatorId:
-            req.operator._id,
-        });
-
-
-      if (!bus) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Bus not found or you do not own this bus",
-        });
-      }
-
-
-      const allowedFields = [
-        "busNo",
-        "regNo",
-        "from",
-        "to",
-        "type",
-        "depart",
-        "arrive",
-        "distanceKm",
-        "fareMin",
-        "fareMax",
-      ];
-
-
-      allowedFields.forEach(
-        (field) => {
-
-          if (
-            req.body[field] !==
-            undefined
-          ) {
-
-            if (
-              [
-                "distanceKm",
-                "fareMin",
-                "fareMax",
-              ].includes(field)
-            ) {
-
-              bus[field] =
-                Number(
-                  req.body[field]
-                );
-
-            } else {
-
-              bus[field] =
-                String(
-                  req.body[field]
-                ).trim();
-            }
-          }
-        }
-      );
-
-
-      await bus.save();
-
-
-      return res.json({
-        success: true,
-        message:
-          "Bus updated successfully",
-        bus,
-      });
-
-    } catch (error) {
-
-      if (
-        error.code === 11000
-      ) {
-        return res.status(409).json({
-          success: false,
-          message:
-            "Registration number already exists",
-        });
-      }
-
-
-      return res.status(500).json({
+    if (!bus) {
+      return res.status(404).json({
         success: false,
-        message:
-          "Failed to update bus",
-        error:
-          error.message,
+        message: "Bus not found",
       });
     }
+
+    const hasCapacity = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "totalSeats"
+    );
+
+    if (hasCapacity) {
+      const requested = Number(req.body.totalSeats);
+      const previous = Number(bus.totalSeats ?? 54);
+
+      if (!Number.isInteger(requested) || requested <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid seat capacity",
+        });
+      }
+
+      if (requested !== previous) {
+        if (!SUPPORTED_CAPACITIES.includes(requested)) {
+          return res.status(400).json({
+            success: false,
+            message: "Choose 52, 54 or 56 seats",
+          });
+        }
+
+        // Read-only checks protect existing trips/bookings.
+        const db = Bus.db;
+
+        const [trip, booking, lock] = await Promise.all([
+          db.collection("trips").findOne(
+            { busId: bus._id },
+            { projection: { _id: 1 } }
+          ),
+          db.collection("bookings").findOne(
+            { busId: bus._id },
+            { projection: { _id: 1 } }
+          ),
+          db.collection("seatlocks").findOne(
+            { busId: bus._id },
+            { projection: { _id: 1 } }
+          ),
+        ]);
+
+        if (trip || booking || lock) {
+          return res.status(409).json({
+            success: false,
+            message:
+              "Cannot change capacity: this bus already has trip or booking history",
+          });
+        }
+
+        bus.totalSeats = requested;
+      }
+    }
+
+    for (const field of ["busNo", "regNo", "type"]) {
+      if (req.body[field] !== undefined) {
+        bus[field] = String(req.body[field] ?? "").trim();
+      }
+    }
+
+    if (
+      !bus.busNo ||
+      !bus.regNo ||
+      !["Private", "CTB"].includes(bus.type)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter valid bus details",
+      });
+    }
+
+    const duplicate = await Bus.exists({
+      regNo: bus.regNo,
+      _id: { $ne: bus._id },
+    });
+
+    if (duplicate) {
+      return res.status(409).json({
+        success: false,
+        message: "Registration number already exists",
+      });
+    }
+
+    await bus.save();
+
+    return res.json({
+      success: true,
+      message: "Bus updated successfully",
+      bus,
+    });
+
+  } catch (error) {
+    console.error("Update bus error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update bus",
+    });
   }
-);
+});
+
+
 
 
 // =====================================================

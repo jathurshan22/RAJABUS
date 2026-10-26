@@ -1,235 +1,198 @@
-const API_URL =
-  "http://localhost:5000/api/operator-buses";
 
+/* =========================================
+   RAJABUS - OPERATOR BUS MANAGEMENT
+   Dynamic Seat Capacity: 52 / 54 / 56
+   ========================================= */
 
-const token =
-  localStorage.getItem(
-    "operatorToken"
-  );
+const API_URL = "http://localhost:5000/api/operator-buses";
 
+const token = localStorage.getItem("operatorToken");
 
 if (!token) {
-
-  window.location.href =
-    "operator-login.html";
-
+  window.location.href = "operator-login.html";
 }
 
+// =======================================
+// DOM ELEMENTS
+// =======================================
 
-const busContainer =
-  document.getElementById(
-    "busContainer"
-  );
-
-const busCount =
-  document.getElementById(
-    "busCount"
-  );
-
-const busModal =
-  document.getElementById(
-    "busModal"
-  );
-
-const busForm =
-  document.getElementById(
-    "busForm"
-  );
-
-const modalTitle =
-  document.getElementById(
-    "modalTitle"
-  );
-
-const editBusId =
-  document.getElementById(
-    "editBusId"
-  );
-
-const openAddBusBtn =
-  document.getElementById(
-    "openAddBusBtn"
-  );
-
-const closeModalBtn =
-  document.getElementById(
-    "closeModalBtn"
-  );
-
-const cancelBtn =
-  document.getElementById(
-    "cancelBtn"
-  );
-
+const busContainer = document.getElementById("busContainer");
+const busCount = document.getElementById("busCount");
+const busModal = document.getElementById("busModal");
+const busForm = document.getElementById("busForm");
+const modalTitle = document.getElementById("modalTitle");
+const editBusId = document.getElementById("editBusId");
+const openAddBusBtn = document.getElementById("openAddBusBtn");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const capacitySelect = document.getElementById("totalSeats");
+const saveBusBtn = document.getElementById("saveBusBtn");
 
 // =======================================
-// AUTH HEADER
+// AUTH HEADERS
 // =======================================
 
 function authHeaders() {
-
   return {
-    "Content-Type":
-      "application/json",
-
-    Authorization:
-      `Bearer ${token}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   };
 }
 
+function checkSession(response) {
+  if (response.status === 401 || response.status === 403) {
+    localStorage.removeItem("operatorToken");
+    localStorage.removeItem("operatorData");
+    window.location.href = "operator-login.html";
+    return false;
+  }
+
+  return true;
+}
 
 // =======================================
-// OPEN ADD MODAL
+// DYNAMIC SEAT CAPACITY HELPERS
 // =======================================
+
+// Remove temporary option for older buses.
+function removeLegacyCapacityOption() {
+  capacitySelect
+    .querySelectorAll('option[data-legacy="true"]')
+    .forEach((option) => option.remove());
+}
+
+// Display capacity correctly in Add/Edit form.
+function setCapacityInForm(value) {
+  removeLegacyCapacityOption();
+
+  const seats = Number(value ?? 54);
+  const selectedValue = String(seats);
+
+  const optionExists = [...capacitySelect.options].some(
+    (option) => option.value === selectedValue
+  );
+
+  // Preserve existing buses with 40 or
+  // another previously saved capacity.
+  if (
+    !optionExists &&
+    Number.isInteger(seats) &&
+    seats > 0
+  ) {
+    const legacyOption = document.createElement("option");
+
+    legacyOption.value = selectedValue;
+    legacyOption.textContent =
+      `${seats} Seats (Existing Bus)`;
+
+    legacyOption.dataset.legacy = "true";
+
+    capacitySelect.appendChild(legacyOption);
+  }
+
+  capacitySelect.value = selectedValue;
+}
+
+// =======================================
+// OPEN ADD BUS MODAL
+// =======================================
+
+function openAddModal() {
+  busForm.reset();
+
+  editBusId.value = "";
+
+  removeLegacyCapacityOption();
+
+  // Default capacity for a new bus.
+  // Operator may select 52 or 56.
+  setCapacityInForm(54);
+
+  modalTitle.textContent = "Add New Bus";
+
+  busModal.classList.add("show");
+}
 
 openAddBusBtn.addEventListener(
   "click",
-  () => {
-
-    busForm.reset();
-
-    editBusId.value = "";
-
-    modalTitle.textContent =
-      "Add New Bus";
-
-    busModal.classList.add(
-      "show"
-    );
-
-  }
+  openAddModal
 );
-
 
 // =======================================
 // CLOSE MODAL
 // =======================================
 
 function closeModal() {
-
-  busModal.classList.remove(
-    "show"
-  );
+  busModal.classList.remove("show");
 
   busForm.reset();
 
   editBusId.value = "";
 
+  removeLegacyCapacityOption();
 }
 
+closeModalBtn.addEventListener("click", closeModal);
 
-closeModalBtn.addEventListener(
-  "click",
-  closeModal
-);
+cancelBtn.addEventListener("click", closeModal);
 
-
-cancelBtn.addEventListener(
-  "click",
-  closeModal
-);
-
-
-busModal.addEventListener(
-  "click",
-  (event) => {
-
-    if (
-      event.target === busModal
-    ) {
-      closeModal();
-    }
-
+busModal.addEventListener("click", (event) => {
+  if (event.target === busModal) {
+    closeModal();
   }
-);
+});
 
+// Close modal when Escape key is pressed.
+document.addEventListener("keydown", (event) => {
+  if (
+    event.key === "Escape" &&
+    busModal.classList.contains("show")
+  ) {
+    closeModal();
+  }
+});
 
 // =======================================
-// LOAD BUSES
+// LOAD OPERATOR BUSES
 // =======================================
 
 async function loadBuses() {
-
   try {
+    const response = await fetch(API_URL, {
+      headers: authHeaders(),
+    });
 
-    const response =
-      await fetch(
-        API_URL,
-        {
-          headers:
-            authHeaders(),
-        }
-      );
+    if (!checkSession(response)) return;
 
+    const data = await response.json();
 
-    const data =
-      await response.json();
-
-
-    if (
-      response.status === 401 ||
-      response.status === 403
-    ) {
-
-      localStorage.removeItem(
-        "operatorToken"
-      );
-
-      localStorage.removeItem(
-        "operatorData"
-      );
-
-      window.location.href =
-        "operator-login.html";
-
-      return;
-    }
-
-
-    if (!data.success) {
-
+    if (!response.ok || !data.success) {
       throw new Error(
-        data.message ||
-        "Could not load buses"
+        data.message || "Could not load buses"
       );
     }
 
-
-    renderBuses(
-      data.buses || []
-    );
-
+    renderBuses(data.buses || []);
 
   } catch (error) {
-
-    console.error(
-      "Load buses error:",
-      error
-    );
-
+    console.error("Load buses error:", error);
 
     busContainer.innerHTML = `
       <div class="empty">
         Could not load buses.
       </div>
     `;
-
   }
 }
 
-
 // =======================================
-// RENDER BUSES
+// RENDER BUS CARDS
 // =======================================
 
 function renderBuses(buses) {
-
-  busCount.textContent =
-    buses.length;
-
+  busCount.textContent = buses.length;
 
   if (buses.length === 0) {
-
     busContainer.innerHTML = `
       <div class="empty">
         <i class="fa-solid fa-bus"></i>
@@ -244,429 +207,240 @@ function renderBuses(buses) {
     return;
   }
 
+  busContainer.innerHTML = buses.map((bus) => {
+    const seats = Number(bus.totalSeats ?? 54);
 
-  busContainer.innerHTML =
-    buses
-      .map(
-        (bus) => {
+    const capacity =
+      Number.isInteger(seats) && seats > 0
+        ? seats
+        : "—";
 
-          return `
-            <article class="bus-card">
+    const id = escapeHtml(bus._id);
 
-              <div class="bus-card-header">
+    return `
+      <article class="bus-card">
 
-                <div>
+        <div class="bus-card-header">
 
-                  <div class="bus-card-icon">
-                    <i class="fa-solid fa-bus"></i>
-                  </div>
+          <div class="bus-card-icon">
+            <i class="fa-solid fa-bus"></i>
+          </div>
 
-                </div>
+          <div>
+            <h3>${escapeHtml(bus.busNo)}</h3>
 
+            <div class="reg-no">
+              ${escapeHtml(bus.regNo)}
+            </div>
 
-                <div>
+            <span class="type-badge">
+              ${escapeHtml(bus.type)}
+            </span>
+          </div>
 
-                  <h3>
-                    ${escapeHtml(
-                      bus.busNo
-                    )}
-                  </h3>
+        </div>
 
-                  <div class="reg-no">
-                    ${escapeHtml(
-                      bus.regNo
-                    )}
-                  </div>
+        <div class="bus-details">
 
-                  <span class="type-badge">
-                    ${escapeHtml(
-                      bus.type
-                    )}
-                  </span>
+          <div>
+            Total Seats
+            <strong>${capacity}</strong>
+          </div>
 
-                </div>
+          <div>
+            Journey Schedule
+            <strong>Manage in Trips</strong>
+          </div>
 
-              </div>
+        </div>
 
+        <div class="bus-actions">
 
-              <div class="route">
+          <button
+            type="button"
+            class="edit-btn"
+            data-action="edit"
+            data-id="${id}"
+          >
+            <i class="fa-solid fa-pen"></i>
+            Edit
+          </button>
 
-                ${escapeHtml(
-                  bus.from
-                )}
+          <button
+            type="button"
+            class="delete-btn"
+            data-action="delete"
+            data-id="${id}"
+          >
+            <i class="fa-solid fa-trash"></i>
+            Delete
+          </button>
 
-                <i class="fa-solid fa-arrow-right"></i>
+        </div>
 
-                ${escapeHtml(
-                  bus.to
-                )}
-
-              </div>
-
-
-              <div class="bus-details">
-
-                <div>
-                  Departure
-                  <strong>
-                    ${escapeHtml(
-                      bus.depart
-                    )}
-                  </strong>
-                </div>
-
-
-                <div>
-                  Arrival
-                  <strong>
-                    ${escapeHtml(
-                      bus.arrive
-                    )}
-                  </strong>
-                </div>
-
-
-                <div>
-                  Distance
-                  <strong>
-                    ${Number(
-                      bus.distanceKm || 0
-                    )} KM
-                  </strong>
-                </div>
-
-
-                <div>
-                  Fare
-                  <strong>
-                    Rs.
-                    ${Number(
-                      bus.fareMin || 0
-                    )}
-                    -
-                    ${Number(
-                      bus.fareMax || 0
-                    )}
-                  </strong>
-                </div>
-
-              </div>
-
-
-              <div class="bus-actions">
-
-                <button
-                  class="edit-btn"
-                  onclick="editBus('${bus._id}')"
-                >
-                  <i class="fa-solid fa-pen"></i>
-                  Edit
-                </button>
-
-
-                <button
-                  class="delete-btn"
-                  onclick="deleteBus('${bus._id}')"
-                >
-                  <i class="fa-solid fa-trash"></i>
-                  Delete
-                </button>
-
-              </div>
-
-            </article>
-          `;
-
-        }
-      )
-      .join("");
+      </article>
+    `;
+  }).join("");
 }
 
+// =======================================
+// BUS CARD BUTTON HANDLING
+// =======================================
+
+busContainer.addEventListener("click", (event) => {
+  const button = event.target.closest(
+    "button[data-action][data-id]"
+  );
+
+  if (!button || !busContainer.contains(button)) {
+    return;
+  }
+
+  const id = button.dataset.id;
+
+  if (button.dataset.action === "edit") {
+    editBus(id);
+  }
+
+  if (button.dataset.action === "delete") {
+    deleteBus(id);
+  }
+});
 
 // =======================================
 // ADD / UPDATE BUS
 // =======================================
 
-busForm.addEventListener(
-  "submit",
-  async (event) => {
+busForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-    event.preventDefault();
+  const id = editBusId.value;
 
+  const busData = {
+    busNo: document.getElementById("busNo").value.trim(),
 
-    const id =
-      editBusId.value;
+    regNo: document.getElementById("regNo").value.trim(),
 
+    type: document.getElementById("type").value,
 
-    const busData = {
+    totalSeats: Number(capacitySelect.value),
+  };
 
-      busNo:
-        document
-          .getElementById(
-            "busNo"
-          )
-          .value
-          .trim(),
+  // Validate selected capacity.
+  if (
+    !Number.isInteger(busData.totalSeats) ||
+    busData.totalSeats <= 0
+  ) {
+    showToast("Select a valid bus capacity", "error");
+    return;
+  }
 
-      regNo:
-        document
-          .getElementById(
-            "regNo"
-          )
-          .value
-          .trim(),
+  // Prevent duplicate form submissions.
+  saveBusBtn.disabled = true;
 
-      from:
-        document
-          .getElementById(
-            "from"
-          )
-          .value
-          .trim(),
+  const originalButtonContent = saveBusBtn.innerHTML;
 
-      to:
-        document
-          .getElementById(
-            "to"
-          )
-          .value
-          .trim(),
+  saveBusBtn.textContent = "Saving...";
 
-      type:
-        document
-          .getElementById(
-            "type"
-          )
-          .value,
+  try {
+    const response = await fetch(
+      id ? `${API_URL}/${id}` : API_URL,
+      {
+        method: id ? "PUT" : "POST",
 
-      depart:
-        document
-          .getElementById(
-            "depart"
-          )
-          .value,
+        headers: authHeaders(),
 
-      arrive:
-        document
-          .getElementById(
-            "arrive"
-          )
-          .value,
-
-      distanceKm:
-        Number(
-          document
-            .getElementById(
-              "distanceKm"
-            )
-            .value
-        ),
-
-      fareMin:
-        Number(
-          document
-            .getElementById(
-              "fareMin"
-            )
-            .value
-        ),
-
-      fareMax:
-        Number(
-          document
-            .getElementById(
-              "fareMax"
-            )
-            .value
-        ),
-    };
-
-
-    try {
-
-      const response =
-        await fetch(
-          id
-            ? `${API_URL}/${id}`
-            : API_URL,
-          {
-            method:
-              id
-                ? "PUT"
-                : "POST",
-
-            headers:
-              authHeaders(),
-
-            body:
-              JSON.stringify(
-                busData
-              ),
-          }
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (!data.success) {
-
-        showToast(
-          data.message ||
-          "Could not save bus",
-          "error"
-        );
-
-        return;
+        body: JSON.stringify(busData),
       }
+    );
 
+    if (!checkSession(response)) return;
 
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
       showToast(
-        id
-          ? "Bus updated successfully"
-          : "Bus added successfully",
-        "success"
-      );
-
-
-      closeModal();
-
-      await loadBuses();
-
-
-    } catch (error) {
-
-      console.error(
-        "Save bus error:",
-        error
-      );
-
-
-      showToast(
-        "Could not connect to server",
+        data.message || "Could not save bus",
         "error"
       );
+      return;
     }
 
-  }
-);
+    showToast(
+      id
+        ? "Bus updated successfully"
+        : "Bus added successfully",
+      "success"
+    );
 
+    closeModal();
+
+    await loadBuses();
+
+  } catch (error) {
+    console.error("Save bus error:", error);
+
+    showToast(
+      "Could not connect to server",
+      "error"
+    );
+
+  } finally {
+    saveBusBtn.disabled = false;
+    saveBusBtn.innerHTML = originalButtonContent;
+  }
+});
 
 // =======================================
 // EDIT BUS
 // =======================================
 
 async function editBus(id) {
-
   try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      headers: authHeaders(),
+    });
 
-    const response =
-      await fetch(
-        `${API_URL}/${id}`,
-        {
-          headers:
-            authHeaders(),
-        }
-      );
+    if (!checkSession(response)) return;
 
+    const data = await response.json();
 
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
+    if (!response.ok || !data.success || !data.bus) {
       showToast(
-        data.message ||
-        "Could not load bus",
+        data.message || "Could not load bus",
         "error"
       );
-
       return;
     }
 
+    const bus = data.bus;
 
-    const bus =
-      data.bus;
+    busForm.reset();
 
+    editBusId.value = bus._id;
 
-    editBusId.value =
-      bus._id;
-
-
-    document.getElementById(
-      "busNo"
-    ).value =
+    // Bus number
+    document.getElementById("busNo").value =
       bus.busNo || "";
 
-
-    document.getElementById(
-      "regNo"
-    ).value =
+    // Registration number
+    document.getElementById("regNo").value =
       bus.regNo || "";
 
-
-    document.getElementById(
-      "from"
-    ).value =
-      bus.from || "";
-
-
-    document.getElementById(
-      "to"
-    ).value =
-      bus.to || "";
-
-
-    document.getElementById(
-      "type"
-    ).value =
+    // Bus type
+    document.getElementById("type").value =
       bus.type || "";
 
+    // Dynamic capacity with legacy support
+    setCapacityInForm(bus.totalSeats ?? 54);
 
-    document.getElementById(
-      "depart"
-    ).value =
-      bus.depart || "";
+    // Set correct modal title and open it.
+    modalTitle.textContent = "Edit Bus";
 
-
-    document.getElementById(
-      "arrive"
-    ).value =
-      bus.arrive || "";
-
-
-    document.getElementById(
-      "distanceKm"
-    ).value =
-      bus.distanceKm || "";
-
-
-    document.getElementById(
-      "fareMin"
-    ).value =
-      bus.fareMin || "";
-
-
-    document.getElementById(
-      "fareMax"
-    ).value =
-      bus.fareMax || "";
-
-
-    modalTitle.textContent =
-      "Edit Bus";
-
-
-    busModal.classList.add(
-      "show"
-    );
-
+    busModal.classList.add("show");
 
   } catch (error) {
-
-    console.error(error);
+    console.error("Edit bus error:", error);
 
     showToast(
       "Failed to load bus",
@@ -675,67 +449,49 @@ async function editBus(id) {
   }
 }
 
-
 // =======================================
 // DELETE BUS
 // =======================================
 
 async function deleteBus(id) {
-
-  const confirmed =
-    window.confirm(
-      "Are you sure you want to delete this bus?"
-    );
-
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this bus?"
+  );
 
   if (!confirmed) {
     return;
   }
 
-
   try {
+    const response = await fetch(
+      `${API_URL}/${id}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(),
+      }
+    );
 
-    const response =
-      await fetch(
-        `${API_URL}/${id}`,
-        {
-          method: "DELETE",
+    if (!checkSession(response)) return;
 
-          headers:
-            authHeaders(),
-        }
-      );
+    const data = await response.json();
 
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-
+    if (!response.ok || !data.success) {
       showToast(
-        data.message ||
-        "Could not delete bus",
+        data.message || "Could not delete bus",
         "error"
       );
-
       return;
     }
-
 
     showToast(
       "Bus deleted successfully",
       "success"
     );
 
-
     await loadBuses();
 
-
   } catch (error) {
-
-    console.error(error);
-
+    console.error("Delete bus error:", error);
 
     showToast(
       "Could not connect to server",
@@ -744,68 +500,34 @@ async function deleteBus(id) {
   }
 }
 
-
 // =======================================
 // XSS SAFE DISPLAY
 // =======================================
 
 function escapeHtml(value) {
-
-  return String(
-    value ?? ""
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
-
 
 // =======================================
 // LOGOUT
 // =======================================
 
 document
-  .getElementById(
-    "logoutBtn"
-  )
-  .addEventListener(
-    "click",
-    () => {
+  .getElementById("logoutBtn")
+  .addEventListener("click", () => {
+    localStorage.removeItem("operatorToken");
+    localStorage.removeItem("operatorData");
 
-      localStorage.removeItem(
-        "operatorToken"
-      );
-
-      localStorage.removeItem(
-        "operatorData"
-      );
-
-      window.location.href =
-        "operator-login.html";
-
-    }
-  );
-
+    window.location.href = "operator-login.html";
+  });
 
 // =======================================
-// START
+// INITIAL LOAD
 // =======================================
 
 loadBuses();

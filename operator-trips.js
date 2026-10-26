@@ -67,85 +67,43 @@ function headers() {
 // LOAD OPERATOR BUSES
 // =======================================
 
+
 async function loadBuses() {
-
   try {
+    const response = await fetch(BUS_API, {
+      headers: headers(),
+    });
 
-    const response =
-      await fetch(
-        BUS_API,
-        {
-          headers:
-            headers(),
-        }
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Failed to load buses"
       );
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.success) {
-      return;
     }
 
-
-    busSelect.innerHTML =
-      `<option value="">
+    busSelect.innerHTML = `
+      <option value="">
         Select a bus
-      </option>`;
+      </option>
+    `;
 
+    data.buses.forEach((bus) => {
+      const option = document.createElement("option");
 
-    data.buses.forEach(
-      (bus) => {
+      option.value = bus._id;
 
-        const option =
-          document.createElement(
-            "option"
-          );
+      option.textContent =
+        `${bus.busNo} - ${bus.regNo}`;
 
-
-        option.value =
-          bus._id;
-
-
-        option.textContent =
-          `${bus.busNo} - ${bus.regNo}`;
-
-
-        option.dataset.from =
-          bus.from || "";
-
-
-        option.dataset.to =
-          bus.to || "";
-
-
-        option.dataset.depart =
-          bus.depart || "";
-
-
-        option.dataset.arrive =
-          bus.arrive || "";
-
-
-        busSelect.appendChild(
-          option
-        );
-
-      }
-    );
+      busSelect.appendChild(option);
+    });
 
   } catch (error) {
-
-    console.error(
-      "Load buses error:",
-      error
-    );
-
+    console.error("Load buses error:", error);
   }
-
 }
+
 
 
 // Auto fill bus route/time

@@ -251,159 +251,59 @@
       >
 
 
+      
       <div class="form-grid">
 
-
         <div class="input-group">
-
-          <label>
-            Bus Number
-          </label>
-
+          <label for="busNo">Bus Number</label>
           <input
             id="busNo"
             type="text"
             placeholder="RB-001"
             required
           >
-
         </div>
 
-
         <div class="input-group">
-
-          <label>
-            Registration Number
-          </label>
-
+          <label for="regNo">Registration Number</label>
           <input
             id="regNo"
             type="text"
             placeholder="NC-1234"
             required
           >
-
         </div>
 
-
         <div class="input-group">
-
-          <label>From</label>
-
-          <input
-            id="from"
-            type="text"
-            placeholder="Mihintale"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>To</label>
-
-          <input
-            id="to"
-            type="text"
-            placeholder="Colombo"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>Bus Type</label>
-
-         <select id="type" required>
+          <label for="type">Bus Type</label>
+          <select id="type" required>
             <option value="">Select type</option>
             <option value="Private">Private</option>
             <option value="CTB">CTB</option>
-         </select>
+          </select>
         </div>
 
+        
+      <div class="input-group">
+        <label for="totalSeats">
+          Total Seats (Bus Capacity)
+        </label>
 
-        <div class="input-group">
+        <select id="totalSeats" required>
+          <option value="52">52 Seats</option>
+          <option value="54" selected>54 Seats</option>
+          <option value="56">56 Seats</option>
+        </select>
 
-          <label>
-            Distance (KM)
-          </label>
+        <small>
+          Capacity can be changed only before
+          the bus has trips or bookings.
+        </small>
+      </div>
 
-          <input
-            id="distanceKm"
-            type="number"
-            min="0"
-            placeholder="200"
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Departure Time
-          </label>
-
-          <input
-            id="depart"
-            type="time"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Arrival Time
-          </label>
-
-          <input
-            id="arrive"
-            type="time"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Minimum Fare
-          </label>
-
-          <input
-            id="fareMin"
-            type="number"
-            min="0"
-            placeholder="500"
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Maximum Fare
-          </label>
-
-          <input
-            id="fareMax"
-            type="number"
-            min="0"
-            placeholder="1500"
-          >
-
-        </div>
 
       </div>
+
 
 
       <div class="modal-actions">

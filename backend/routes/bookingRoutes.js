@@ -13,8 +13,10 @@ const generateTicketPdf =
   require("../utils/generateTicketPdf");
 
 const {
-  COUNTER_SEATS,
-} = require("../config/seatLayout");
+  getBusSeatLayout,
+  SUPPORTED_CAPACITIES,
+} = require("../config/busSeatLayouts");
+
 
 const {
   protect,
@@ -612,46 +614,45 @@ router.post(
       }
 
 
+      
       // ==================================================
-      // COUNTER SEATS
+      // DYNAMIC BUS SEAT VALIDATION
       // ==================================================
 
-      const counterSeatStrings =
-        (COUNTER_SEATS || [])
-          .map(
-            String
-          );
+      const storedCapacity = Number(bus.totalSeats);
 
+      // Preserve original 54-seat booking behaviour
+      // for older buses with legacy capacity values.
+      const layoutCapacity = SUPPORTED_CAPACITIES.includes(
+        storedCapacity
+      )
+        ? storedCapacity
+        : 54;
 
-      const invalidSeats =
-        normalizedSeats.filter(
-          (seat) =>
-            counterSeatStrings.includes(
-              String(
-                seat
-              )
-            )
-        );
+      // Get seats according to this bus capacity.
+      const {
+        bookableSeats,
+      } = getBusSeatLayout(layoutCapacity);
 
+      const bookableSeatSet = new Set(
+        bookableSeats.map(String)
+      );
 
-      if (
-        invalidSeats.length >
-        0
-      ) {
+      // Reject seats that are not available
+      // for online booking on this bus.
+      const invalidSeats = normalizedSeats.filter(
+        (seat) => !bookableSeatSet.has(String(seat))
+      );
 
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              `Seats ${invalidSeats.join(
-                ", "
-              )} are counter seats and cannot be booked online`,
-          });
+      if (invalidSeats.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            `Seat(s) ${invalidSeats.join(", ")} ` +
+            "cannot be booked online for this bus",
+        });
       }
+
 
 
       // ==================================================

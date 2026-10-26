@@ -8,15 +8,34 @@ const Booking = require("../models/Booking");
 const SeatLock = require("../models/SeatLock");
 const SearchLog = require("../models/SearchLog");
 
+
 const {
-  SEAT_PATTERN,
-  COUNTER_SEATS,
-  BOOKABLE_SEATS,
-} = require("../config/seatLayout");
+  getBusSeatLayout,
+  SUPPORTED_CAPACITIES,
+} = require("../config/busSeatLayouts");
+
 
 const router = express.Router();
 
-const bookableSeatSet = new Set(BOOKABLE_SEATS.map(String));
+
+// =============================================
+// GET SEAT LAYOUT FOR SELECTED BUS
+// =============================================
+
+function getLayoutForBus(bus) {
+  const savedCapacity = Number(bus?.totalSeats);
+
+  // Preserve old 54-seat booking behaviour
+  // for legacy buses (40 or missing capacity).
+  const capacity = SUPPORTED_CAPACITIES.includes(
+    savedCapacity
+  )
+    ? savedCapacity
+    : 54;
+
+  return getBusSeatLayout(capacity);
+}
+
 
 function exactRegex(value) {
   const escaped = String(value).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -56,7 +75,8 @@ function busSummary(bus, trip = null, availableSeats = null) {
     fareMin: trip ? trip.fare : bus.fareMin,
     fareMax: trip ? trip.fare : bus.fareMax,
     journeyDate: trip?.journeyDate || null,
-    totalSeats: BOOKABLE_SEATS.length,
+    totalSeats: getLayoutForBus(bus).bookableSeats.length,
+
     availableSeats,
   };
 }
@@ -125,7 +145,15 @@ router.get("/search", async (req, res) => {
         (!type || exactRegex(type).test(String(trip.busId.type || "")))
     );
 
-    const tripIds = matchingTrips.map((trip) => trip._id);
+    
+    // ============================================
+    // DYNAMIC TRIP SEAT AVAILABILITY
+    // ============================================
+
+    const tripIds = matchingTrips.map(
+      (trip) => trip._id
+    );
+
     const occupiedByTrip = new Map();
 
     if (tripIds.length > 0) {
@@ -136,18 +164,44 @@ router.get("/search", async (req, res) => {
 
       for (const lock of locks) {
         const key = String(lock.tripId);
-        if (!occupiedByTrip.has(key)) occupiedByTrip.set(key, new Set());
-        if (bookableSeatSet.has(String(lock.seat))) {
-          occupiedByTrip.get(key).add(String(lock.seat));
+
+        if (!occupiedByTrip.has(key)) {
+          occupiedByTrip.set(key, new Set());
         }
+
+        occupiedByTrip
+          .get(key)
+          .add(String(lock.seat));
       }
     }
 
     const buses = matchingTrips.map((trip) => {
-      const occupied = occupiedByTrip.get(String(trip._id))?.size || 0;
-      const remaining = Math.max(0, BOOKABLE_SEATS.length - occupied);
-      return busSummary(trip.busId, trip, remaining);
+      // Get selected bus's actual layout.
+      const { bookableSeats } = getLayoutForBus(
+        trip.busId
+      );
+
+      const occupiedSet =
+        occupiedByTrip.get(String(trip._id)) ||
+        new Set();
+
+      // Count only seats allowed for online booking.
+      const occupied = bookableSeats.filter(
+        (seat) => occupiedSet.has(String(seat))
+      ).length;
+
+      const remaining = Math.max(
+        0,
+        bookableSeats.length - occupied
+      );
+
+      return busSummary(
+        trip.busId,
+        trip,
+        remaining
+      );
     });
+
 
     return res.json({ success: true, date, buses });
   } catch (error) {
@@ -287,10 +341,12 @@ router.get("/stats", async (req, res) => {
   }
 });
 
+
 // ======================================================
-// TRIP-SPECIFIC SEAT MAP
-// GET /api/buses/:id/seats?date=YYYY-MM-DD&tripId=TRIP_ID
+// DYNAMIC TRIP-SPECIFIC SEAT MAP
+// GET /api/buses/:id/seats?date=YYYY-MM-DD&tripId=...
 // ======================================================
+
 router.get("/:id/seats", async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
@@ -300,40 +356,72 @@ router.get("/:id/seats", async (req, res) => {
     if (!isValidDate(date)) {
       return res.status(400).json({
         success: false,
-        message: "Valid date (YYYY-MM-DD) is required",
+        message: "Valid journey date is required",
       });
     }
 
-    if (!mongoose.isValidObjectId(busId) || !mongoose.isValidObjectId(tripId)) {
+    if (
+      !mongoose.isValidObjectId(busId) ||
+      !mongoose.isValidObjectId(tripId)
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Valid bus ID and tripId are required",
+        message: "Valid bus ID and trip ID are required",
       });
     }
 
+    // Get physical bus and selected trip.
     const [bus, trip] = await Promise.all([
       Bus.findById(busId),
       Trip.findById(tripId),
     ]);
 
     if (!bus) {
-      return res.status(404).json({ success: false, message: "Bus not found" });
-    }
-    if (!trip) {
-      return res.status(404).json({ success: false, message: "Trip not found" });
-    }
-    if (String(trip.busId) !== String(bus._id) || trip.journeyDate !== date) {
-      return res.status(409).json({
+      return res.status(404).json({
         success: false,
-        message: "Trip does not match the selected bus and date",
+        message: "Bus not found",
       });
     }
+
+    if (!trip) {
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found",
+      });
+    }
+
+    // Validate selected trip belongs to this bus.
+    if (
+      String(trip.busId) !== String(bus._id) ||
+      trip.journeyDate !== date
+    ) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Trip does not match the selected bus and date",
+      });
+    }
+
     if (trip.status !== "Active") {
       return res.status(409).json({
         success: false,
         message: "This trip is not available for booking",
       });
     }
+
+    // ============================================
+    // DYNAMIC SEAT LAYOUT
+    // ============================================
+
+    const layout = getLayoutForBus(bus);
+
+    const bookableSeatSet = new Set(
+      layout.bookableSeats.map(String)
+    );
+
+    // ============================================
+    // LOAD TRIP-SPECIFIC SEAT LOCKS
+    // ============================================
 
     const seatLocks = await SeatLock.find({
       tripId: trip._id,
@@ -342,15 +430,28 @@ router.get("/:id/seats", async (req, res) => {
 
     const heldSeats = [];
     const bookedSeats = [];
+
     for (const lock of seatLocks) {
       const seat = String(lock.seat);
-      if (!bookableSeatSet.has(seat)) continue;
-      if (lock.status === "held") heldSeats.push(seat);
-      else bookedSeats.push(seat);
+
+      if (!bookableSeatSet.has(seat)) {
+        continue;
+      }
+
+      if (lock.status === "held") {
+        heldSeats.push(seat);
+      } else {
+        bookedSeats.push(seat);
+      }
     }
+
+    // ============================================
+    // RESPONSE FOR PASSENGER SEAT MAP
+    // ============================================
 
     return res.json({
       success: true,
+
       bus: {
         id: bus._id,
         busNo: bus.busNo,
@@ -361,22 +462,33 @@ router.get("/:id/seats", async (req, res) => {
         fare: trip.fare,
         fareMin: trip.fare,
         fareMax: trip.fare,
+        totalSeats: layout.totalSeats,
       },
+
       tripId: trip._id,
       date: trip.journeyDate,
-      pattern: SEAT_PATTERN,
-      counterSeats: COUNTER_SEATS,
+
+      // Physical seat layout for this bus.
+      pattern: layout.pattern,
+
+      // Seats reserved for counter booking.
+      counterSeats: layout.counterSeats,
+
+      // Current trip-specific availability.
       heldSeats,
       bookedSeats,
     });
+
   } catch (error) {
-    console.error("Seat map error:", error);
+    console.error("Dynamic seat map error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to load seat map",
     });
   }
 });
+
 
 // ======================================================
 // SINGLE BUS
