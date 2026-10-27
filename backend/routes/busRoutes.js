@@ -15,6 +15,16 @@ const {
 const router = express.Router();
 
 // =============================================
+// OPERATOR-OWNED BUSES ONLY
+// =============================================
+
+const OPERATOR_BUS_FILTER = {
+  operatorId: {
+    $type: "objectId"
+  }
+};
+
+// =============================================
 // DYNAMIC BUS SEAT LAYOUT
 // =============================================
 
@@ -25,8 +35,7 @@ function layoutForBus(bus) {
     return getBusSeatLayout(capacity);
   }
 
-  // Preserve the original seat map for older
-  // buses saved with the legacy default of 40.
+  // Legacy compatibility.
   if (
     bus?.totalSeats == null ||
     capacity === 40
@@ -34,8 +43,8 @@ function layoutForBus(bus) {
     return getBusSeatLayout(54);
   }
 
-  // Do not silently display a 54-seat layout
-  // for unsupported 52/56-seat buses.
+  // Unsupported capacities are not converted
+  // silently to 54 seats.
   return null;
 }
 
@@ -122,8 +131,8 @@ function busSummary(
 
     journeyDate: trip?.journeyDate || null,
 
-    // Existing search response uses this field
-    // for online-bookable seats, not physical seats.
+    // Preserve existing frontend response:
+    // totalSeats represents online bookable seats.
     totalSeats: layout?.bookableSeats.length ?? 0,
 
     availableSeats,
@@ -170,31 +179,45 @@ router.get("/search", async (req, res) => {
     SearchLog.create({ to }).catch(() => {});
 
     // =========================================
-    // LEGACY BUS CATALOG
+    // SEARCH WITHOUT DATE
     // =========================================
+    // Route information now belongs to Trip.
+    // Dummy buses are excluded by population.
 
     if (!date) {
-      const filter = {
+      const trips = await Trip.find({
         to: exactRegex(to),
-      };
+        status: "Active",
+      })
+        .sort({
+          journeyDate: 1,
+          departureTime: 1
+        })
+        .populate({
+          path: "busId",
+          match: OPERATOR_BUS_FILTER,
+        });
 
-      if (type) {
-        filter.type = exactRegex(type);
-      }
-
-      const buses = await Bus.find(filter)
-        .sort({ depart: 1 });
+      const buses = trips
+        .filter((trip) =>
+          trip.busId &&
+          (
+            !type ||
+            exactRegex(type).test(
+              String(trip.busId.type || "")
+            )
+          )
+        )
+        .map((trip) =>
+          busSummary(trip.busId, trip)
+        );
 
       return res.json({
         success: true,
         date: null,
-
-        buses: buses.map((bus) =>
-          busSummary(bus)
-        ),
-
+        buses,
         message:
-          "Select a journey date to see scheduled trips",
+          "Select a journey date to see available seats",
       });
     }
 
@@ -208,7 +231,10 @@ router.get("/search", async (req, res) => {
       status: "Active",
     })
       .sort({ departureTime: 1 })
-      .populate("busId");
+      .populate({
+        path: "busId",
+        match: OPERATOR_BUS_FILTER,
+      });
 
     const matchingTrips = trips.filter(
       (trip) =>
@@ -269,8 +295,7 @@ router.get("/search", async (req, res) => {
         occupiedByTrip.get(String(trip._id)) ||
         new Set();
 
-      // Count occupied seats only if they
-      // belong to this bus's bookable layout.
+      // Count only online-bookable seats.
       const occupied = layout.bookableSeats.filter(
         (seat) =>
           occupiedSeats.has(String(seat))
@@ -306,31 +331,55 @@ router.get("/search", async (req, res) => {
 
 // =============================================
 // DISTINCT DESTINATIONS
+// GET /api/buses/distinct/destinations
 // =============================================
 
-router.get("/distinct/destinations", async (req, res) => {
-  try {
-    const destinations = await Bus.distinct("to");
+router.get(
+  "/distinct/destinations",
+  async (req, res) => {
+    try {
+      // Find operator-owned buses.
+      const operatorBusIds = await Bus.distinct(
+        "_id",
+        OPERATOR_BUS_FILTER
+      );
 
-    return res.json({
-      success: true,
-      destinations: destinations
-        .filter(Boolean)
-        .sort(),
-    });
+      // Only active trips belonging to them.
+      const destinations = await Trip.distinct(
+        "to",
+        {
+          status: "Active",
+          busId: {
+            $in: operatorBusIds
+          }
+        }
+      );
 
-  } catch (error) {
-    console.error("Destination error:", error);
+      return res.json({
+        success: true,
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to load destinations",
-    });
+        destinations: destinations
+          .filter(Boolean)
+          .sort(),
+      });
+
+    } catch (error) {
+      console.error(
+        "Destination error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load destinations",
+      });
+    }
   }
-});
+);
 
 // =============================================
 // TOP SEARCHED ROUTES
+// GET /api/buses/top-searched
 // =============================================
 
 router.get("/top-searched", async (req, res) => {
@@ -344,86 +393,121 @@ router.get("/top-searched", async (req, res) => {
       ? Math.max(1, Math.min(requestedLimit, 20))
       : 9;
 
-    const topDestinations = await SearchLog.aggregate([
-      {
-        $group: {
-          _id: { $toLower: "$to" },
-          searchCount: { $sum: 1 },
-        },
-      },
-      {
-        $sort: {
-          searchCount: -1,
-          _id: 1,
-        },
-      },
-      { $limit: limit },
-    ]);
+    // =========================================
+    // GET OPERATOR-OWNED BUSES
+    // =========================================
 
-    const routes = [];
+    const operatorBusIds = await Bus.distinct(
+      "_id",
+      OPERATOR_BUS_FILTER
+    );
 
-    for (const item of topDestinations) {
-      if (!item._id) continue;
+    // =========================================
+    // GET ACTIVE TRIPS
+    // =========================================
 
-      const bus = await Bus.findOne({
-        to: exactRegex(item._id),
-      }).sort({
-        depart: 1,
-        _id: 1,
+    const trips = await Trip.find({
+      status: "Active",
+      busId: {
+        $in: operatorBusIds
+      }
+    })
+      .sort({
+        journeyDate: 1,
+        departureTime: 1
+      })
+      .populate({
+        path: "busId",
+        match: OPERATOR_BUS_FILTER,
       });
 
-      if (!bus) continue;
+    // =========================================
+    // UNIQUE DESTINATIONS
+    // =========================================
 
-      routes.push({
-        from: bus.from,
-        to: bus.to,
-        type: bus.type,
+    const tripByDestination = new Map();
 
-        depart: bus.depart,
-        arrive: bus.arrive,
+    for (const trip of trips) {
+      if (!trip.busId || !trip.to) {
+        continue;
+      }
 
-        distanceKm: bus.distanceKm,
-        fareMin: bus.fareMin,
-        fareMax: bus.fareMax,
+      const key = String(trip.to)
+        .trim()
+        .toLowerCase();
 
-        searchCount: item.searchCount,
-      });
-    }
+      if (!key) continue;
 
-    // Preserve legacy fallback.
-    if (routes.length === 0) {
-      const destinations = (
-        await Bus.distinct("to")
-      )
-        .filter(Boolean)
-        .slice(0, limit);
-
-      for (const to of destinations) {
-        const bus = await Bus.findOne({
-          to,
-        }).sort({
-          depart: 1,
-          _id: 1,
-        });
-
-        if (!bus) continue;
-
-        routes.push({
-          from: bus.from,
-          to: bus.to,
-          type: bus.type,
-
-          depart: bus.depart,
-          arrive: bus.arrive,
-
-          distanceKm: bus.distanceKm,
-          fareMin: bus.fareMin,
-          fareMax: bus.fareMax,
-
-          searchCount: 0,
-        });
+      if (!tripByDestination.has(key)) {
+        tripByDestination.set(key, trip);
       }
     }
+
+    // =========================================
+    // SEARCH COUNTS
+    // =========================================
+
+    const counts = await SearchLog.aggregate([
+      {
+        $group: {
+          _id: {
+            $toLower: "$to"
+          },
+
+          searchCount: {
+            $sum: 1
+          },
+        },
+      },
+    ]);
+
+    const searchCounts = new Map(
+      counts.map((item) => [
+        String(item._id || "")
+          .trim()
+          .toLowerCase(),
+
+        item.searchCount,
+      ])
+    );
+
+    // =========================================
+    // BUILD HOMEPAGE ROUTES
+    // =========================================
+
+    const routes = [
+      ...tripByDestination.entries()
+    ]
+      .map(([key, trip]) => ({
+        trip,
+        searchCount:
+          searchCounts.get(key) || 0,
+      }))
+
+      .sort(
+        (a, b) =>
+          b.searchCount - a.searchCount
+      )
+
+      .slice(0, limit)
+
+      .map(({ trip, searchCount }) => ({
+        from: trip.from,
+        to: trip.to,
+
+        type: trip.busId.type,
+
+        depart: trip.departureTime,
+        arrive: trip.arrivalTime,
+
+        distanceKm:
+          trip.busId.distanceKm ?? null,
+
+        fareMin: trip.fare,
+        fareMax: trip.fare,
+
+        searchCount,
+      }));
 
     return res.json({
       success: true,
@@ -431,7 +515,10 @@ router.get("/top-searched", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Top searched routes error:", error);
+    console.error(
+      "Top searched routes error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -442,6 +529,7 @@ router.get("/top-searched", async (req, res) => {
 
 // =============================================
 // WEBSITE STATISTICS
+// GET /api/buses/stats
 // =============================================
 
 router.get("/stats", async (req, res) => {
@@ -450,6 +538,9 @@ router.get("/stats", async (req, res) => {
       passengerAgg,
       totalRoutes,
     ] = await Promise.all([
+
+      // Existing passenger booking statistics
+      // are intentionally unchanged.
       Booking.aggregate([
         {
           $match: {
@@ -468,26 +559,34 @@ router.get("/stats", async (req, res) => {
         {
           $group: {
             _id: null,
-            total: { $sum: "$seatCount" },
+            total: {
+              $sum: "$seatCount"
+            },
           },
         },
       ]),
 
-      Bus.countDocuments(),
+      // Operator-owned buses only.
+      Bus.countDocuments(OPERATOR_BUS_FILTER),
     ]);
 
     return res.json({
       success: true,
 
-      passengers: passengerAgg[0]?.total || 0,
+      passengers:
+        passengerAgg[0]?.total || 0,
 
+      // Keep existing frontend field name.
       searchRoutes: totalRoutes,
 
       districts: 25,
     });
 
   } catch (error) {
-    console.error("Statistics error:", error);
+    console.error(
+      "Statistics error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -504,13 +603,20 @@ router.get("/stats", async (req, res) => {
 router.get("/:id/seats", async (req, res) => {
   try {
     const busId = req.params.id;
-    const tripId = String(req.query.tripId || "").trim();
-    const date = String(req.query.date || "").trim();
+
+    const tripId = String(
+      req.query.tripId || ""
+    ).trim();
+
+    const date = String(
+      req.query.date || ""
+    ).trim();
 
     if (!isValidDate(date)) {
       return res.status(400).json({
         success: false,
-        message: "Valid journey date is required",
+        message:
+          "Valid journey date is required",
       });
     }
 
@@ -520,16 +626,21 @@ router.get("/:id/seats", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Valid bus ID and trip ID required",
+        message:
+          "Valid bus ID and trip ID required",
       });
     }
 
     // =========================================
-    // FIND BUS AND TRIP
+    // OPERATOR BUS AND TRIP
     // =========================================
 
     const [bus, trip] = await Promise.all([
-      Bus.findById(busId),
+      Bus.findOne({
+        _id: busId,
+        ...OPERATOR_BUS_FILTER,
+      }),
+
       Trip.findById(tripId),
     ]);
 
@@ -547,6 +658,10 @@ router.get("/:id/seats", async (req, res) => {
       });
     }
 
+    // =========================================
+    // VERIFY TRIP
+    // =========================================
+
     if (
       String(trip.busId) !== String(bus._id) ||
       trip.journeyDate !== date
@@ -561,12 +676,13 @@ router.get("/:id/seats", async (req, res) => {
     if (trip.status !== "Active") {
       return res.status(409).json({
         success: false,
-        message: "This trip is unavailable for booking",
+        message:
+          "This trip is unavailable for booking",
       });
     }
 
     // =========================================
-    // GET ACTUAL BUS LAYOUT
+    // GET PHYSICAL SEAT LAYOUT
     // =========================================
 
     const layout = layoutForBus(bus);
@@ -574,6 +690,7 @@ router.get("/:id/seats", async (req, res) => {
     if (!layout) {
       return res.status(409).json({
         success: false,
+
         message:
           `Unsupported bus capacity (${bus.totalSeats}). ` +
           "Only 50 and 54 seats are supported.",
@@ -611,7 +728,7 @@ router.get("/:id/seats", async (req, res) => {
     }
 
     // =========================================
-    // RESPONSE TO PASSENGER SEAT MAP
+    // PASSENGER SEAT MAP RESPONSE
     // =========================================
 
     return res.json({
@@ -619,6 +736,7 @@ router.get("/:id/seats", async (req, res) => {
 
       bus: {
         id: bus._id,
+
         busNo: bus.busNo,
         regNo: bus.regNo,
         type: bus.type,
@@ -639,11 +757,11 @@ router.get("/:id/seats", async (req, res) => {
       tripId: trip._id,
       date: trip.journeyDate,
 
-      // Exact reference screenshot pattern.
+      // Preserve exact screenshot positions.
       pattern: layout.pattern,
 
-      // 50 seats -> 13 columns
-      // 54 seats -> 11 columns
+      // 50 seats = 13 columns.
+      // 54 seats = 11 columns.
       columns: layout.columns,
 
       counterSeats: layout.counterSeats,
@@ -652,7 +770,10 @@ router.get("/:id/seats", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Dynamic seat map error:", error);
+    console.error(
+      "Dynamic seat map error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -663,18 +784,25 @@ router.get("/:id/seats", async (req, res) => {
 
 // =============================================
 // SINGLE BUS DETAILS
+// GET /api/buses/:id
 // =============================================
 
 router.get("/:id", async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (
+      !mongoose.isValidObjectId(req.params.id)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid bus ID",
       });
     }
 
-    const bus = await Bus.findById(req.params.id);
+    // Operator-owned buses only.
+    const bus = await Bus.findOne({
+      _id: req.params.id,
+      ...OPERATOR_BUS_FILTER,
+    });
 
     if (!bus) {
       return res.status(404).json({
@@ -689,7 +817,10 @@ router.get("/:id", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Load bus error:", error);
+    console.error(
+      "Load bus error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,

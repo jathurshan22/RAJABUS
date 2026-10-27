@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,237 +6,344 @@ const User = require("../models/User");
 const Booking = require("../models/Booking");
 const Bus = require("../models/Bus");
 const Contact = require("../models/Contact");
+const Operator = require("../models/Operator");
 const { protect, adminOnly } = require("../middleware/auth");
 
-// Every route below requires a valid admin JWT
+// =============================================
+// ADMIN AUTHENTICATION
+// =============================================
+
+// All routes require a valid Admin JWT.
 router.use(protect, adminOnly);
 
-/* ADMIN STATS */
+// =============================================
+// OPERATOR-OWNED BUS FILTER
+// =============================================
+
+const OPERATOR_BUS_FILTER = {
+    operatorId: {
+        $type: "objectId"
+    }
+};
+
+// =============================================
+// ADMIN DASHBOARD STATISTICS
+// GET /api/admin/stats
+// =============================================
+
 router.get("/stats", async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments();
-        const totalBookings = await Booking.countDocuments();
-        const totalBuses = await Bus.countDocuments();
+        const totalUsers =
+            await User.countDocuments();
+
+        const totalBookings =
+            await Booking.countDocuments();
+
+        // Count operator-owned buses only.
+        const totalBuses =
+            await Bus.countDocuments(
+                OPERATOR_BUS_FILTER
+            );
 
         const revenueData = await Booking.aggregate([
-            { $match: { status: "Paid" } },
-            { $group: { _id: null, total: { $sum: "$totalFare" } } }
+            {
+                $match: {
+                    status: "Paid"
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    total: {
+                        $sum: "$totalFare"
+                    }
+                }
+            }
         ]);
 
-        res.json({
+        return res.json({
             success: true,
             totalUsers,
             totalBookings,
             totalBuses,
-            totalRevenue: revenueData[0]?.total || 0
+            totalRevenue:
+                revenueData[0]?.total || 0
         });
 
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 });
 
-/* GET USERS */
+// =============================================
+// GET USERS
+// GET /api/admin/users
+// =============================================
+
 router.get("/users", async (req, res) => {
     try {
-        const users = await User.find().select("-password").sort({ createdAt: -1 });
+        const users = await User.find()
+            .select("-password")
+            .sort({
+                createdAt: -1
+            });
 
-        // Attach a real booking count per user (Booking.userId stores the
-        // Mongo _id as a string, so we match against that).
         const usersWithCounts = await Promise.all(
             users.map(async (user) => {
-                const bookingCount = await Booking.countDocuments({
-                    userId: String(user._id),
-                });
+
+                const bookingCount =
+                    await Booking.countDocuments({
+                        userId: String(user._id)
+                    });
 
                 return {
                     ...user.toObject(),
-                    bookingCount,
+                    bookingCount
                 };
             })
         );
 
-        res.json({
+        return res.json({
             success: true,
             users: usersWithCounts
         });
 
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 });
 
-/* GET BOOKINGS */
+// =============================================
+// GET BOOKINGS
+// GET /api/admin/bookings
+// =============================================
+
 router.get("/bookings", async (req, res) => {
     try {
-        const bookings = await Booking.find().sort({ createdAt: -1 });
+        const bookings = await Booking.find()
+            .sort({
+                createdAt: -1
+            });
 
-        res.json({
+        return res.json({
             success: true,
             bookings
         });
 
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 });
 
-/* CANCEL BOOKING */
-router.put("/bookings/:id/cancel", async (req, res) => {
-    try {
-        const booking = await Booking.findByIdAndUpdate(
-            req.params.id,
-            { status: "Cancelled" },
-            { new: true }
-        );
+// =============================================
+// CANCEL BOOKING
+// PUT /api/admin/bookings/:id/cancel
+// =============================================
 
-        res.json({
-            success: true,
-            message: "Booking cancelled",
-            booking
-        });
+router.put(
+    "/bookings/:id/cancel",
+    async (req, res) => {
+        try {
+            const booking =
+                await Booking.findByIdAndUpdate(
+                    req.params.id,
+                    {
+                        status: "Cancelled"
+                    },
+                    {
+                        new: true
+                    }
+                );
 
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+            return res.json({
+                success: true,
+                message: "Booking cancelled",
+                booking
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
     }
-});
+);
 
-/* GET BUSES */
+// =============================================
+// GET OPERATOR-OWNED BUSES
+// GET /api/admin/buses
+// =============================================
+
+
+/* =========================================
+   GET OPERATOR BUSES WITH COMPANY NAME
+   GET /api/admin/buses
+========================================= */
+
 router.get("/buses", async (req, res) => {
     try {
-        const buses = await Bus.find().sort({ createdAt: -1 });
 
-        res.json({
+        const buses = await Bus.find({
+            operatorId: {
+                $type: "objectId"
+            }
+        })
+        .populate({
+            path: "operatorId",
+            model: Operator,
+            select: "companyName ownerName"
+        })
+        .sort({
+            createdAt: -1
+        });
+
+        return res.json({
             success: true,
             buses
         });
 
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
 
-/* ADD BUS */
-router.post("/buses", async (req, res) => {
-    try {
-        const bus = await Bus.create(req.body);
-
-        res.status(201).json({
-            success: true,
-            message: "Bus added successfully",
-            bus
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-/* UPDATE BUS */
-router.put("/buses/:id", async (req, res) => {
-    try {
-        const bus = await Bus.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
+        console.error(
+            "Admin buses loading error:",
+            error
         );
 
-        res.json({
-            success: true,
-            message: "Bus updated successfully",
-            bus
-        });
-
-    } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: error.message
+            message: "Failed to load operator buses"
         });
     }
 });
 
-/* DELETE BUS */
-router.delete("/buses/:id", async (req, res) => {
-    try {
-        await Bus.findByIdAndDelete(req.params.id);
 
-        res.json({
-            success: true,
-            message: "Bus deleted successfully"
-        });
+// =============================================
+// ADD BUS - DISABLED
+// POST /api/admin/buses
+// =============================================
 
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+// Only Bus Operators are allowed to add buses.
+// Admin must not create unowned dummy buses.
+
+router.post("/buses", (req, res) => {
+    return res.status(403).json({
+        success: false,
+        message:
+            "Only Bus Operators can add buses."
+    });
 });
 
-/* GET CONTACT MESSAGES */
+// =============================================
+// UPDATE BUS - DISABLED
+// PUT /api/admin/buses/:id
+// =============================================
+
+// Operators manage their own buses.
+// Admin cannot overwrite operator bus details.
+
+router.put("/buses/:id", (req, res) => {
+    return res.status(403).json({
+        success: false,
+        message:
+            "Only the owning Bus Operator can update buses."
+    });
+});
+
+// =============================================
+// DELETE BUS - DISABLED
+// DELETE /api/admin/buses/:id
+// =============================================
+
+// Protect related Trips, Bookings and SeatLocks.
+
+router.delete("/buses/:id", (req, res) => {
+    return res.status(403).json({
+        success: false,
+        message:
+            "Bus deletion is disabled to protect trips and bookings."
+    });
+});
+
+// =============================================
+// GET CONTACT MESSAGES
+// GET /api/admin/messages
+// =============================================
+
 router.get("/messages", async (req, res) => {
     try {
-        const messages = await Contact.find().sort({ createdAt: -1 });
+        const messages = await Contact.find()
+            .sort({
+                createdAt: -1
+            });
 
-        res.json({
+        return res.json({
             success: true,
             messages
         });
 
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 });
 
-/* MARK MESSAGE AS READ */
-router.put("/messages/:id/read", async (req, res) => {
-    try {
-        const message = await Contact.findByIdAndUpdate(
-            req.params.id,
-            { isRead: true },
-            { new: true }
-        );
+// =============================================
+// MARK MESSAGE AS READ
+// PUT /api/admin/messages/:id/read
+// =============================================
 
-        if (!message) {
-            return res.status(404).json({
+router.put(
+    "/messages/:id/read",
+    async (req, res) => {
+        try {
+
+            const message =
+                await Contact.findByIdAndUpdate(
+                    req.params.id,
+                    {
+                        isRead: true
+                    },
+                    {
+                        new: true
+                    }
+                );
+
+            if (!message) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Message not found"
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Marked as read",
+                data: message
+            });
+
+        } catch (error) {
+            return res.status(500).json({
                 success: false,
-                message: "Message not found",
+                message: error.message
             });
         }
-
-        res.json({
-            success: true,
-            message: "Marked as read",
-            data: message,
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
     }
-});
+);
+
+// =============================================
+// EXPORT ADMIN ROUTER
+// =============================================
 
 module.exports = router;
