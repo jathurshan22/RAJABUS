@@ -1,3 +1,9 @@
+// DNS used for MongoDB connection
+require("node:dns").setServers([
+  "1.1.1.1",
+  "8.8.8.8",
+]);
+
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -62,6 +68,9 @@ const operatorTripRoutes =
 
 const tripRoutes =
   require("./routes/tripRoutes");
+
+const tripChatRoutes =
+  require("./routes/tripChatRoutes");
 
 
 // ======================================================
@@ -163,6 +172,11 @@ app.use(
 app.use(
   "/api/trips",
   tripRoutes
+);
+
+app.use(
+  "/api/trip-chat",
+  tripChatRoutes
 );
 
 app.use(
