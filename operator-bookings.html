@@ -1,676 +1,313 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Bus Bookings | RajaBus Operator</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Passenger Bookings | RajaBus</title>
-
-  <!-- EXISTING OPERATOR DESIGN -->
-
-  <link
-    rel="stylesheet"
-    href="operator-trips.css"
-  >
-
+  <link rel="stylesheet" href="operator-trips.css">
   <link rel="stylesheet" href="operator-bookings.css">
-  <!-- TOAST STYLES -->
-
-  <link
-    rel="stylesheet"
-    href="toast.css"
-  >
-
-  <!-- FONT AWESOME -->
+  <link rel="stylesheet" href="toast.css">
 
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   >
-
-  <!-- GOOGLE FONTS -->
-
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
   >
-
 </head>
 
-
 <body>
+  <div id="toastContainer" class="toast-container"></div>
 
-<!-- ========================================
-     TOAST NOTIFICATIONS
-     ======================================== -->
+  <div class="layout">
 
-<div
-  id="toastContainer"
-  class="toast-container"
-></div>
-
-
-<div class="layout">
-
-  <!-- ========================================
-       OPERATOR SIDEBAR
-       ======================================== -->
-
-  <aside class="sidebar">
-
-    <div class="logo">
-      Raja<span>Bus</span>
-    </div>
-
-    <p class="portal">
-      Operator Portal
-    </p>
-
-    <nav>
-
-      <!-- DASHBOARD -->
-
-      <a href="operator-dashboard.html">
-
-        <i class="fa-solid fa-chart-line"></i>
-
-        Dashboard
-
-      </a>
-
-      <!-- MY BUSES -->
-
-      <a href="operator-buses.html">
-
-        <i class="fa-solid fa-bus"></i>
-
-        My Buses
-
-      </a>
-
-      <!-- TRIPS -->
-
-      <a href="operator-trips.html">
-
-        <i class="fa-solid fa-route"></i>
-
-        Trips
-
-      </a>
-
-      <!-- BOOKINGS -->
-
-      <a
-        href="operator-bookings.html"
-        class="active"
-        aria-current="page"
-      >
-
-        <i class="fa-solid fa-ticket"></i>
-
-        Bookings
-
-      </a>
-
-      <!-- PROFILE -->
-
-      <a href="operator-profile.html">
-
-        <i class="fa-solid fa-user"></i>
-
-        Profile
-
-      </a>
-
-    </nav>
-
-    <!-- LOGOUT -->
-
-    <button
-      id="logoutBtn"
-      type="button"
-      class="logout-btn"
-    >
-
-      <i class="fa-solid fa-right-from-bracket"></i>
-
-      Logout
-
-    </button>
-
-  </aside>
-
-
-  <!-- ========================================
-       MAIN CONTENT
-       ======================================== -->
-
-  <main class="main">
-
-    <!-- ======================================
-         PAGE HEADER
-         ====================================== -->
-
-    <header class="page-header">
-
-      <div>
-
-        <p>
-          Booking Management
-        </p>
-
-        <h1>
-          Passenger Bookings
-        </h1>
-
+    <!-- OPERATOR SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        Raja<span>Bus</span>
       </div>
+
+      <p class="portal">Operator Portal</p>
+
+      <nav aria-label="Operator navigation">
+        <a href="operator-dashboard.html">
+          <i class="fa-solid fa-chart-line"></i>
+          Dashboard
+        </a>
+
+        <a href="operator-buses.html">
+          <i class="fa-solid fa-bus"></i>
+          My Buses
+        </a>
+
+        <a href="operator-trips.html">
+          <i class="fa-solid fa-route"></i>
+          Trips
+        </a>
+
+        <a
+          href="operator-bookings.html"
+          class="active"
+          aria-current="page"
+        >
+          <i class="fa-solid fa-ticket"></i>
+          Bookings
+        </a>
+
+        <a href="operator-profile.html">
+          <i class="fa-solid fa-user"></i>
+          Profile
+        </a>
+      </nav>
 
       <button
-        id="refreshBookingsBtn"
+        id="logoutBtn"
         type="button"
-        class="primary-btn"
+        class="logout-btn"
+      >
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
+      </button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- PAGE HEADER -->
+      <header class="page-header ob-header">
+        <div>
+          <p>Booking Management</p>
+          <h1>Daily Bus Bookings</h1>
+          <span class="ob-subtitle">
+            See every bus assigned on a selected day
+            and its passenger list.
+          </span>
+        </div>
+
+        <button
+          id="refreshBookingsBtn"
+          type="button"
+          class="primary-btn"
+        >
+          <i class="fa-solid fa-rotate"></i>
+          Refresh
+        </button>
+      </header>
+
+      <!-- DAILY STATISTICS -->
+      <section
+        class="ob-stats"
+        aria-label="Selected-day booking statistics"
+      >
+        <div class="ob-stat">
+          <i class="fa-solid fa-bus"></i>
+          <div>
+            <span>Assigned Buses</span>
+            <strong id="assignedBusCount">—</strong>
+          </div>
+        </div>
+
+        <div class="ob-stat">
+          <i class="fa-solid fa-route"></i>
+          <div>
+            <span>Scheduled Trips</span>
+            <strong id="dailyTripCount">—</strong>
+          </div>
+        </div>
+
+        <div class="ob-stat">
+          <i class="fa-solid fa-ticket"></i>
+          <div>
+            <span>Total Bookings</span>
+            <strong id="totalBookings">—</strong>
+          </div>
+        </div>
+
+        <div class="ob-stat">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <span>Paid Bookings</span>
+            <strong id="paidBookings">—</strong>
+          </div>
+        </div>
+
+        <div class="ob-stat">
+          <i class="fa-solid fa-clock"></i>
+          <div>
+            <span>Pending Bookings</span>
+            <strong id="pendingBookings">—</strong>
+          </div>
+        </div>
+
+        <div class="ob-stat">
+          <i class="fa-solid fa-chair"></i>
+          <div>
+            <span>Paid Seats</span>
+            <strong id="confirmedSeats">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUS-WISE BOOKINGS -->
+      <section
+        class="ob-panel"
+        aria-labelledby="dailyListTitle"
       >
 
-        <i class="fa-solid fa-rotate"></i>
+        <div class="ob-section-heading">
+          <div>
+            <h2 id="dailyListTitle">
+              Assigned Buses &amp; Passengers
+            </h2>
+            <p>
+              Bus-wise and trip-wise booking details.
+              Reports include Paid passengers only.
+            </p>
+          </div>
 
-        Refresh Bookings
-
-      </button>
-
-    </header>
-
-
-    <!-- ======================================
-         BOOKING STATISTICS
-         ====================================== -->
-
-    <section
-      class="summary-grid bookings-summary"
-      aria-label="Booking statistics"
-    >
-
-      <!-- TOTAL BOOKINGS -->
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-ticket"></i>
-
-        <div>
-
-          <span>
-            Total Bookings
+          <span
+            id="selectedDateLabel"
+            class="ob-date-tag"
+          >
+            Select a date
           </span>
-
-          <h2 id="totalBookings">
-            —
-          </h2>
-
         </div>
 
-      </div>
+        <!-- FILTERS -->
+        <div class="ob-filters">
 
+          <div class="ob-field">
+            <label for="bookingDateFilter">
+              Journey Date
+            </label>
+            <input
+              id="bookingDateFilter"
+              type="date"
+              required
+            >
+          </div>
 
-      <!-- PAID BOOKINGS -->
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-circle-check"></i>
-
-        <div>
-
-          <span>
-            Paid Bookings
-          </span>
-
-          <h2 id="paidBookings">
-            —
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <!-- PENDING BOOKINGS -->
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-clock"></i>
-
-        <div>
-
-          <span>
-            Pending Bookings
-          </span>
-
-          <h2 id="pendingBookings">
-            —
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <!-- CANCELLED BOOKINGS -->
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-circle-xmark"></i>
-
-        <div>
-
-          <span>
-            Cancelled Bookings
-          </span>
-
-          <h2 id="cancelledBookings">
-            —
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <!-- EXPIRED BOOKINGS -->
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-hourglass-end"></i>
-
-        <div>
-
-          <span>
-            Expired Bookings
-          </span>
-
-          <h2 id="expiredBookings">
-            —
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <!-- TOTAL REVENUE -->
-
-      <div class="summary-card revenue-card">
-
-        <i class="fa-solid fa-money-bill-wave"></i>
-
-        <div>
-
-          <span>
-            Paid Revenue (LKR)
-          </span>
-
-          <h2 id="totalRevenue">
-            —
-          </h2>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ======================================
-         BOOKINGS TABLE CARD
-         ====================================== -->
-
-    <section class="content-card bookings-content">
-
-      <!-- SECTION HEADER -->
-
-      <div class="section-title">
-
-        <h2>
-          All Passenger Bookings
-        </h2>
-
-        <p>
-          View passenger reservations,
-          booked seats and payment status
-          for your scheduled trips.
-        </p>
-
-      </div>
-
-
-      <!-- ====================================
-           SEARCH AND FILTERS
-           ==================================== -->
-
-      <div class="booking-filters">
-
-        <!-- SEARCH BOOKINGS -->
-
-        <div class="filter-group search-group">
-
-          <label for="bookingSearch">
-            Search Bookings
-          </label>
-
-          <div class="search-input">
-
-            <i class="fa-solid fa-magnifying-glass"></i>
-
+          <div class="ob-field ob-search">
+            <label for="bookingSearch">
+              Search
+            </label>
             <input
               id="bookingSearch"
               type="search"
-              placeholder="Ticket ID, passenger, bus..."
+              placeholder="Bus, route, ticket or passenger"
               autocomplete="off"
             >
-
           </div>
 
-        </div>
+          <div class="ob-field">
+            <label for="bookingStatusFilter">
+              Payment Status
+            </label>
 
-
-        <!-- STATUS FILTER -->
-
-        <div class="filter-group">
-
-          <label for="bookingStatusFilter">
-            Payment Status
-          </label>
-
-          <select id="bookingStatusFilter">
-
-            <option value="All">
-              All Statuses
-            </option>
-
-            <option value="Paid">
-              Paid
-            </option>
-
-            <option value="Pending">
-              Pending
-            </option>
-
-            <option value="Cancelled">
-              Cancelled
-            </option>
-
-            <option value="Expired">
-              Expired
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <!-- JOURNEY DATE FILTER -->
-
-        <div class="filter-group">
-
-          <label for="bookingDateFilter">
-            Journey Date
-          </label>
-
-          <input
-            id="bookingDateFilter"
-            type="date"
-          >
-
-        </div>
-
-
-        <!-- RESET FILTERS -->
-
-        <div class="filter-group filter-action">
+            <select id="bookingStatusFilter">
+              <option value="All">All Statuses</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Expired">Expired</option>
+            </select>
+          </div>
 
           <button
             id="resetBookingFiltersBtn"
+            class="secondary-btn ob-reset"
             type="button"
-            class="secondary-btn"
           >
-
             <i class="fa-solid fa-filter-circle-xmark"></i>
-
-            Reset
-
+            Reset Filters
           </button>
 
         </div>
 
-      </div>
+        <!-- MESSAGES -->
+        <p
+          id="bookingsMessage"
+          class="ob-message"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
 
-
-      <!-- ====================================
-           BOOKINGS TABLE
-           ==================================== -->
-
-      <div
-        class="table-wrapper bookings-table-wrapper"
-      >
-
-        <table class="bookings-table">
-
-          <thead>
-
-            <tr>
-
-              <th scope="col">
-                Ticket ID
-              </th>
-
-              <th scope="col">
-                Passenger
-              </th>
-
-              <th scope="col">
-                Journey
-              </th>
-
-              <th scope="col">
-                Bus
-              </th>
-
-              <th scope="col">
-                Seats
-              </th>
-
-              <th scope="col">
-                Booked On
-              </th>
-
-              <th scope="col">
-                Amount
-              </th>
-
-              <th scope="col">
-                Status
-              </th>
-
-              <th scope="col">
-                Action
-              </th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody id="bookingTableBody">
-
-            <tr>
-
-              <td
-                colspan="9"
-                class="empty-row"
-              >
-
-                <i class="fa-solid fa-spinner fa-spin"></i>
-
-                Loading passenger bookings...
-
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-
-      <!-- ====================================
-           PAGINATION
-           ==================================== -->
-
-      <div class="booking-pagination">
+        <!-- DYNAMIC BUS CARDS -->
+        <div
+          id="busGroups"
+          class="ob-bus-list"
+          aria-live="polite"
+        >
+          <div class="ob-empty">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Loading assigned buses...
+          </div>
+        </div>
 
         <p
           id="bookingPageInfo"
+          class="ob-footer"
           aria-live="polite"
-        >
-          Waiting for booking data...
-        </p>
+        ></p>
 
-        <div class="pagination-actions">
-
-          <button
-            id="previousBookingsBtn"
-            type="button"
-            class="secondary-btn"
-            disabled
-          >
-
-            <i class="fa-solid fa-chevron-left"></i>
-
-            Previous
-
-          </button>
-
-          <button
-            id="nextBookingsBtn"
-            type="button"
-            class="secondary-btn"
-            disabled
-          >
-
-            Next
-
-            <i class="fa-solid fa-chevron-right"></i>
-
-          </button>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-
-</div>
-
-
-<!-- ========================================
-     BOOKING DETAILS MODAL
-     READ-ONLY
-     ======================================== -->
-
-<div
-  id="bookingDetailsModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="bookingDetailsTitle"
->
-
-  <div class="modal-card booking-details-card">
-
-    <!-- MODAL HEADER -->
-
-    <div class="modal-header">
-
-      <div>
-
-        <p>
-          Booking Information
-        </p>
-
-        <h2 id="bookingDetailsTitle">
-          Passenger Details
-        </h2>
-
-      </div>
-
-      <button
-        id="closeBookingDetailsBtn"
-        type="button"
-        class="close-btn"
-        aria-label="Close booking details"
-      >
-
-        <i class="fa-solid fa-xmark"></i>
-
-      </button>
-
-    </div>
-
-
-    <!-- MODAL CONTENT -->
-
-    <div
-      id="bookingDetailsContent"
-      class="booking-details-content"
-    >
-
-      <p>
-        Select a booking to view
-        passenger and journey information.
-      </p>
-
-    </div>
-
-
-    <!-- MODAL FOOTER -->
-
-    <div class="modal-actions">
-
-      <button
-        id="closeBookingDetailsFooterBtn"
-        type="button"
-        class="secondary-btn"
-      >
-
-        Close
-
-      </button>
-
-    </div>
-
+      </section>
+    </main>
   </div>
 
-</div>
+  <!-- PASSENGER DETAILS MODAL -->
+  <div
+    id="bookingDetailsModal"
+    class="ob-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="bookingDetailsTitle"
+    hidden
+  >
 
+    <div class="ob-modal-card">
 
-<!-- ========================================
-     JAVASCRIPT
-     ======================================== -->
+      <header class="ob-modal-header">
+        <div>
+          <p>Read-only booking information</p>
+          <h2 id="bookingDetailsTitle">
+            Passenger Details
+          </h2>
+        </div>
 
-<script src="toast.js"></script><script src="toast.js"></script>
-<script src="operator-bookings.js"></script>
+        <button
+          id="closeBookingDetailsBtn"
+          type="button"
+          class="ob-close"
+          aria-label="Close passenger details"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </header>
 
-<!-- Booking functionality will be added
-     in STEP 06D after the CSS step. -->
+      <div
+        id="bookingDetailsContent"
+        class="ob-detail-grid"
+      ></div>
 
+      <div class="ob-modal-actions">
+        <button
+          id="closeBookingDetailsFooterBtn"
+          type="button"
+          class="secondary-btn"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="toast.js"></script>
+  <script src="operator-bookings.js"></script>
 </body>
-
 </html>

@@ -1,417 +1,261 @@
 
-/* ==============================================
-   RAJABUS - OPERATOR BOOKINGS
-   STEP 06D
-
-   Real MongoDB Data
-   Search / Filters / Pagination
-   Booking Details / Refresh / Logout
-   ============================================== */
+/* ============================================
+   RAJABUS OPERATOR PORTAL
+   DAILY BUS-WISE BOOKINGS + PASSENGER PDF
+============================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  const API_URL =
-    "http://localhost:5000/api/operators/bookings";
-
-  const PAGE_SIZE = 10;
-  const API_PAGE_SIZE = 100;
-
-  // ============================================
-  // AUTHENTICATION
-  // ============================================
-
-  const token =
-    localStorage.getItem("operatorToken");
-
-  if (!token) {
-    window.location.replace("operator-login.html");
-    return;
-  }
-
-  // ============================================
-  // DOM ELEMENTS
-  // ============================================
+  const API =
+    "http://localhost:5000/api/operators/daily-bookings";
 
   const $ = (id) => document.getElementById(id);
 
-  const tableBody = $("bookingTableBody");
-  const pageInfo = $("bookingPageInfo");
+  const ui = {
+    date: $("bookingDateFilter"),
+    search: $("bookingSearch"),
+    status: $("bookingStatusFilter"),
+    reset: $("resetBookingFiltersBtn"),
+    refresh: $("refreshBookingsBtn"),
+    logout: $("logoutBtn"),
 
-  const searchInput = $("bookingSearch");
-  const statusFilter = $("bookingStatusFilter");
-  const dateFilter = $("bookingDateFilter");
+    groups: $("busGroups"),
+    message: $("bookingsMessage"),
+    dateLabel: $("selectedDateLabel"),
+    footer: $("bookingPageInfo"),
 
-  const resetBtn = $("resetBookingFiltersBtn");
-  const refreshBtn = $("refreshBookingsBtn");
+    modal: $("bookingDetailsModal"),
+    details: $("bookingDetailsContent"),
+    close: $("closeBookingDetailsBtn"),
+    closeFooter: $("closeBookingDetailsFooterBtn")
+  };
 
-  const previousBtn = $("previousBookingsBtn");
-  const nextBtn = $("nextBookingsBtn");
-
-  const logoutBtn = $("logoutBtn");
-
-  const detailsModal = $("bookingDetailsModal");
-  const detailsContent = $("bookingDetailsContent");
-
-  const detailsCloseBtn = $("closeBookingDetailsBtn");
-
-  const detailsFooterCloseBtn =
-    $("closeBookingDetailsFooterBtn");
-
-  if (!tableBody || !pageInfo) {
+  if (!ui.date || !ui.groups || !ui.modal) {
     console.error(
-      "Bookings page HTML is missing required IDs."
+      "Daily bookings page: required HTML elements are missing."
     );
     return;
   }
 
-  // ============================================
-  // STATE
-  // ============================================
+  let dailyData = null;
+  let controller = null;
+  let lastFocus = null;
 
-  let allBookings = [];
-  let filteredBookings = [];
+  // =========================================
+  // AUTHENTICATION
+  // =========================================
 
-  let currentPage = 1;
-  let isLoading = false;
+  function getToken() {
+    return localStorage.getItem("operatorToken");
+  }
 
-  let requestController = null;
-  let lastFocusedElement = null;
+  function logout() {
+    if (controller) {
+      controller.abort();
+    }
 
-  // ============================================
-  // NOTIFICATION
-  // ============================================
+    localStorage.removeItem("operatorToken");
+    localStorage.removeItem("operatorData");
 
-  function notify(message, type = "error") {
+    window.location.replace("operator-login.html");
+  }
 
-    if (typeof window.showToast === "function") {
-      window.showToast(message, type);
-    } else {
-      console[
-        type === "error" ? "error" : "log"
-      ](message);
+  if (!getToken()) {
+    logout();
+    return;
+  }
+
+  // =========================================
+  // TODAY'S DATE IN SRI LANKA
+  // =========================================
+
+  function localToday() {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Colombo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+
+    const part = (kind) =>
+      parts.find(
+        (item) => item.type === kind
+      )?.value || "";
+
+    return (
+      `${part("year")}-` +
+      `${part("month")}-` +
+      `${part("day")}`
+    );
+  }
+
+  // =========================================
+  // SAFE TEXT HELPERS
+  // =========================================
+
+  function fmt(value, fallback = "—") {
+    const result = String(value ?? "").trim();
+    return result || fallback;
+  }
+
+  function make(tag, className = "", content) {
+    const el = document.createElement(tag);
+
+    if (className) {
+      el.className = className;
+    }
+
+    if (content !== undefined) {
+      el.textContent = String(content);
+    }
+
+    return el;
+  }
+
+  function message(text, error = false) {
+    ui.message.textContent = text || "";
+    ui.message.hidden = !text;
+
+    ui.message.classList.toggle(
+      "error",
+      error
+    );
+  }
+
+  function empty(text) {
+    ui.groups.replaceChildren(
+      make("div", "ob-empty", text)
+    );
+  }
+
+  function count(id, value) {
+    const el = $(id);
+
+    if (el) {
+      el.textContent = String(value);
     }
   }
 
-  // ============================================
-  // TEXT HELPER
-  // ============================================
-
-  function setText(id, value) {
-
-    const element =
-      document.getElementById(id);
-
-    if (element) {
-      element.textContent = String(value);
-    }
+  function bookings(trip) {
+    return Array.isArray(trip.bookings)
+      ? trip.bookings
+      : [];
   }
 
-  function safeText(value, fallback = "—") {
-
-    if (
-      value === null ||
-      value === undefined ||
-      value === ""
-    ) {
-      return fallback;
-    }
-
-    return String(value);
+  function seats(booking) {
+    return Array.isArray(booking.seats)
+      ? booking.seats.map(String)
+      : [];
   }
 
-  // ============================================
-  // FORMAT CURRENCY
-  // ============================================
-
-  function formatCurrency(amount) {
-
-    const value = Number(amount);
-
-    const validAmount =
-      Number.isFinite(value) ? value : 0;
-
-    return `Rs. ${validAmount.toLocaleString(
-      "en-LK",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }
-    )}`;
+  function lower(value) {
+    return String(value ?? "").toLowerCase();
   }
 
-  // ============================================
-  // FORMAT JOURNEY DATE
-  // ============================================
+  // =========================================
+  // JOURNEY DATE FORMATTING
+  // =========================================
 
-  function formatJourneyDate(dateString) {
-
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        String(dateString || "")
-      )
-    ) {
-      return safeText(dateString);
+  function dateLabel(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return fmt(value);
     }
 
     const [year, month, day] =
-      dateString.split("-").map(Number);
-
-    const date =
-      new Date(Date.UTC(year, month - 1, day));
-
-    if (Number.isNaN(date.getTime())) {
-      return safeText(dateString);
-    }
+      value.split("-").map(Number);
 
     return new Intl.DateTimeFormat("en-LK", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       timeZone: "UTC"
-    }).format(date);
-  }
-
-  // ============================================
-  // FORMAT BOOKING DATE / TIME
-  // ============================================
-
-  function formatDateTime(value) {
-
-    if (!value) return "—";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return "—";
-    }
-
-    return new Intl.DateTimeFormat("en-LK", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Asia/Colombo"
-    }).format(date);
-  }
-
-  // ============================================
-  // BOOKING HELPERS
-  // ============================================
-
-  function tripInfo(booking) {
-
-    return (
-      booking.tripId &&
-      typeof booking.tripId === "object"
-    )
-      ? booking.tripId
-      : {};
-  }
-
-  function bookedSeats(booking) {
-
-    return Array.isArray(booking.seats)
-      ? booking.seats.map(String)
-      : [];
-  }
-
-  function bookingRoute(booking) {
-
-    const trip = tripInfo(booking);
-
-    const from =
-      booking.from || trip.from;
-
-    const to =
-      booking.to || trip.to;
-
-    return (
-      `${safeText(from)} → ${safeText(to)}`
+    }).format(
+      new Date(Date.UTC(year, month - 1, day))
     );
   }
 
-  function journeyDate(booking) {
+  // =========================================
+  // DAILY STATISTICS
+  // =========================================
 
-    return (
-      booking.journeyDate ||
-      tripInfo(booking).journeyDate ||
-      ""
-    );
-  }
+  function updateStats(data) {
+    const buses = data?.buses || [];
 
-  // ============================================
-  // LOGOUT
-  // ============================================
-
-  function logout() {
-
-    if (requestController) {
-      requestController.abort();
-    }
-
-    localStorage.removeItem("operatorToken");
-    localStorage.removeItem("operatorData");
-
-    window.location.replace(
-      "operator-login.html"
-    );
-  }
-
-  // ============================================
-  // CREATE DOM ELEMENT SAFELY
-  // ============================================
-
-  function element(tag, className, textValue) {
-
-    const node =
-      document.createElement(tag);
-
-    if (className) {
-      node.className = className;
-    }
-
-    if (textValue !== undefined) {
-      node.textContent =
-        String(textValue);
-    }
-
-    return node;
-  }
-
-  // ============================================
-  // TABLE MESSAGE
-  // ============================================
-
-  function showTableMessage(
-    message,
-    iconName = "fa-circle-info"
-  ) {
-
-    tableBody.replaceChildren();
-
-    const row =
-      document.createElement("tr");
-
-    const cell =
-      element("td", "empty-row");
-
-    cell.colSpan = 9;
-
-    const icon = element(
-      "i",
-      `fa-solid ${iconName}`
+    const allBookings = buses.flatMap(
+      (bus) =>
+        (bus.trips || []).flatMap(
+          (trip) => bookings(trip)
+        )
     );
 
-    icon.setAttribute(
-      "aria-hidden",
-      "true"
+    count(
+      "assignedBusCount",
+      buses.length
     );
 
-    cell.append(
-      icon,
-      document.createTextNode(` ${message}`)
+    count(
+      "dailyTripCount",
+      buses.reduce(
+        (sum, bus) =>
+          sum + (bus.trips || []).length,
+        0
+      )
     );
 
-    row.appendChild(cell);
-
-    tableBody.appendChild(row);
-  }
-
-  // ============================================
-  // BOOKING STATISTICS
-  // ============================================
-
-  function setStats(stats = {}) {
-
-    setText(
+    count(
       "totalBookings",
-      Number(stats.totalBookings) || 0
+      allBookings.length
     );
 
-    setText(
+    count(
       "paidBookings",
-      Number(stats.paidBookings) || 0
+      allBookings.filter(
+        (b) => b.status === "Paid"
+      ).length
     );
 
-    setText(
+    count(
       "pendingBookings",
-      Number(stats.pendingBookings) || 0
+      allBookings.filter(
+        (b) => b.status === "Pending"
+      ).length
     );
 
-    setText(
-      "cancelledBookings",
-      Number(stats.cancelledBookings) || 0
-    );
-
-    setText(
-      "expiredBookings",
-      Number(stats.expiredBookings) || 0
-    );
-
-    setText(
-      "totalRevenue",
-      formatCurrency(stats.totalRevenue)
+    count(
+      "confirmedSeats",
+      allBookings
+        .filter(
+          (b) => b.status === "Paid"
+        )
+        .reduce(
+          (sum, b) =>
+            sum + seats(b).length,
+          0
+        )
     );
   }
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
+  // =========================================
+  // AUTHENTICATED API REQUEST
+  // =========================================
 
-  function setLoading(loading) {
+  async function authorizedFetch(url, signal) {
+    const token = getToken();
 
-    isLoading = loading;
-
-    if (refreshBtn) {
-      refreshBtn.disabled = loading;
-    }
-
-    if (previousBtn) {
-      previousBtn.disabled = loading;
-    }
-
-    if (nextBtn) {
-      nextBtn.disabled = loading;
-    }
-
-    if (loading) {
-
-      showTableMessage(
-        "Loading passenger bookings...",
-        "fa-spinner fa-spin"
+    if (!token) {
+      logout();
+      throw new Error(
+        "Operator login required"
       );
-
-      pageInfo.textContent =
-        "Loading booking records...";
     }
-  }
 
-  // ============================================
-  // FETCH OPERATOR BOOKINGS
-  // ============================================
-
-  async function fetchPage(page, signal) {
-
-    const params = new URLSearchParams({
-      status: "All",
-      page: String(page),
-      limit: String(API_PAGE_SIZE)
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: "no-store",
+      signal
     });
-
-    const response = await fetch(
-      `${API_URL}?${params}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-
-        cache: "no-store",
-        signal
-      }
-    );
-
-    // Session expired / unauthorized.
 
     if (
       response.status === 401 ||
@@ -420,925 +264,877 @@ document.addEventListener("DOMContentLoaded", () => {
       logout();
 
       throw new Error(
-        "Operator session expired"
+        "Operator session expired. Please log in again."
       );
     }
 
-    const data = await response.json();
-
-    if (
-      !response.ok ||
-      !data.success ||
-      !Array.isArray(data.bookings)
-    ) {
-      throw new Error(
-        data.message ||
-        "Failed to load operator bookings"
-      );
-    }
-
-    return data;
+    return response;
   }
 
-  // ============================================
-  // LOAD ALL OPERATOR BOOKINGS
-  //
-  // Backend API is paginated.
-  // Load remaining pages in small batches
-  // so search/date filters cover all bookings.
-  // ============================================
+  // =========================================
+  // PASSENGER FILTER HELPERS
+  // =========================================
 
-  async function loadBookings() {
-
-    if (requestController) {
-      requestController.abort();
-    }
-
-    const controller =
-      new AbortController();
-
-    requestController = controller;
-
-    setLoading(true);
-
-    let loadedSuccessfully = false;
-
-    try {
-
-      // First API page.
-
-      const firstPage =
-        await fetchPage(1, controller.signal);
-
-      const pages = Math.max(
-        1,
-        Number(
-          firstPage.pagination?.totalPages
-        ) || 1
-      );
-
-      const records = [
-        ...firstPage.bookings
-      ];
-
-      // Load remaining pages.
-      // Maximum 3 simultaneous requests.
-
-      for (
-        let start = 2;
-        start <= pages;
-        start += 3
-      ) {
-
-        const requests = [];
-
-        for (
-          let page = start;
-          page < Math.min(start + 3, pages + 1);
-          page++
-        ) {
-
-          requests.push(
-            fetchPage(
-              page,
-              controller.signal
-            )
-          );
-        }
-
-        const responses =
-          await Promise.all(requests);
-
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        for (const response of responses) {
-          records.push(...response.bookings);
-        }
-      }
-
-      if (controller.signal.aborted) {
-        return;
-      }
-
-      // Save data in memory only.
-      // Do not store passenger records in localStorage.
-
-      allBookings = records;
-
-      // Backend statistics across all statuses.
-
-      setStats(firstPage.stats);
-
-      currentPage = 1;
-
-      applyFilters();
-
-      loadedSuccessfully = true;
-
-      console.log(
-        "Operator bookings loaded:",
-        allBookings.length
-      );
-
-    } catch (error) {
-
-      if (error.name === "AbortError") {
-        return;
-      }
-
-      console.error(
-        "Operator bookings loading error:",
-        error
-      );
-
-      allBookings = [];
-      filteredBookings = [];
-
-      setStats();
-
-      showTableMessage(
-        "Could not load bookings. Click Refresh to retry.",
-        "fa-triangle-exclamation"
-      );
-
-      pageInfo.textContent =
-        "Booking data unavailable";
-
-      notify(
-        error.message ||
-        "Could not load bookings"
-      );
-
-    } finally {
-
-      if (requestController === controller) {
-
-        requestController = null;
-
-        isLoading = false;
-
-        if (refreshBtn) {
-          refreshBtn.disabled = false;
-        }
-
-        if (loadedSuccessfully) {
-
-          updatePagination();
-
-        } else {
-
-          if (previousBtn) {
-            previousBtn.disabled = true;
-          }
-
-          if (nextBtn) {
-            nextBtn.disabled = true;
-          }
-        }
-      }
-    }
+  function matchesSearch(value, query) {
+    return lower(value).includes(query);
   }
 
-  // ============================================
-  // SEARCH / STATUS / DATE FILTER
-  // ============================================
-
-  function applyFilters() {
-
-    const query = (
-      searchInput?.value || ""
-    ).trim().toLowerCase();
-
-    const status =
-      statusFilter?.value || "All";
-
-    const date =
-      dateFilter?.value || "";
-
-    filteredBookings = allBookings.filter(
-      (booking) => {
-
-        // Payment status filter.
-
-        if (
-          status !== "All" &&
-          booking.status !== status
-        ) {
-          return false;
-        }
-
-        // Journey date filter.
-
-        if (
-          date &&
-          journeyDate(booking) !== date
-        ) {
-          return false;
-        }
-
-        if (!query) {
-          return true;
-        }
-
-        const searchable = [
-
-          booking.ticketId,
-
-          booking.passengerName,
-
-          booking.mobileNo,
-
-          booking.email,
-
-          booking.busNo,
-
-          booking.from ||
-            tripInfo(booking).from,
-
-          booking.to ||
-            tripInfo(booking).to,
-
-          journeyDate(booking),
-
-          ...bookedSeats(booking)
-
-        ]
-          .map(
-            (part) => String(part || "")
-          )
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(query);
-      }
-    );
-
-    const totalPages = Math.max(
-      1,
-      Math.ceil(
-        filteredBookings.length / PAGE_SIZE
-      )
-    );
-
-    currentPage = Math.max(
-      1,
-      Math.min(currentPage, totalPages)
-    );
-
-    renderTable();
-  }
-
-  // ============================================
-  // PAGINATION INFORMATION
-  // ============================================
-
-  function updatePagination() {
-
-    if (isLoading) {
-      return;
-    }
-
-    const total =
-      filteredBookings.length;
-
-    const pages = Math.max(
-      1,
-      Math.ceil(total / PAGE_SIZE)
-    );
-
-    const start = total
-      ? (currentPage - 1) * PAGE_SIZE + 1
-      : 0;
-
-    const end = Math.min(
-      currentPage * PAGE_SIZE,
-      total
-    );
-
-    pageInfo.textContent = total
-      ? `Showing ${start}–${end} of ${total} bookings • Page ${currentPage} of ${pages}`
-      : "Showing 0 bookings";
-
-    if (previousBtn) {
-
-      previousBtn.disabled =
-        currentPage <= 1;
-    }
-
-    if (nextBtn) {
-
-      nextBtn.disabled =
-        currentPage >= pages;
-    }
-  }
-
-  // ============================================
-  // ADD TABLE CELL
-  // ============================================
-
-  function addCell(
-    row,
-    mainText,
-    secondaryText = ""
+  function matchingBookings(
+    bus,
+    trip,
+    query,
+    status
   ) {
-
-    const cell = element("td");
-
-    cell.appendChild(
-      element(
-        "strong",
-        "",
-        safeText(mainText)
-      )
+    const busMatch = [
+      bus.busNo,
+      bus.regNo,
+      bus.type
+    ].some(
+      (v) => matchesSearch(v, query)
     );
 
-    if (secondaryText) {
+    const tripMatch = [
+      trip.from,
+      trip.to,
+      trip.departureTime,
+      trip.arrivalTime
+    ].some(
+      (v) => matchesSearch(v, query)
+    );
 
-      cell.appendChild(
-        element(
-          "small",
-          "",
-          secondaryText
+    return bookings(trip).filter((b) => {
+      if (
+        status !== "All" &&
+        b.status !== status
+      ) {
+        return false;
+      }
+
+      return (
+        !query ||
+        busMatch ||
+        tripMatch ||
+        [
+          b.ticketId,
+          b.passengerName,
+          b.email,
+          b.phoneNumber,
+          ...seats(b)
+        ].some(
+          (v) => matchesSearch(v, query)
         )
       );
-    }
-
-    row.appendChild(cell);
-
-    return cell;
+    });
   }
 
-  // ============================================
-  // RENDER BOOKINGS TABLE
-  // ============================================
+  // =========================================
+  // TABLE CELL
+  // =========================================
 
-  function renderTable() {
+  function cell(row, value) {
+    row.appendChild(
+      make("td", "", fmt(value))
+    );
+  }
 
-    tableBody.replaceChildren();
+  // =========================================
+  // PASSENGER TABLE ROW
+  // =========================================
 
-    if (filteredBookings.length === 0) {
+  function renderBookingRow(booking, bus, trip) {
+    const row = make("tr");
 
-      showTableMessage(
-        allBookings.length === 0
-          ? "No passenger bookings found for your trips."
-          : "No bookings match the selected filters.",
-        "fa-ticket"
+    cell(row, booking.ticketId);
+    cell(row, booking.passengerName);
+    cell(row, booking.email);
+    cell(row, booking.phoneNumber);
+
+    cell(
+      row,
+      seats(booking).join(", ")
+    );
+
+    const statusCell = make("td");
+
+    const badge = make(
+      "span",
+      `ob-badge ${lower(booking.status)}`,
+      fmt(booking.status)
+    );
+
+    statusCell.appendChild(badge);
+    row.appendChild(statusCell);
+
+    const actionCell = make("td");
+
+    const detailsBtn = make(
+      "button",
+      "ob-details-btn",
+      "View Details"
+    );
+
+    detailsBtn.type = "button";
+
+    detailsBtn.addEventListener(
+      "click",
+      () => showDetails(booking, bus, trip)
+    );
+
+    actionCell.appendChild(detailsBtn);
+    row.appendChild(actionCell);
+
+    return row;
+  }
+
+  // =========================================
+  // TRIP-WISE PASSENGER TABLE
+  // =========================================
+
+  
+function renderTrip(trip, bus, visible) {
+
+  const section = make("section", "ob-trip");
+
+  // Count confirmed bookings only.
+  const paidBookings = bookings(trip).filter(
+    (booking) => booking.status === "Paid"
+  );
+
+  // Count seats, not booking records.
+  const bookedSeats = new Set(
+    paidBookings.flatMap(
+      (booking) => seats(booking).map(String)
+    )
+  );
+
+  const bookedCount = bookedSeats.size;
+  const capacity = Number(bus.totalSeats) || 0;
+
+  // Route and time.
+  const heading = make("div", "ob-trip-title");
+  const details = make("div");
+
+  details.appendChild(
+    make(
+      "strong",
+      "",
+      `${fmt(trip.from)} → ${fmt(trip.to)}`
+    )
+  );
+
+  details.appendChild(
+    make(
+      "small",
+      "",
+      `Departure: ${fmt(trip.departureTime)} | ` +
+      `Arrival: ${fmt(trip.arrivalTime)}`
+    )
+  );
+
+  heading.appendChild(details);
+
+  heading.appendChild(
+    make(
+      "span",
+      "ob-trip-count",
+      fmt(trip.status)
+    )
+  );
+
+  section.appendChild(heading);
+
+  // Seat booking summary.
+  const summary = make(
+    "div",
+    "ob-seat-summary"
+  );
+
+  const label = make(
+    "strong",
+    "",
+    "Confirmed Booked Seats"
+  );
+
+  const count = make(
+    "h3",
+    "",
+    capacity
+      ? `${bookedCount} / ${capacity}`
+      : String(bookedCount)
+  );
+
+  summary.appendChild(label);
+  summary.appendChild(count);
+
+  // Capacity progress bar.
+  if (capacity > 0) {
+
+    const progress = make(
+      "div",
+      "ob-seat-progress"
+    );
+
+    const fill = make(
+      "div",
+      "ob-seat-progress-fill"
+    );
+
+    fill.style.width =
+      `${Math.min(
+        100,
+        bookedCount / capacity * 100
+      )}%`;
+
+    progress.appendChild(fill);
+    summary.appendChild(progress);
+  }
+
+  summary.appendChild(
+    make(
+      "small",
+      "",
+      `${paidBookings.length} Paid bookings · ` +
+      `${bookedCount} confirmed seats`
+    )
+  );
+
+  section.appendChild(summary);
+
+  return section;
+}
+
+
+  // =========================================
+  // BUS CARD
+  // =========================================
+
+  function renderBus(bus, query, status) {
+    const trips = Array.isArray(bus.trips)
+      ? bus.trips
+      : [];
+
+    const busMatch = [
+      bus.busNo,
+      bus.regNo,
+      bus.type
+    ].some(
+      (v) => matchesSearch(v, query)
+    );
+
+    const visibleTrips = trips.map(
+      (trip) => ({
+        trip,
+
+        visible: matchingBookings(
+          bus,
+          trip,
+          query,
+          status
+        ),
+
+        tripMatch: [
+          trip.from,
+          trip.to,
+          trip.departureTime
+        ].some(
+          (v) => matchesSearch(v, query)
+        )
+      })
+    );
+
+    if (
+      query &&
+      !busMatch &&
+      !visibleTrips.some(
+        (item) =>
+          item.tripMatch ||
+          item.visible.length
+      )
+    ) {
+      return null;
+    }
+
+    const card = make(
+      "article",
+      "ob-bus-card"
+    );
+
+    const header = make(
+      "div",
+      "ob-bus-header"
+    );
+
+    const heading = make(
+      "div",
+      "ob-bus-heading"
+    );
+
+    heading.appendChild(
+      make(
+        "span",
+        "ob-bus-icon"
+      )
+    );
+
+    heading.firstChild.appendChild(
+      make(
+        "i",
+        "fa-solid fa-bus"
+      )
+    );
+
+    const info = make("div");
+
+    info.appendChild(
+      make(
+        "h3",
+        "",
+        fmt(bus.busNo)
+      )
+    );
+
+    info.appendChild(
+      make(
+        "p",
+        "",
+        `Reg: ${fmt(bus.regNo)}` +
+        ` · ${fmt(bus.type)}` +
+        ` · ${fmt(bus.totalSeats)} seats`
+      )
+    );
+
+    heading.appendChild(info);
+
+    const actions = make(
+      "div",
+      "ob-bus-actions"
+    );
+
+    actions.appendChild(
+      make(
+        "span",
+        "ob-count-pill",
+        `${trips.length} Trips`
+      )
+    );
+
+    actions.appendChild(
+      make(
+        "span",
+        "ob-count-pill",
+        `${Number(bus.totalBookings) || 0} Bookings`
+      )
+    );
+
+    // =====================================
+    // PDF DOWNLOAD BUTTON
+    // =====================================
+
+    const download = make(
+      "button",
+      "ob-pdf-btn",
+      "Download Passenger PDF"
+    );
+
+    download.type = "button";
+
+    download.prepend(
+      make(
+        "i",
+        "fa-solid fa-file-pdf"
+      )
+    );
+
+    download.disabled =
+      (Number(bus.paidBookings) || 0) === 0;
+
+    download.title = download.disabled
+      ? "No Paid bookings for this bus and date"
+      : "Download all Paid passengers for this bus on the selected date";
+
+    download.addEventListener(
+      "click",
+      () => downloadPDF(bus, download)
+    );
+
+    actions.appendChild(download);
+
+    header.append(
+      heading,
+      actions
+    );
+
+    card.appendChild(header);
+
+    visibleTrips.forEach(
+      ({ trip, visible }) => {
+        card.appendChild(
+          renderTrip(
+            trip,
+            bus,
+            visible
+          )
+        );
+      }
+    );
+
+    return card;
+  }
+
+  // =========================================
+  // RENDER ALL ASSIGNED BUSES
+  // =========================================
+
+  function render() {
+    if (!dailyData) {
+      return;
+    }
+
+    const query = ui.search.value
+      .trim()
+      .toLowerCase();
+
+    const status = ui.status.value;
+
+    const buses = Array.isArray(dailyData.buses)
+      ? dailyData.buses
+      : [];
+
+    ui.groups.replaceChildren();
+
+    if (!buses.length) {
+      empty(
+        "No buses assigned for this journey date. Try another date."
       );
 
-      updatePagination();
+      ui.footer.textContent =
+        "0 buses assigned";
 
       return;
     }
 
-    const start =
-      (currentPage - 1) * PAGE_SIZE;
-
-    const rows =
-      filteredBookings.slice(
-        start,
-        start + PAGE_SIZE
-      );
+    let displayed = 0;
 
     const fragment =
       document.createDocumentFragment();
 
-    for (const booking of rows) {
-
-      const trip = tripInfo(booking);
-
-      const row = element("tr");
-
-      // 1. Ticket ID.
-
-      addCell(
-        row,
-        booking.ticketId
-      );
-
-      // 2. Passenger.
-
-      addCell(
-        row,
-        booking.passengerName,
-        booking.mobileNo || ""
-      );
-
-      // 3. Journey.
-
-      addCell(
-        row,
-        bookingRoute(booking),
-        `${formatJourneyDate(
-          journeyDate(booking)
-        )} • ${safeText(
-          booking.departTime ||
-          trip.departureTime
-        )}`
-      );
-
-      // 4. Bus.
-
-      addCell(
-        row,
-        booking.busNo
-      );
-
-      // 5. Seats.
-
-      addCell(
-        row,
-        bookedSeats(booking).join(", ") || "—"
-      );
-
-      // 6. Booking date.
-
-      addCell(
-        row,
-        formatDateTime(booking.createdAt)
-      );
-
-      // 7. Fare.
-
-      addCell(
-        row,
-        formatCurrency(booking.totalFare)
-      );
-
-      // 8. Booking status.
-
-      const statusCell = element("td");
-
-      const status =
-        safeText(
-          booking.status,
-          "Unknown"
-        );
-
-      const badge = element(
-        "span",
-        "booking-status",
+    buses.forEach((bus) => {
+      const card = renderBus(
+        bus,
+        query,
         status
       );
 
-      if (
-        [
-          "Paid",
-          "Pending",
-          "Cancelled",
-          "Expired"
-        ].includes(status)
-      ) {
-        badge.classList.add(
-          status.toLowerCase()
-        );
+      if (card) {
+        fragment.appendChild(card);
+        displayed++;
       }
+    });
 
-      statusCell.appendChild(badge);
-
-      row.appendChild(statusCell);
-
-      // 9. View Details button.
-
-      const actionCell = element("td");
-
-      const button = element(
-        "button",
-        "view-booking-btn",
-        "View Details"
+    if (!displayed) {
+      empty(
+        "No buses or passengers match your search."
       );
-
-      button.type = "button";
-
-      button.dataset.bookingId =
-        String(booking._id || "");
-
-      const icon = element(
-        "i",
-        "fa-solid fa-eye"
-      );
-
-      icon.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-      button.prepend(icon);
-
-      actionCell.appendChild(button);
-
-      row.appendChild(actionCell);
-
-      fragment.appendChild(row);
+    } else {
+      ui.groups.appendChild(fragment);
     }
 
-    tableBody.appendChild(fragment);
-
-    updatePagination();
+    ui.footer.textContent =
+      `${displayed} of ${buses.length} assigned buses shown` +
+      " · PDF includes Paid bookings only";
   }
 
-  // ============================================
-  // BOOKING DETAILS
-  // ============================================
+  // =========================================
+  // BOOKING DETAILS MODAL
+  // =========================================
 
-  function addDetail(
-    grid,
-    labelText,
-    valueText
-  ) {
-
-    const item = element(
+  function addDetail(label, value) {
+    const item = make(
       "div",
-      "booking-detail-item"
+      "ob-detail"
     );
 
-    const label = element(
-      "label",
-      "",
-      labelText
+    item.append(
+      make("span", "", label),
+      make("strong", "", fmt(value))
     );
 
-    const value = element(
-      "strong",
-      "",
-      safeText(valueText)
-    );
-
-    item.append(label, value);
-
-    grid.appendChild(item);
+    ui.details.appendChild(item);
   }
 
-  // ============================================
-  // OPEN DETAILS MODAL
-  // ============================================
+  function showDetails(booking, bus, trip) {
+    lastFocus = document.activeElement;
 
-  function openDetails(booking) {
-
-    if (
-      !detailsModal ||
-      !detailsContent
-    ) {
-      return;
-    }
-
-    const trip = tripInfo(booking);
-
-    const seats = bookedSeats(booking);
-
-    const grid = element(
-      "div",
-      "booking-details-grid"
-    );
+    ui.details.replaceChildren();
 
     addDetail(
-      grid,
       "Ticket ID",
       booking.ticketId
     );
 
     addDetail(
-      grid,
-      "Payment Status",
-      booking.status
-    );
-
-    addDetail(
-      grid,
       "Passenger Name",
       booking.passengerName
     );
 
     addDetail(
-      grid,
-      "Mobile Number",
-      booking.mobileNo
-    );
-
-    addDetail(
-      grid,
       "Email Address",
       booking.email
     );
 
     addDetail(
-      grid,
-      "Bus Number",
-      booking.busNo
+      "Phone Number",
+      booking.phoneNumber
     );
 
     addDetail(
-      grid,
+      "Seat Number(s)",
+      seats(booking).join(", ")
+    );
+
+    addDetail(
+      "Booking Status",
+      booking.status
+    );
+
+    addDetail(
+      "Bus",
+      `${fmt(bus.busNo)} (${fmt(bus.regNo)})`
+    );
+
+    addDetail(
       "Route",
-      bookingRoute(booking)
+      `${fmt(trip.from)} → ${fmt(trip.to)}`
     );
 
     addDetail(
-      grid,
       "Journey Date",
-      formatJourneyDate(
-        journeyDate(booking)
-      )
+      dateLabel(ui.date.value)
     );
 
     addDetail(
-      grid,
-      "Departure",
-      booking.departTime ||
-      trip.departureTime
+      "Departure / Arrival",
+      `${fmt(trip.departureTime)} / ` +
+      `${fmt(trip.arrivalTime)}`
     );
 
-    addDetail(
-      grid,
-      "Arrival",
-      booking.arriveTime ||
-      trip.arrivalTime
-    );
+    ui.modal.hidden = false;
 
-    addDetail(
-      grid,
-      "Booked Seats",
-      seats.join(", ") || "—"
-    );
+    document.body.style.overflow =
+      "hidden";
 
-    addDetail(
-      grid,
-      "Total Fare",
-      formatCurrency(booking.totalFare)
-    );
-
-    addDetail(
-      grid,
-      "Boarding Point",
-      booking.boardingPoint
-    );
-
-    addDetail(
-      grid,
-      "Dropping Point",
-      booking.droppingPoint
-    );
-
-    addDetail(
-      grid,
-      "Booked On",
-      formatDateTime(booking.createdAt)
-    );
-
-    if (booking.status === "Paid") {
-
-      addDetail(
-        grid,
-        "Paid On",
-        formatDateTime(booking.paidAt)
-      );
-    }
-
-    // Safe rendering using textContent.
-
-    detailsContent.replaceChildren(grid);
-
-    lastFocusedElement =
-      document.activeElement;
-
-    detailsModal.classList.add("show");
-
-    detailsCloseBtn?.focus();
+    ui.close?.focus();
   }
 
-  // ============================================
-  // CLOSE DETAILS MODAL
-  // ============================================
-
   function closeDetails() {
+    ui.modal.hidden = true;
 
-    if (!detailsModal) {
+    document.body.style.overflow = "";
+
+    if (lastFocus?.isConnected) {
+      lastFocus.focus();
+    }
+
+    lastFocus = null;
+  }
+
+  // =========================================
+  // AUTHENTICATED PASSENGER PDF DOWNLOAD
+  // =========================================
+
+  async function downloadPDF(bus, button) {
+    if (
+      !dailyData ||
+      !ui.date.value ||
+      button.disabled
+    ) {
       return;
     }
 
-    detailsModal.classList.remove("show");
+    const date = ui.date.value;
+    const label = button.textContent;
 
-    if (
-      lastFocusedElement?.isConnected
-    ) {
-      lastFocusedElement.focus();
-    }
+    button.disabled = true;
+    button.textContent = "Generating PDF...";
 
-    lastFocusedElement = null;
-  }
+    message("");
 
-  // ============================================
-  // SEARCH EVENT
-  // ============================================
+    try {
+      const url =
+        `${API}/${encodeURIComponent(bus.busId)}/pdf` +
+        `?date=${encodeURIComponent(date)}`;
 
-  searchInput?.addEventListener(
-    "input",
-    () => {
+      const response =
+        await authorizedFetch(url);
 
-      currentPage = 1;
+      if (!response.ok) {
+        const error = await response
+          .json()
+          .catch(() => ({}));
 
-      applyFilters();
-    }
-  );
-
-  // ============================================
-  // STATUS FILTER
-  // ============================================
-
-  statusFilter?.addEventListener(
-    "change",
-    () => {
-
-      currentPage = 1;
-
-      applyFilters();
-    }
-  );
-
-  // ============================================
-  // JOURNEY DATE FILTER
-  // ============================================
-
-  dateFilter?.addEventListener(
-    "change",
-    () => {
-
-      currentPage = 1;
-
-      applyFilters();
-    }
-  );
-
-  // ============================================
-  // RESET FILTERS
-  // ============================================
-
-  resetBtn?.addEventListener(
-    "click",
-    () => {
-
-      if (searchInput) {
-        searchInput.value = "";
+        throw new Error(
+          error.message ||
+          `PDF request failed (${response.status})`
+        );
       }
 
-      if (statusFilter) {
-        statusFilter.value = "All";
-      }
-
-      if (dateFilter) {
-        dateFilter.value = "";
-      }
-
-      currentPage = 1;
-
-      applyFilters();
-    }
-  );
-
-  // ============================================
-  // REFRESH BOOKINGS
-  // ============================================
-
-  refreshBtn?.addEventListener(
-    "click",
-    loadBookings
-  );
-
-  // ============================================
-  // PREVIOUS PAGE
-  // ============================================
-
-  previousBtn?.addEventListener(
-    "click",
-    () => {
-
-      if (currentPage > 1) {
-
-        currentPage -= 1;
-
-        renderTable();
-      }
-    }
-  );
-
-  // ============================================
-  // NEXT PAGE
-  // ============================================
-
-  nextBtn?.addEventListener(
-    "click",
-    () => {
+      const pdf = await response.blob();
 
       if (
-        currentPage * PAGE_SIZE <
-        filteredBookings.length
+        !pdf.size ||
+        !pdf.type.includes("pdf")
       ) {
-
-        currentPage += 1;
-
-        renderTable();
-      }
-    }
-  );
-
-  // ============================================
-  // VIEW BOOKING DETAILS
-  // ============================================
-
-  tableBody.addEventListener(
-    "click",
-    (event) => {
-
-      const button =
-        event.target.closest(
-          ".view-booking-btn"
+        throw new Error(
+          "Invalid PDF response"
         );
+      }
 
-      if (!button) {
+      const objectUrl =
+        URL.createObjectURL(pdf);
+
+      const anchor = make("a");
+
+      const safeBus = fmt(
+        bus.busNo,
+        "bus"
+      ).replace(
+        /[^a-z0-9_-]/gi,
+        "-"
+      );
+
+      anchor.href = objectUrl;
+
+      anchor.download =
+        `RAJABUS-${date}-${safeBus}-passengers.pdf`;
+
+      document.body.appendChild(anchor);
+
+      anchor.click();
+      anchor.remove();
+
+      window.setTimeout(
+        () => URL.revokeObjectURL(objectUrl),
+        30000
+      );
+
+      message(
+        `Passenger PDF downloaded for ${fmt(bus.busNo)}. ` +
+        "Store it securely."
+      );
+
+    } catch (error) {
+      console.error(
+        "Passenger PDF download failed:",
+        error.message
+      );
+
+      message(
+        error.message ||
+        "Could not download PDF",
+        true
+      );
+
+    } finally {
+      button.textContent = label;
+
+      button.disabled =
+        (Number(bus.paidBookings) || 0) === 0;
+    }
+  }
+
+  // =========================================
+  // LOAD DAILY BOOKINGS FROM MONGODB
+  // =========================================
+
+  async function loadDaily() {
+    if (controller) {
+      controller.abort();
+    }
+
+    const date = ui.date.value;
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    ) {
+      message(
+        "Select a valid journey date.",
+        true
+      );
+
+      empty(
+        "Choose a journey date to view assigned buses."
+      );
+
+      return;
+    }
+
+    const thisRequest =
+      new AbortController();
+
+    controller = thisRequest;
+
+    ui.refresh.disabled = true;
+
+    ui.dateLabel.textContent =
+      dateLabel(date);
+
+    message("");
+
+    empty(
+      "Loading assigned buses and passenger bookings..."
+    );
+
+    ui.footer.textContent = "Loading...";
+
+    try {
+      const response = await authorizedFetch(
+        `${API}?date=${encodeURIComponent(date)}`,
+        thisRequest.signal
+      );
+
+      const result = await response
+        .json()
+        .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        result.success !== true ||
+        !Array.isArray(result.buses)
+      ) {
+        throw new Error(
+          result.message ||
+          `Failed to load daily bookings (${response.status})`
+        );
+      }
+
+      if (
+        controller !== thisRequest ||
+        thisRequest.signal.aborted
+      ) {
         return;
       }
 
-      const booking = allBookings.find(
-        (item) =>
-          String(item._id) ===
-          button.dataset.bookingId
+      dailyData = result;
+
+      updateStats(result);
+      render();
+
+    } catch (error) {
+      if (
+        error.name === "AbortError" ||
+        controller !== thisRequest
+      ) {
+        return;
+      }
+
+      dailyData = null;
+
+      updateStats(null);
+
+      empty(
+        "Could not load assigned buses. Click Refresh to retry."
       );
 
-      if (booking) {
-        openDetails(booking);
+      ui.footer.textContent =
+        "Booking data unavailable";
+
+      message(
+        error.message ||
+        "Unable to load bookings",
+        true
+      );
+
+    } finally {
+      if (controller === thisRequest) {
+        controller = null;
+        ui.refresh.disabled = false;
       }
+    }
+  }
+
+  // =========================================
+  // EVENT LISTENERS
+  // =========================================
+
+  ui.date.value = localToday();
+
+  ui.date.addEventListener(
+    "change",
+    loadDaily
+  );
+
+  ui.search.addEventListener(
+    "input",
+    render
+  );
+
+  ui.status.addEventListener(
+    "change",
+    render
+  );
+
+  ui.reset.addEventListener(
+    "click",
+    () => {
+      ui.search.value = "";
+      ui.status.value = "All";
+      render();
     }
   );
 
-  // ============================================
-  // CLOSE MODAL BUTTONS
-  // ============================================
-
-  detailsCloseBtn?.addEventListener(
+  ui.refresh.addEventListener(
     "click",
-    closeDetails
+    loadDaily
   );
 
-  detailsFooterCloseBtn?.addEventListener(
-    "click",
-    closeDetails
-  );
-
-  // Click outside modal.
-
-  detailsModal?.addEventListener(
-    "click",
-    (event) => {
-
-      if (event.target === detailsModal) {
-        closeDetails();
-      }
-    }
-  );
-
-  // Escape key.
-
-  document.addEventListener(
-    "keydown",
-    (event) => {
-
-      if (
-        event.key === "Escape" &&
-        detailsModal?.classList.contains("show")
-      ) {
-        closeDetails();
-      }
-    }
-  );
-
-  // ============================================
-  // LOGOUT BUTTON
-  // ============================================
-
-  logoutBtn?.addEventListener(
+  ui.logout?.addEventListener(
     "click",
     logout
   );
 
-  // ============================================
-  // CLEANUP
-  // ============================================
+  ui.close?.addEventListener(
+    "click",
+    closeDetails
+  );
 
-  window.addEventListener(
-    "beforeunload",
-    () => {
+  ui.closeFooter?.addEventListener(
+    "click",
+    closeDetails
+  );
 
-      if (requestController) {
-        requestController.abort();
+  ui.modal.addEventListener(
+    "click",
+    (event) => {
+      if (event.target === ui.modal) {
+        closeDetails();
       }
     }
   );
 
-  // ============================================
-  // INITIAL DATA LOAD
-  // ============================================
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key === "Escape" &&
+        !ui.modal.hidden
+      ) {
+        closeDetails();
+      }
+    }
+  );
 
-  loadBookings();
+  window.addEventListener(
+    "beforeunload",
+    () => {
+      if (controller) {
+        controller.abort();
+      }
+    }
+  );
 
+  // =========================================
+  // INITIAL LOAD
+  // =========================================
+
+  loadDaily();
 });

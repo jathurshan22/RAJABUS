@@ -69,6 +69,12 @@ const operatorBusRoutes =
 const operatorTripRoutes =
   require("./routes/operatorTripRoutes");
 
+
+const operatorDailyBookingsRoutes = require(
+  "./routes/operatorDailyBookingsRoutes"
+);
+
+
 const tripRoutes =
   require("./routes/tripRoutes");
 
@@ -166,6 +172,13 @@ app.use(
   "/api/operators",
   operatorRoutes
 );
+
+
+app.use(
+  "/api/operators",
+  operatorDailyBookingsRoutes
+);
+
 
 app.use(
   "/api/operator-buses",
