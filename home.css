@@ -2747,3 +2747,232 @@ body.dark .top-routes .flat-route-card .fr-price small{
   }
 }
 
+/* ==================================================
+   HOME — BUS REVIEWS
+   ================================================== */
+
+.bus-reviews-section {
+  --hbr-paper: #fff;
+  --hbr-text: #242424;
+  --hbr-muted: #8a8a8a;
+  --hbr-line: #f1e7df;
+
+  width: 94%;
+  margin: 50px auto;
+  padding-top: 30px;
+  border-top: 1px solid #f26522;
+  color: var(--hbr-text);
+}
+
+.bus-reviews-section [hidden] {
+  display: none !important;
+}
+
+.bus-reviews-section .hbr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.bus-reviews-section .hbr-heading {
+  margin: 0;
+  color: var(--hbr-text);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -.6px;
+}
+
+.bus-reviews-section .hbr-summary {
+  margin: 0;
+  color: var(--hbr-muted);
+  font-size: 13px;
+}
+
+.bus-reviews-section .hbr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.bus-reviews-section .hbr-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid var(--hbr-line);
+  border-radius: 20px;
+  background: var(--hbr-paper);
+  box-shadow: 0 8px 28px #70360009;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.bus-reviews-section .hbr-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 35px #f2652214;
+}
+
+.bus-reviews-section .hbr-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bus-reviews-section .hbr-registration {
+  padding: 6px 11px;
+  border-radius: 9px;
+  background: #fff1e7;
+  color: #f26522;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bus-reviews-section .hbr-stars {
+  color: #f26522;
+  font-size: 18px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.bus-reviews-section .hbr-route {
+  margin: 17px 0 12px;
+  color: var(--hbr-text);
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bus-reviews-section .hbr-text {
+  flex: 1;
+  margin: 0 0 20px;
+  color: var(--hbr-text);
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bus-reviews-section .hbr-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hbr-line);
+}
+
+.bus-reviews-section .hbr-author {
+  color: var(--hbr-text);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bus-reviews-section .hbr-date {
+  color: var(--hbr-muted);
+  font-size: 10px;
+}
+
+.bus-reviews-section .hbr-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 35px 20px;
+  border: 1px dashed var(--hbr-line);
+  border-radius: 18px;
+  background: var(--hbr-paper);
+  color: var(--hbr-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.bus-reviews-section .hbr-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.bus-reviews-section .hbr-status {
+  margin: 0;
+  color: var(--hbr-muted);
+  font-size: 12px;
+}
+
+.bus-reviews-section .hbr-load-more {
+  padding: 11px 20px;
+  border: 1px solid #f26522;
+  border-radius: 12px;
+  background: #f26522;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bus-reviews-section .hbr-load-more:hover {
+  background: #e45717;
+}
+
+.bus-reviews-section .hbr-load-more:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.bus-reviews-section .hbr-load-more:focus-visible {
+  outline: 3px solid #f26522;
+  outline-offset: 3px;
+}
+
+html[data-theme="dark"] .bus-reviews-section {
+  --hbr-paper: #222326;
+  --hbr-text: #f1ece7;
+  --hbr-muted: #b0a69e;
+  --hbr-line: #403831;
+}
+
+@media (max-width: 1050px) {
+  .bus-reviews-section .hbr-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .bus-reviews-section {
+    margin: 35px auto;
+    padding-top: 24px;
+  }
+
+  .bus-reviews-section .hbr-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .bus-reviews-section .hbr-heading {
+    font-size: 25px;
+  }
+
+  .bus-reviews-section .hbr-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .bus-reviews-section .hbr-card {
+    padding: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bus-reviews-section .hbr-card {
+    transition: none;
+  }
+}
+

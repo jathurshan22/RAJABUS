@@ -83,6 +83,12 @@ const bookingSchema =
         trim: true,
       },
 
+      busRegNo: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
 
       from: {
         type: String,

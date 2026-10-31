@@ -1120,4 +1120,37 @@ body {
     border-left:
       6px solid #f26522;
   }
+
+}
+.ticket-action .bus-review-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border: 1px solid #f26522;
+  border-radius: 14px;
+  background: #f26522;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .2s, background .2s;
+}
+
+.ticket-action .bus-review-btn:hover {
+  background: #e45717;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.ticket-action .bus-review-btn:focus-visible {
+  outline: 3px solid #f26522;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .ticket-action .bus-review-btn {
+    width: 100%;
+  }
 }

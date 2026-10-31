@@ -1,4 +1,4 @@
-// DNS used for MongoDB connection
+Passenger:// DNS used for MongoDB connection
 require("node:dns").setServers([
   "1.1.1.1",
   "8.8.8.8",
@@ -42,6 +42,9 @@ const busRoutes =
 
 const reviewRoutes =
   require("./routes/reviewRoutes");
+
+const busReviewRoutes =
+  require("./routes/busReviewRoutes");
 
 const contactRoutes =
   require("./routes/contactRoutes");
@@ -133,6 +136,11 @@ app.use(
 app.use(
   "/api/reviews",
   reviewRoutes
+);
+
+app.use(
+  "/api/bus-reviews",
+  busReviewRoutes
 );
 
 app.use(

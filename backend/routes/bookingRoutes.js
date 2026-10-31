@@ -828,6 +828,9 @@ router.post(
           busNo:
             bus.busNo,
 
+          busRegNo:
+            bus.regNo || "",
+
 
           // JOURNEY
           from:
@@ -1174,76 +1177,85 @@ router.post(
 router.get(
   "/user/:userId",
   protect,
-
   async (req, res) => {
-
     try {
-
+      // Only the booking owner can view this history.
       if (
-        String(
-          req.user.id
-        ) !==
-        String(
-          req.params.userId
-        )
+        String(req.user.id) !==
+        String(req.params.userId)
       ) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "You can only view your own bookings",
-          });
+        return res.status(403).json({
+          success: false,
+          message: "You can only view your own bookings",
+        });
       }
 
+      // Load the user's bookings.
+      const bookings = await Booking.find({
+        userId: req.params.userId,
+      })
+        .sort({ createdAt: -1 })
+        .lean();
 
-      const bookings =
-        await Booking.find({
+      // Find older bookings without a registration number.
+      const missingBusIds = [
+        ...new Set(
+          bookings
+            .filter(
+              (booking) =>
+                !booking.busRegNo &&
+                booking.busId
+            )
+            .map(
+              (booking) =>
+                String(booking.busId)
+            )
+        ),
+      ];
 
-          userId:
-            req.params.userId,
+      // Get registration numbers from the bus records.
+      const buses = missingBusIds.length
+        ? await Bus.find({
+            _id: {
+              $in: missingBusIds,
+            },
+          })
+            .select("_id regNo")
+            .lean()
+        : [];
 
-        }).sort({
+      const registrations = new Map(
+        buses.map((bus) => [
+          String(bus._id),
+          bus.regNo || "",
+        ])
+      );
 
-          createdAt:
-            -1,
-        });
-
+      // Add registration number to each booking.
+      for (const booking of bookings) {
+        booking.busRegNo =
+          booking.busRegNo ||
+          registrations.get(
+            String(booking.busId)
+          ) ||
+          "";
+      }
 
       return res.json({
-
-        success:
-          true,
-
+        success: true,
         bookings,
       });
 
-
     } catch (error) {
-
       console.error(
         "Booking history error:",
         error
       );
 
-
-      return res
-        .status(500)
-        .json({
-
-          success:
-            false,
-
-          message:
-            "Failed to get bookings",
-
-          error:
-            error.message,
-        });
+      return res.status(500).json({
+        success: false,
+        message: "Failed to get bookings",
+      });
     }
   }
 );

@@ -408,6 +408,14 @@ function createBookingCard(booking) {
         <i class="fa-solid fa-download"></i>
         PDF
       </button>
+
+      <a
+        class="bus-review-btn"
+        href="bus-review.html?bookingId=${encodeURIComponent(booking._id)}"
+      >
+        <i class="fa-solid fa-star"></i>
+        Review
+      </a>
     `;
   }
 
@@ -517,6 +525,15 @@ function createBookingCard(booking) {
 
 
         <p>
+          Registration Number:
+          <b>
+            ${escapeHtml(
+              booking.busRegNo || "Not available"
+            )}
+          </b>
+        </p>
+
+        <p>
           Passenger:
           <b>
             ${escapeHtml(
@@ -524,7 +541,7 @@ function createBookingCard(booking) {
               "-"
             )}
           </b>
-        </p>
+      </p>
 
 
         <p>
