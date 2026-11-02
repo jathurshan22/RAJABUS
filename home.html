@@ -233,17 +233,6 @@ With a fully responsive design, the site is accessible on mobile, tablet, and co
 
 
 
-
-<div class="scroll-indicator">
-  <div class="mouse">
-    <span class="wheel"></span>
-  </div>
-</div>
-
-
-
-
-
 <div class="reviews-viewport">
   <div class="reviews-track">
     <div class="reviews-grid" id="reviewsGrid1">
@@ -256,13 +245,27 @@ With a fully responsive design, the site is accessible on mobile, tablet, and co
   </div>
 </div>
 
-<!-- BUS REVIEWS -->
+
+<!-- ==========================================
+     RAJABUS - AUTO SCROLLING BUS REVIEWS
+========================================== -->
+
 <section
   class="bus-reviews-section"
   id="homeBusReviews"
   aria-labelledby="homeBusReviewsTitle"
 >
+
+<div class="scroll-indicator">
+  <div class="mouse">
+    <span class="wheel"></span>
+  </div>
+</div>
+
+  <!-- SECTION HEADING -->
+
   <div class="hbr-head">
+
     <h2
       class="hbr-heading"
       id="homeBusReviewsTitle"
@@ -274,16 +277,39 @@ With a fully responsive design, the site is accessible on mobile, tablet, and co
       class="hbr-summary"
       id="homeBusReviewsSummary"
     >
-      Loading reviews…
+      Loading reviews...
     </p>
+
   </div>
 
+  <!-- CONTINUOUS HORIZONTAL REVIEWS -->
+
   <div
-    class="hbr-grid"
-    id="homeBusReviewsGrid"
-  ></div>
+    class="hbr-viewport"
+    id="homeBusReviewsViewport"
+    role="region"
+    aria-label="Bus passenger reviews"
+    tabindex="0"
+  >
+
+    <div
+      class="hbr-track"
+      id="homeBusReviewsTrack"
+    >
+
+      <div
+        class="hbr-grid"
+        id="homeBusReviewsGrid"
+      ></div>
+
+    </div>
+
+  </div>
+
+  <!-- REVIEW STATUS -->
 
   <div class="hbr-bottom">
+
     <p
       class="hbr-status"
       id="homeBusReviewsStatus"
@@ -296,10 +322,17 @@ With a fully responsive design, the site is accessible on mobile, tablet, and co
       type="button"
       hidden
     >
-      Load more reviews
+      Retry loading reviews
     </button>
+
   </div>
+
 </section>
+
+<!-- ==========================================
+     END BUS REVIEWS
+========================================== -->
+
 
 <div class="top-border1"></div>
 

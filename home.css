@@ -2747,12 +2747,16 @@ body.dark .top-routes .flat-route-card .fr-price small{
   }
 }
 
-/* ==================================================
-   HOME — BUS REVIEWS
-   ================================================== */
+
+/* ==============================================
+   RAJABUS - HOME BUS REVIEWS
+   CONTINUOUS INFINITE AUTO SCROLL
+============================================== */
+
+/* SECTION */
 
 .bus-reviews-section {
-  --hbr-paper: #fff;
+  --hbr-paper: #ffffff;
   --hbr-text: #242424;
   --hbr-muted: #8a8a8a;
   --hbr-line: #f1e7df;
@@ -2760,7 +2764,9 @@ body.dark .top-routes .flat-route-card .fr-price small{
   width: 94%;
   margin: 50px auto;
   padding-top: 30px;
+
   border-top: 1px solid #f26522;
+
   color: var(--hbr-text);
 }
 
@@ -2768,152 +2774,314 @@ body.dark .top-routes .flat-route-card .fr-price small{
   display: none !important;
 }
 
+/* HEADER */
+
 .bus-reviews-section .hbr-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  flex-wrap: wrap;
   gap: 16px;
+
   margin-bottom: 26px;
 }
 
 .bus-reviews-section .hbr-heading {
   margin: 0;
-  color: var(--hbr-text);
+
   font-size: 30px;
   font-weight: 700;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
+
+  color: var(--hbr-text);
 }
 
 .bus-reviews-section .hbr-summary {
   margin: 0;
-  color: var(--hbr-muted);
+
   font-size: 13px;
+  color: var(--hbr-muted);
 }
 
-.bus-reviews-section .hbr-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
+/* ==============================================
+   VIEWPORT - HIDE OVERFLOW
+============================================== */
+
+.bus-reviews-section .hbr-viewport {
+  position: relative;
+
+  width: 100%;
+  max-width: 100%;
+
+  overflow: hidden;
+
+  outline-offset: 5px;
 }
+
+/* ==============================================
+   ANIMATED TRACK
+============================================== */
+
+.bus-reviews-section .hbr-track {
+  display: flex;
+
+  align-items: stretch;
+  gap: 0;
+
+  width: max-content;
+  max-width: none;
+
+  will-change: transform;
+}
+
+/* ==============================================
+   SINGLE HORIZONTAL ROW
+============================================== */
+
+.bus-reviews-section .hbr-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+
+  flex: 0 0 auto;
+
+  gap: 22px;
+
+  width: max-content;
+  max-width: none;
+
+  padding-right: 22px;
+}
+
+/* ==============================================
+   REVIEW CARD
+============================================== */
 
 .bus-reviews-section .hbr-card {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+
+  flex: 0 0 clamp(300px, 30vw, 510px);
+
+  width: clamp(300px, 30vw, 510px);
+  min-height: 260px;
+
   padding: 23px;
+
+  background: var(--hbr-paper);
+
   border: 1px solid var(--hbr-line);
   border-radius: 20px;
-  background: var(--hbr-paper);
+
   box-shadow: 0 8px 28px #70360009;
-  transition: transform .2s, box-shadow .2s;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .bus-reviews-section .hbr-card:hover {
   transform: translateY(-4px);
+
   box-shadow: 0 14px 35px #f2652214;
 }
+
+/* CARD TOP */
 
 .bus-reviews-section .hbr-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   flex-wrap: wrap;
   gap: 10px;
 }
 
+/* REGISTRATION */
+
 .bus-reviews-section .hbr-registration {
   padding: 6px 11px;
-  border-radius: 9px;
+
   background: #fff1e7;
   color: #f26522;
+
+  border-radius: 9px;
+
   font-size: 14px;
   font-weight: 700;
+
   overflow-wrap: anywhere;
 }
+
+/* RATING */
 
 .bus-reviews-section .hbr-stars {
   color: #f26522;
+
   font-size: 18px;
   letter-spacing: 2px;
+
   white-space: nowrap;
 }
 
+/* ROUTE */
+
 .bus-reviews-section .hbr-route {
   margin: 17px 0 12px;
-  color: var(--hbr-text);
+
   font-size: 16px;
   font-weight: 600;
+
+  color: var(--hbr-text);
+
   overflow-wrap: anywhere;
 }
 
+/* REVIEW TEXT */
+
 .bus-reviews-section .hbr-text {
   flex: 1;
+
   margin: 0 0 20px;
+
   color: var(--hbr-text);
+
   font-size: 13px;
   line-height: 1.9;
+
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* CARD FOOTER */
 
 .bus-reviews-section .hbr-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   flex-wrap: wrap;
   gap: 8px;
+
   padding-top: 15px;
+
   border-top: 1px solid var(--hbr-line);
 }
 
+/* PASSENGER NAME */
+
 .bus-reviews-section .hbr-author {
   color: var(--hbr-text);
+
   font-size: 12px;
   font-weight: 600;
+
   overflow-wrap: anywhere;
 }
+
+/* REVIEW DATE */
 
 .bus-reviews-section .hbr-date {
   color: var(--hbr-muted);
   font-size: 10px;
 }
 
+/* NO REVIEWS */
+
 .bus-reviews-section .hbr-empty {
-  grid-column: 1 / -1;
+  flex: 0 0 min(460px, 90vw);
+
   margin: 0;
   padding: 35px 20px;
+
   border: 1px dashed var(--hbr-line);
   border-radius: 18px;
+
   background: var(--hbr-paper);
   color: var(--hbr-muted);
+
   text-align: center;
   font-size: 13px;
 }
+
+/* ==============================================
+   AUTO SCROLL ANIMATION
+============================================== */
+
+.bus-reviews-section
+.hbr-viewport.hbr-ready
+.hbr-track {
+  animation:
+    hbr-slide-left
+    var(--hbr-duration, 35s)
+    linear
+    infinite;
+}
+
+@keyframes hbr-slide-left {
+
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+
+}
+
+/* ==============================================
+   HOVER / KEYBOARD FOCUS = PAUSE
+============================================== */
+
+.bus-reviews-section
+.hbr-viewport:hover
+.hbr-track,
+.bus-reviews-section
+.hbr-viewport:focus-within
+.hbr-track {
+  animation-play-state: paused;
+}
+
+/* ==============================================
+   BOTTOM STATUS
+============================================== */
 
 .bus-reviews-section .hbr-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   flex-wrap: wrap;
   gap: 14px;
+
   margin-top: 22px;
 }
 
 .bus-reviews-section .hbr-status {
   margin: 0;
+
   color: var(--hbr-muted);
   font-size: 12px;
 }
 
+/* RETRY BUTTON */
+
 .bus-reviews-section .hbr-load-more {
   padding: 11px 20px;
+
   border: 1px solid #f26522;
   border-radius: 12px;
+
   background: #f26522;
-  color: #fff;
+  color: white;
+
   font: inherit;
   font-size: 12px;
   font-weight: 600;
+
   cursor: pointer;
 }
 
@@ -2922,14 +3090,11 @@ body.dark .top-routes .flat-route-card .fr-price small{
 }
 
 .bus-reviews-section .hbr-load-more:disabled {
-  opacity: .6;
-  cursor: default;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.bus-reviews-section .hbr-load-more:focus-visible {
-  outline: 3px solid #f26522;
-  outline-offset: 3px;
-}
+/* DARK MODE */
 
 html[data-theme="dark"] .bus-reviews-section {
   --hbr-paper: #222326;
@@ -2938,13 +3103,176 @@ html[data-theme="dark"] .bus-reviews-section {
   --hbr-line: #403831;
 }
 
-@media (max-width: 1050px) {
-  .bus-reviews-section .hbr-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+/* ==========================================
+   RAJABUS - REVIEW MOUSE POSITION FIX
+========================================== */
+
+.bus-reviews-section {
+  position: relative;
+  overflow: visible;
+}
+
+/* Mouse stays above the orange border */
+
+.bus-reviews-section > .scroll-indicator {
+  position: absolute;
+
+  top: -50px;
+  right: min(454.5px, 30%);
+
+  bottom: auto;
+  left: auto;
+
+  opacity: 1;
+  display: flex;
+  transform: none;
+
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Preserve original mouse design */
+
+.bus-reviews-section > .scroll-indicator .mouse {
+  width: 20.5px;
+  height: 38px;
+  border: 3px solid #f26522;
+  border-radius: 16px;
+}
+
+
+/* ==========================================
+   RAJABUS - LIVE CHAT ABOVE, ARROW BELOW
+========================================== */
+
+/* LIVE CHAT - TOP POSITION */
+
+body #rajaLiveChat {
+  position: fixed;
+  right: 24px;
+  bottom: 82px;
+  z-index: 10000;
+}
+
+/* SCROLL TO TOP - BOTTOM POSITION */
+
+body #scrollTopBtn {
+  position: fixed;
+  right: 24px;
+  bottom: 20px;
+
+  width: 42px;
+  height: 42px;
+  padding: 0;
+
+  border-radius: 50%;
+  background: #ffffff;
+  color: #f26522;
+
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+}
+
+
+/* ==========================================
+   RAJABUS - LIVE CHAT TOP GAP FIX
+========================================== */
+
+/* Live Chat: Above Scroll-to-Top Arrow */
+
+body #rajaLiveChat {
+  position: fixed;
+  right: 24px;
+  bottom: 82px;
+  z-index: 10000;
+}
+
+/* Chat Window: Keep Space at Browser Top */
+
+body #rajaLiveChat .rlc-panel {
+  height: min(
+    640px,
+    calc(100dvh - 195px)
+  );
+
+  max-height: calc(100dvh - 195px);
+}
+
+/* Scroll-to-Top: Below Live Chat */
+
+body #scrollTopBtn {
+  position: fixed;
+  right: 24px;
+  bottom: 20px;
+  width: 42px;
+  height: 42px;
+  z-index: 9999;
+}
+
+/* Mobile Responsive */
+
+@media (max-width: 480px) {
+
+  body #rajaLiveChat {
+    right: 12px;
+    bottom: 78px;
+  }
+
+  body #rajaLiveChat .rlc-panel {
+    height: min(
+      640px,
+      calc(100dvh - 180px)
+    );
+
+    max-height: calc(100dvh - 180px);
+  }
+
+  body #scrollTopBtn {
+    right: 12px;
+    bottom: 12px;
+    width: 44px;
+    height: 44px;
   }
 }
 
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 480px) {
+
+  body #rajaLiveChat {
+    right: 12px;
+    bottom: 78px;
+  }
+
+  body #scrollTopBtn {
+    right: 12px;
+    bottom: 12px;
+
+    width: 44px;
+    height: 44px;
+  }
+}
+
+
+/* Mobile responsive */
+
 @media (max-width: 640px) {
+  .bus-reviews-section > .scroll-indicator {
+    right: 12px;
+    top: -50px;
+    opacity: 1;
+  }
+}
+
+
+/* ==============================================
+   MOBILE RESPONSIVE
+============================================== */
+
+@media (max-width: 640px) {
+
   .bus-reviews-section {
     margin: 35px auto;
     padding-top: 24px;
@@ -2953,6 +3281,7 @@ html[data-theme="dark"] .bus-reviews-section {
   .bus-reviews-section .hbr-head {
     align-items: flex-start;
     flex-direction: column;
+
     gap: 7px;
   }
 
@@ -2961,18 +3290,46 @@ html[data-theme="dark"] .bus-reviews-section {
   }
 
   .bus-reviews-section .hbr-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
+    padding-right: 14px;
   }
 
   .bus-reviews-section .hbr-card {
+    flex-basis: min(83vw, 390px);
+
+    width: min(83vw, 390px);
+    min-height: 245px;
+
     padding: 20px;
   }
+
 }
 
+/* ==============================================
+   ACCESSIBILITY
+============================================== */
+
 @media (prefers-reduced-motion: reduce) {
+
+  .bus-reviews-section .hbr-viewport {
+    overflow-x: auto;
+  }
+
+  .bus-reviews-section
+  .hbr-viewport.hbr-ready
+  .hbr-track {
+    animation: none;
+    will-change: auto;
+  }
+
+  .bus-reviews-section .hbr-copy {
+    display: none;
+  }
+
   .bus-reviews-section .hbr-card {
     transition: none;
   }
+
 }
+
 

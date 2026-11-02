@@ -123,7 +123,7 @@ function busSummary(
     depart: trip?.departureTime || bus.depart,
     arrive: trip?.arrivalTime || bus.arrive,
 
-    distanceKm: bus.distanceKm,
+    distanceKm: trip?.distanceKm ?? null,
 
     fare: trip ? trip.fare : null,
     fareMin: trip ? trip.fare : bus.fareMin,
@@ -382,139 +382,260 @@ router.get(
 // GET /api/buses/top-searched
 // =============================================
 
+
+/* =============================================
+   RAJABUS - REAL TOP SEARCH ROUTES
+   OPERATOR TRIPS + BUS DETAILS
+   GET /api/buses/top-searched
+============================================= */
+
 router.get("/top-searched", async (req, res) => {
+
   try {
-    const requestedLimit = Number.parseInt(
+
+    const requested = Number.parseInt(
       req.query.limit,
       10
     );
 
-    const limit = Number.isInteger(requestedLimit)
-      ? Math.max(1, Math.min(requestedLimit, 20))
+    const limit = Number.isInteger(requested)
+      ? Math.max(1, Math.min(requested, 20))
       : 9;
 
     // =========================================
-    // GET OPERATOR-OWNED BUSES
+    // SRI LANKA CURRENT JOURNEY DATE
     // =========================================
 
-    const operatorBusIds = await Bus.distinct(
+    const localDateParts =
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Colombo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(new Date());
+
+    const datePart = (kind) =>
+      localDateParts.find(
+        (item) => item.type === kind
+      )?.value;
+
+    const today =
+      `${datePart("year")}-` +
+      `${datePart("month")}-` +
+      `${datePart("day")}`;
+
+    // =========================================
+    // OPERATOR-OWNED BUSES ONLY
+    // =========================================
+
+    const busIds = await Bus.distinct(
       "_id",
       OPERATOR_BUS_FILTER
     );
 
+    if (!busIds.length) {
+      return res.json({
+        success: true,
+        routes: []
+      });
+    }
+
     // =========================================
-    // GET ACTIVE TRIPS
+    // REAL ACTIVE UPCOMING TRIPS
     // =========================================
 
     const trips = await Trip.find({
       status: "Active",
+
+      journeyDate: {
+        $gte: today
+      },
+
       busId: {
-        $in: operatorBusIds
+        $in: busIds
       }
     })
+
+      .select(
+        "busId from to journeyDate " +
+        "departureTime arrivalTime fare " +
+        "status distanceKm"
+      )
+
       .sort({
         journeyDate: 1,
         departureTime: 1
       })
+
       .populate({
         path: "busId",
         match: OPERATOR_BUS_FILTER,
-      });
+        select:
+          "busNo regNo type totalSeats " +
+          "distanceKm operatorId"
+      })
+
+      .lean();
 
     // =========================================
-    // UNIQUE DESTINATIONS
+    // REAL SEARCH COUNTS
     // =========================================
 
-    const tripByDestination = new Map();
-
-    for (const trip of trips) {
-      if (!trip.busId || !trip.to) {
-        continue;
-      }
-
-      const key = String(trip.to)
-        .trim()
-        .toLowerCase();
-
-      if (!key) continue;
-
-      if (!tripByDestination.has(key)) {
-        tripByDestination.set(key, trip);
-      }
-    }
-
-    // =========================================
-    // SEARCH COUNTS
-    // =========================================
-
-    const counts = await SearchLog.aggregate([
-      {
-        $group: {
-          _id: {
-            $toLower: "$to"
-          },
-
-          searchCount: {
-            $sum: 1
-          },
+    const searchCounts =
+      await SearchLog.aggregate([
+        {
+          $match: {
+            to: {
+              $type: "string"
+            }
+          }
         },
-      },
-    ]);
+        {
+          $group: {
+            _id: {
+              $toLower: {
+                $trim: {
+                  input: "$to"
+                }
+              }
+            },
 
-    const searchCounts = new Map(
-      counts.map((item) => [
-        String(item._id || "")
-          .trim()
-          .toLowerCase(),
+            total: {
+              $sum: 1
+            }
+          }
+        }
+      ]);
 
-        item.searchCount,
-      ])
+    const counts = new Map(
+      searchCounts.map(
+        ({ _id, total }) => [
+          String(_id),
+          total
+        ]
+      )
     );
 
     // =========================================
-    // BUILD HOMEPAGE ROUTES
+    // UNIQUE BUS + ROUTE COMBINATIONS
     // =========================================
 
-    const routes = [
-      ...tripByDestination.entries()
-    ]
-      .map(([key, trip]) => ({
-        trip,
-        searchCount:
-          searchCounts.get(key) || 0,
-      }))
+    const unique = new Map();
 
-      .sort(
-        (a, b) =>
-          b.searchCount - a.searchCount
-      )
+    for (const trip of trips) {
 
-      .slice(0, limit)
+      const bus = trip.busId;
 
-      .map(({ trip, searchCount }) => ({
+      if (
+        !bus ||
+        !trip.from ||
+        !trip.to
+      ) {
+        continue;
+      }
+
+      const key = [
+        bus._id,
+        trip.from.trim().toLowerCase(),
+        trip.to.trim().toLowerCase()
+      ].join("|");
+
+      // Keep nearest upcoming trip
+      // for the same bus and route.
+
+      if (unique.has(key)) {
+        continue;
+      }
+
+      // =====================================
+      // DISTANCE - REAL STORED DATA ONLY
+      // =====================================
+
+      const rawDistance =
+        trip.distanceKm ??
+        bus.distanceKm;
+
+      const km = Number(rawDistance);
+
+      const distanceKm =
+        rawDistance !== null &&
+        rawDistance !== undefined &&
+        rawDistance !== "" &&
+        Number.isFinite(km) &&
+        km > 0
+          ? km
+          : null;
+
+      // =====================================
+      // SEARCH RANKING
+      // =====================================
+
+      const destinationKey =
+        trip.to.trim().toLowerCase();
+
+      // =====================================
+      // RETURN ACTUAL BUS/TRIP DETAILS
+      // =====================================
+
+      unique.set(key, {
+
+        tripId: String(trip._id),
+
+        busId: String(bus._id),
+
+        busNo: bus.busNo,
+
+        regNo: bus.regNo,
+
+        type: bus.type,
+
+        totalSeats: bus.totalSeats,
+
         from: trip.from,
+
         to: trip.to,
 
-        type: trip.busId.type,
+        journeyDate: trip.journeyDate,
 
         depart: trip.departureTime,
+
         arrive: trip.arrivalTime,
 
-        distanceKm:
-          trip.busId.distanceKm ?? null,
+        fare: trip.fare,
 
-        fareMin: trip.fare,
-        fareMax: trip.fare,
+        distanceKm,
 
-        searchCount,
-      }));
+        searchCount:
+          counts.get(destinationKey) || 0
+
+      });
+    }
+
+    // =========================================
+    // SORT MOST SEARCHED DESTINATIONS FIRST
+    // =========================================
+
+    const routes = [...unique.values()]
+
+      .sort((a, b) =>
+        b.searchCount - a.searchCount ||
+        a.journeyDate.localeCompare(
+          b.journeyDate
+        ) ||
+        a.depart.localeCompare(
+          b.depart
+        )
+      )
+
+      .slice(0, limit);
 
     return res.json({
       success: true,
-      routes,
+      routes
     });
 
   } catch (error) {
+
     console.error(
       "Top searched routes error:",
       error
@@ -522,10 +643,12 @@ router.get("/top-searched", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Failed to load popular routes",
+      message: "Failed to load top routes"
     });
   }
+
 });
+
 
 // =============================================
 // WEBSITE STATISTICS

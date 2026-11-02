@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REVIEW</title>
-    <link rel="stylesheet" href="review.css" />
+    <link rel="stylesheet" href="review.css?v=2"/>
     <link rel="stylesheet" href="globals.css" />
     <link rel="stylesheet" href="theme.css">
     <script src="review.js" defer></script>
+    <script src="review-bus-v2.js?v=2" defer></script>
+    
+
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
   <link rel="stylesheet" href="dark-responsive.css">
@@ -77,91 +81,371 @@
       </a>
     </div>
   </div>
-<div class="container">
-  
-  <header>
-  <div class="pill" id="summaryPill">
-    <span class="inline-stars" id="avgStars"></span>
-    <strong id="avgScore">0.0</strong>/5 
-    <div class="right">
-      <span id="totalCount">0</span> reviews
+
+<!-- ============================================
+     RAJABUS - REVIEWS PAGE
+     WEBSITE + BUS REVIEWS
+============================================ -->
+
+<div class="container reviews-v2">
+
+  <!-- PAGE HEADING -->
+  <section class="rv-hero">
+    <div class="rv-hero-icon">
+      <i class="fa-solid fa-comment-dots"></i>
     </div>
-  </div>
-</header>
 
+    <div>
+      <h1>Reviews</h1>
+      <p>
+        What our passengers say about RAJABUS
+        and our buses.
+      </p>
+    </div>
+  </section>
 
-  <div class="top-row">
-    <aside class="summary card">
-      <div class="big-rating">
-        <div class="score" id="bigScore">0.0</div>
-        <div>
-          <div class="stars" id="bigStars"></div>
-          <div class="muted">Average rating</div>
-        </div>
+  <!-- SEPARATE REVIEW STATISTICS -->
+  <section class="rv-overview">
+
+    <div class="rv-overview-card website">
+      <div class="rv-overview-icon">
+        <i class="fa-solid fa-desktop"></i>
       </div>
-      <div class="dist" id="distBars"></div>
-    </aside>
 
-    <section class="card" id="formCard">
-      <form class="review-form" id="reviewForm" autocomplete="off">
-        <h3 style="margin:0">Write your review</h3>
-        <div class="field">
-          <label>Rating </label>
-          <div class="rate inline-stars" id="rateBox">
-            <input type="radio" name="rating" id="star1" value="1"><label for="star1"></label>
-            <input type="radio" name="rating" id="star2" value="2"><label for="star2"></label>
-            <input type="radio" name="rating" id="star3" value="3"><label for="star3"></label>
-            <input type="radio" name="rating" id="star4" value="4"><label for="star4"></label>
-            <input type="radio" name="rating" id="star5" value="5"><label for="star5"></label>
-          </div>
-          <div class="muted" id="rateLive">Select rating</div>
-        </div>
-        <div class="row">
-          <div class="field" style="flex:1 1 220px">
-            <label>Name (optional)</label>
-            <input class="inp" name="name" placeholder="e.g  jathurshan" />
-          </div>
-          <div class="field" style="flex:1 1 180px">
-            <label>Location (optional)</label>
-            <input class="inp" name="place" placeholder="e.g  batticaloa" />
-          </div>
-        </div>
-        <div class="field">
-          <label>Your experience *</label>
-          <textarea name="text" maxlength="600" placeholder="Service quality, timing, cleanliness…"></textarea>
-          <div class="muted"><span id="cc">0</span>/600</div>
-        </div>
-        <div class="row">
-          <button class="btn" type="submit">Submit Review</button>
-          <span class="muted" id="formNote">* Required fields</span>
-        </div>
-      </form>
-    </section>
+      <div class="rv-overview-info">
+        <h2>Website Reviews</h2>
+        <p>
+          Overall experience of using RAJABUS
+        </p>
+      </div>
+
+      <div class="rv-overview-score">
+        <strong>
+          <span id="websiteReviewAvg">—</span> / 5
+        </strong>
+        <span>
+          <span id="websiteReviewTotal">—</span>
+          total reviews
+        </span>
+      </div>
+    </div>
+
+    <div class="rv-overview-card buses">
+      <div class="rv-overview-icon">
+        <i class="fa-solid fa-bus"></i>
+      </div>
+
+      <div class="rv-overview-info">
+        <h2>Buses Reviews</h2>
+        <p>
+          Reviews about our bus services
+          and journeys
+        </p>
+      </div>
+
+      <div class="rv-overview-score">
+        <strong>
+          <span id="busReviewAvg">—</span> / 5
+        </strong>
+        <span>
+          <span id="busReviewTotal">—</span>
+          total reviews
+        </span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- REVIEW CATEGORY TABS -->
+  <div class="rv-tabs" role="tablist">
+
+    <button
+      id="websiteReviewsTab"
+      class="rv-tab active"
+      data-review-tab="website"
+      type="button"
+      role="tab"
+      aria-selected="true"
+      aria-controls="websiteReviewsPanel"
+    >
+      <i class="fa-solid fa-desktop"></i>
+      Website Reviews
+    </button>
+
+    <button
+      id="busReviewsTab"
+      class="rv-tab"
+      data-review-tab="bus"
+      type="button"
+      role="tab"
+      aria-selected="false"
+      aria-controls="busReviewsPanel"
+    >
+      <i class="fa-solid fa-bus"></i>
+      Buses Reviews
+    </button>
+
   </div>
 
+  <!-- ========================================
+       WEBSITE REVIEWS
+  ========================================= -->
 
-  <main class="card reviews-card" id="reviewsCard">
-    <div class="controls">
-      
-      <select id="sortSel">
-        <option value="new">Sort: Newest</option>
-        <option value="high">Sort: Highest rating</option>
-        <option value="low">Sort: Lowest rating</option>
-      </select>
-      <button class="chip-btn active" data-filter="all">All</button>
-      <button class="chip-btn" data-filter="5">5★</button>
-      <button class="chip-btn" data-filter="4">4★</button>
-      <button class="chip-btn" data-filter="3">3★</button>
-      <button class="chip-btn" data-filter="2">2★</button>
-      <button class="chip-btn" data-filter="1">1★</button>
+  <section
+    id="websiteReviewsPanel"
+    class="rv-panel"
+    role="tabpanel"
+    aria-labelledby="websiteReviewsTab"
+  >
+
+    <div class="rv-section-heading">
+      <h2>Website Reviews</h2>
+      <p>
+        Feedback about the RAJABUS website,
+        ticket booking and online services.
+      </p>
     </div>
-    <div class="sep"></div>
-    <section class="reviews" id="reviewsList"></section>
-    <div id="empty" class="empty" style="display:none">No reviews yet. Be the first ✍️</div>
-  </main>
+
+    <!-- ORIGINAL SUMMARY -->
+    <div class="pill" id="summaryPill">
+      <span class="inline-stars" id="avgStars"></span>
+      <strong id="avgScore">0.0</strong>/5
+      <div class="right">
+        <span id="totalCount">0</span> reviews
+      </div>
+    </div>
+
+    <div class="top-row">
+
+      <aside class="summary card">
+        <div class="big-rating">
+          <div class="score" id="bigScore">0.0</div>
+          <div>
+            <div class="stars" id="bigStars"></div>
+            <div class="muted">Average rating</div>
+          </div>
+        </div>
+
+        <div class="dist" id="distBars"></div>
+      </aside>
+
+      <!-- EXISTING WEBSITE REVIEW FORM -->
+      <section class="card" id="formCard">
+
+        <form
+          class="review-form"
+          id="reviewForm"
+          autocomplete="off"
+        >
+
+          <h3>Write your website review</h3>
+
+          <div class="field">
+            <label>Rating</label>
+
+            <div class="rate inline-stars" id="rateBox">
+              <input type="radio" name="rating" id="star1" value="1">
+              <label for="star1"></label>
+
+              <input type="radio" name="rating" id="star2" value="2">
+              <label for="star2"></label>
+
+              <input type="radio" name="rating" id="star3" value="3">
+              <label for="star3"></label>
+
+              <input type="radio" name="rating" id="star4" value="4">
+              <label for="star4"></label>
+
+              <input type="radio" name="rating" id="star5" value="5">
+              <label for="star5"></label>
+            </div>
+
+            <div class="muted" id="rateLive">
+              Select rating
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Name (optional)</label>
+              <input
+                class="inp"
+                name="name"
+                placeholder="Your name"
+              >
+            </div>
+
+            <div class="field">
+              <label>Location (optional)</label>
+              <input
+                class="inp"
+                name="place"
+                placeholder="Your location"
+              >
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Your experience *</label>
+
+            <textarea
+              name="text"
+              maxlength="600"
+              placeholder="Tell us about your experience..."
+            ></textarea>
+
+            <div class="muted">
+              <span id="cc">0</span>/600
+            </div>
+          </div>
+
+          <div class="row">
+            <button class="btn" type="submit">
+              Submit Review
+            </button>
+
+            <span class="muted" id="formNote">
+              * Required fields
+            </span>
+          </div>
+
+        </form>
+
+      </section>
+    </div>
+
+    <!-- WEBSITE REVIEW LIST -->
+    <main class="card reviews-card" id="reviewsCard">
+
+      <div class="controls">
+        <select id="sortSel">
+          <option value="new">Latest First</option>
+          <option value="high">Highest Rating</option>
+          <option value="low">Lowest Rating</option>
+        </select>
+
+        <button class="chip-btn active" data-filter="all">All</button>
+        <button class="chip-btn" data-filter="5">5★</button>
+        <button class="chip-btn" data-filter="4">4★</button>
+        <button class="chip-btn" data-filter="3">3★</button>
+        <button class="chip-btn" data-filter="2">2★</button>
+        <button class="chip-btn" data-filter="1">1★</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <section class="reviews" id="reviewsList"></section>
+
+      <div id="empty" class="empty" style="display:none">
+        No website reviews yet.
+      </div>
+
+    </main>
+
+  </section>
+
+  <!-- ========================================
+       BUS REVIEWS
+  ========================================= -->
+
+  <section
+    id="busReviewsPanel"
+    class="rv-panel"
+    role="tabpanel"
+    aria-labelledby="busReviewsTab"
+    hidden
+  >
+
+    <div class="rv-section-heading">
+      <h2>
+        <i class="fa-solid fa-bus"></i>
+        Buses Reviews
+      </h2>
+
+      <p>
+        Passenger feedback about buses,
+        journeys and travelling experience.
+      </p>
+    </div>
+
+    <!-- BUS FILTERS -->
+    <div class="rv-bus-filters">
+
+      <select id="busReviewBusFilter">
+        <option value="all">All Buses</option>
+      </select>
+
+      <select id="busReviewRouteFilter">
+        <option value="all">All Routes</option>
+      </select>
+
+      <select id="busReviewSort">
+        <option value="new">Latest First</option>
+        <option value="high">Highest Rating</option>
+        <option value="low">Lowest Rating</option>
+      </select>
+
+    </div>
+
+    <div class="rv-bus-layout">
+
+      <!-- BUS RATING SUMMARY -->
+      <aside class="rv-bus-summary card">
+
+        <h3>Buses Reviews Summary</h3>
+
+        <div class="rv-bus-score">
+          <strong id="busReviewBigScore">—</strong>
+          <span>/ 5 ★</span>
+        </div>
+
+        <p>
+          <span id="busReviewSummaryTotal">—</span>
+          total reviews
+        </p>
+
+        <div id="busReviewDistBars"></div>
+
+      </aside>
+
+      <!-- ALL BUS REVIEWS LIST -->
+      <div class="rv-bus-results">
+
+        <div
+          id="busReviewsList"
+          class="rv-bus-review-list"
+        ></div>
+
+        <p
+          id="busReviewsEmpty"
+          class="rv-bus-empty"
+          hidden
+        >
+          No bus reviews available.
+        </p>
+
+        <button
+          id="busReviewsLoadMore"
+          class="rv-load-more"
+          type="button"
+          hidden
+        >
+          Load More Reviews
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
 </div>
-<!-- Scroll to Top Button -->
-<button id="scrollTopBtn">↑</button>
+
+<!-- SCROLL TO TOP -->
+<button id="scrollTopBtn" type="button" aria-label="Scroll to top">
+  ↑
+</button>
+
 
 
 

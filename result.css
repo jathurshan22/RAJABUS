@@ -148,11 +148,25 @@ body{
   background:#000000;
 }
 
-.bus-info{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
+
+.bus-info {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
 }
+
+@media (max-width: 1000px) {
+  .bus-info {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .bus-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 
 .bus-info div{
   background:#fff3ec;
@@ -782,4 +796,29 @@ body.dark .bus-area{
   color:#222;
   font-size:15px;
   font-weight:800;
+}
+
+
+/* RAJABUS - PASSENGER BUS CARD DISTANCE */
+
+.bus-info {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1050px) {
+  .bus-info {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .bus-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .bus-info {
+    grid-template-columns: 1fr;
+  }
 }

@@ -57,6 +57,14 @@ const tripSchema = new mongoose.Schema(
       min: 0,
     },
 
+    
+    distanceKm: {
+      type: Number,
+      min: 0.1,
+      default: null
+    },
+
+
     status: {
       type: String,
       enum: [

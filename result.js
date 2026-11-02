@@ -2,32 +2,16 @@
 "use strict";
 
 // =====================================================
-// RAJABUS - TRIP BASED SEARCH RESULTS
-//
-// Requires corrected backend busRoutes.js
-//
-// API:
-// GET /api/buses/search?to=...&date=...&type=...
-//
-// Each result represents ONE scheduled trip.
+// RAJABUS - PASSENGER TRIP SEARCH RESULTS
+// Scheduled trips + real Distance (KM)
 // =====================================================
-
-// API_BASE is normally declared in seat.js.
-// Use a fallback if result.js is loaded independently.
 
 const RESULT_API_BASE =
   typeof API_BASE !== "undefined"
     ? API_BASE
     : "http://localhost:5000/api";
 
-
-// =====================================================
-// SEARCH PARAMETERS
-// =====================================================
-
-const params = new URLSearchParams(
-  window.location.search
-);
+const params = new URLSearchParams(window.location.search);
 
 const fromLocation = "Mihintale";
 
@@ -42,7 +26,6 @@ const travelDate = (
 const busType = (
   params.get("bus") || ""
 ).trim();
-
 
 // =====================================================
 // DOM ELEMENTS
@@ -60,50 +43,36 @@ const busTypeElement =
 const resultsSection =
   document.getElementById("resultsSection");
 
+const tripsById = new Map();
+
 if (districtNameElement) {
-  districtNameElement.textContent =
-    district || "-";
+  districtNameElement.textContent = district || "-";
 }
 
 if (travelDateElement) {
-  travelDateElement.textContent =
-    travelDate || "-";
+  travelDateElement.textContent = travelDate || "-";
 }
 
 if (busTypeElement) {
-  busTypeElement.textContent =
-    busType || "Any";
+  busTypeElement.textContent = busType || "Any";
 }
 
-
 // =====================================================
-// TRIP CACHE
-//
-// Map:
-// tripId -> selected trip data
-// =====================================================
-
-const tripsById = new Map();
-
-
-// =====================================================
-// ESCAPE HTML
+// SAFE HTML
 // =====================================================
 
 function escapeHtml(value) {
   return String(value ?? "").replace(
     /[&<>"']/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-      })[character]
+    (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]
   );
 }
-
 
 // =====================================================
 // FORMAT DATE
@@ -123,16 +92,23 @@ function formatDate(dateString) {
   return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
-    year: "numeric",
+    year: "numeric"
   });
 }
-
 
 // =====================================================
 // FORMAT FARE
 // =====================================================
 
 function formatFare(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "-";
+  }
+
   const amount = Number(value);
 
   if (!Number.isFinite(amount)) {
@@ -141,10 +117,36 @@ function formatFare(value) {
 
   return amount.toLocaleString("en-LK", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
 
+// =====================================================
+// FORMAT DISTANCE KM
+// =====================================================
+
+function formatDistanceKm(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "Not provided";
+  }
+
+  const distance = Number(value);
+
+  if (
+    !Number.isFinite(distance) ||
+    distance <= 0
+  ) {
+    return "Not provided";
+  }
+
+  return `${distance.toLocaleString("en-LK", {
+    maximumFractionDigits: 2
+  })} km`;
+}
 
 // =====================================================
 // SHOW MESSAGE
@@ -158,23 +160,8 @@ function showResultMessage(message) {
   `;
 }
 
-
 // =====================================================
-// NORMALIZE SEARCH RESULT
-//
-// Expected corrected busRoutes.js fields:
-//
-// id            -> Physical Bus ID
-// tripId        -> Scheduled Trip ID
-// from
-// to
-// depart
-// arrive
-// fare
-// journeyDate
-// availableSeats
-//
-// Also supports a populated busId object.
+// NORMALIZE EACH SCHEDULED TRIP
 // =====================================================
 
 function normalizeTrip(raw) {
@@ -194,11 +181,6 @@ function normalizeTrip(raw) {
     raw.busId ||
     "";
 
-  const scheduledTripId =
-    raw.tripId || "";
-
-  const numericFare = Number(raw.fare);
-
   let availableSeats = null;
 
   if (
@@ -216,12 +198,20 @@ function normalizeTrip(raw) {
     }
   }
 
+  const numericFare = Number(raw.fare);
+
+  const hasFare =
+    raw.fare !== null &&
+    raw.fare !== undefined &&
+    raw.fare !== "" &&
+    Number.isFinite(numericFare);
+
   return {
     id: String(physicalBusId),
 
     busId: String(physicalBusId),
 
-    tripId: String(scheduledTripId),
+    tripId: String(raw.tripId || ""),
 
     busNo: String(
       raw.busNo ||
@@ -241,13 +231,9 @@ function normalizeTrip(raw) {
       ""
     ),
 
-    from: String(
-      raw.from || ""
-    ),
+    from: String(raw.from || ""),
 
-    to: String(
-      raw.to || ""
-    ),
+    to: String(raw.to || ""),
 
     depart: String(
       raw.depart ||
@@ -261,25 +247,25 @@ function normalizeTrip(raw) {
       ""
     ),
 
-    fare: Number.isFinite(numericFare)
-      ? numericFare
-      : null,
-
     journeyDate: String(
       raw.journeyDate ||
       travelDate
     ),
 
-    distanceKm:
-      raw.distanceKm ?? null,
+    fare: hasFare
+      ? numericFare
+      : null,
 
-    totalSeats:
-      raw.totalSeats ?? null,
+    // IMPORTANT:
+    // Operator-assigned Trip distance.
+    // Never invent a KM value.
+    distanceKm: raw.distanceKm ?? null,
 
-    availableSeats,
+    totalSeats: raw.totalSeats ?? null,
+
+    availableSeats
   };
 }
-
 
 // =====================================================
 // BUS TYPE FILTER
@@ -302,9 +288,8 @@ function filterTripsByType(trips) {
   );
 }
 
-
 // =====================================================
-// FORMAT SEAT BADGE
+// SEAT BADGE
 // =====================================================
 
 function getSeatBadge(trip) {
@@ -312,7 +297,7 @@ function getSeatBadge(trip) {
     return {
       label: "Check Seats",
       low: false,
-      full: false,
+      full: false
     };
   }
 
@@ -320,22 +305,19 @@ function getSeatBadge(trip) {
     return {
       label: "Fully Booked",
       low: true,
-      full: true,
+      full: true
     };
   }
 
   return {
     label: `${trip.availableSeats} Seats`,
     low: trip.availableSeats <= 10,
-    full: false,
+    full: false
   };
 }
 
-
 // =====================================================
-// BUILD TRIP CARD
-//
-// Uses existing result.css class names.
+// CREATE PASSENGER BUS RESULT CARD
 // =====================================================
 
 function busCardHtml(bus) {
@@ -377,19 +359,14 @@ function busCardHtml(bus) {
 
           <p>
             Bus No:
-
             <b>${escapeHtml(bus.busNo)}</b>
 
             &middot;
-
             ${escapeHtml(bus.type)}
 
             ${
               bus.regNo
-                ? `
-                  &middot;
-                  ${escapeHtml(bus.regNo)}
-                `
+                ? `&middot; ${escapeHtml(bus.regNo)}`
                 : ""
             }
           </p>
@@ -401,24 +378,40 @@ function busCardHtml(bus) {
 
       </div>
 
+      <!-- ====================================
+           TRIP INFORMATION - FIVE BOXES
+      ==================================== -->
 
       <div class="bus-info">
 
+        <!-- DEPARTURE -->
         <div>
           <i class="fa-regular fa-clock"></i>
+
           <span>Departure</span>
-          <b>${escapeHtml(bus.depart)}</b>
+
+          <b>
+            ${escapeHtml(bus.depart)}
+          </b>
         </div>
 
+        <!-- ARRIVAL -->
         <div>
           <i class="fa-solid fa-clock"></i>
+
           <span>Arrival</span>
-          <b>${escapeHtml(bus.arrive)}</b>
+
+          <b>
+            ${escapeHtml(bus.arrive)}
+          </b>
         </div>
 
+        <!-- JOURNEY DATE -->
         <div>
           <i class="fa-regular fa-calendar"></i>
+
           <span>Journey Date</span>
+
           <b>
             ${escapeHtml(
               formatDate(bus.journeyDate)
@@ -426,9 +419,25 @@ function busCardHtml(bus) {
           </b>
         </div>
 
+        <!-- NEW: DISTANCE KM -->
+        <div>
+          <i class="fa-solid fa-route"></i>
+
+          <span>Distance</span>
+
+          <b>
+            ${escapeHtml(
+              formatDistanceKm(bus.distanceKm)
+            )}
+          </b>
+        </div>
+
+        <!-- FARE -->
         <div>
           <i class="fa-solid fa-ticket"></i>
+
           <span>Fare</span>
+
           <b>
             Rs. ${escapeHtml(
               formatFare(bus.fare)
@@ -438,6 +447,9 @@ function busCardHtml(bus) {
 
       </div>
 
+      <!-- ====================================
+           EXISTING BOOK NOW BUTTON
+      ==================================== -->
 
       <button
         type="button"
@@ -452,9 +464,8 @@ function busCardHtml(bus) {
   `;
 }
 
-
 // =====================================================
-// OPEN SEAT MODAL FOR SELECTED TRIP
+// BOOK NOW - EXISTING SEAT MODAL
 // =====================================================
 
 function selectTrip(tripId) {
@@ -496,9 +507,9 @@ function selectTrip(tripId) {
     return;
   }
 
-  // ===================================================
+  // ---------------------------------------
   // STORE SELECTED TRIP
-  // ===================================================
+  // ---------------------------------------
 
   localStorage.setItem(
     "selectedBus",
@@ -522,16 +533,13 @@ function selectTrip(tripId) {
       busId: bus.id,
       journeyDate: bus.journeyDate,
       fare: bus.fare,
+      distanceKm: bus.distanceKm
     }
   );
 
-  // ===================================================
-  // OPEN SEAT MAP
-  //
-  // seat.js function:
-  //
-  // openSeatModal(bus, journeyDate)
-  // ===================================================
+  // ---------------------------------------
+  // OPEN EXISTING SEAT MAP
+  // ---------------------------------------
 
   if (
     typeof window.openSeatModal !== "function"
@@ -548,12 +556,8 @@ function selectTrip(tripId) {
   );
 }
 
-
 // =====================================================
-// BOOK BUTTON CLICK LISTENER
-//
-// Event delegation avoids separate listeners
-// for each card.
+// BOOK NOW CLICK LISTENER
 // =====================================================
 
 if (resultsSection) {
@@ -586,28 +590,8 @@ if (resultsSection) {
   );
 }
 
-
 // =====================================================
-// LOAD SCHEDULED TRIPS
-//
-// Uses corrected trip-aware busRoutes.js.
-//
-// GET:
-// /api/buses/search?to=Jaffna&date=YYYY-MM-DD
-//
-// Response:
-// {
-//   success: true,
-//   date: "...",
-//   buses: [
-//     {
-//       id,
-//       tripId,
-//       availableSeats,
-//       ...
-//     }
-//   ]
-// }
+// LOAD PASSENGER SEARCH RESULTS
 // =====================================================
 
 async function loadBuses() {
@@ -618,9 +602,9 @@ async function loadBuses() {
     return;
   }
 
-  // -----------------------------------------------
+  // ---------------------------------------
   // DESTINATION VALIDATION
-  // -----------------------------------------------
+  // ---------------------------------------
 
   if (!district) {
     showResultMessage(
@@ -629,9 +613,9 @@ async function loadBuses() {
     return;
   }
 
-  // -----------------------------------------------
+  // ---------------------------------------
   // DATE VALIDATION
-  // -----------------------------------------------
+  // ---------------------------------------
 
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(travelDate)
@@ -642,18 +626,18 @@ async function loadBuses() {
     return;
   }
 
-  resultsSection.innerHTML = `
-    <p>Searching available trips...</p>
-  `;
+  showResultMessage(
+    "Searching available trips..."
+  );
 
   try {
-    // -----------------------------------------------
+    // -------------------------------------
     // SEARCH QUERY
-    // -----------------------------------------------
+    // -------------------------------------
 
     const qs = new URLSearchParams({
       to: district,
-      date: travelDate,
+      date: travelDate
     });
 
     if (
@@ -671,15 +655,23 @@ async function loadBuses() {
       url
     );
 
-    // -----------------------------------------------
+    // -------------------------------------
     // FETCH TRIPS
-    // -----------------------------------------------
+    // -------------------------------------
 
-    const response = await fetch(url);
+    const response = await fetch(
+      url,
+      {
+        cache: "no-store"
+      }
+    );
 
     const data = await response.json();
 
-    if (!response.ok || !data.success) {
+    if (
+      !response.ok ||
+      !data.success
+    ) {
       showResultMessage(
         data.message ||
         "Could not search trips."
@@ -687,19 +679,17 @@ async function loadBuses() {
       return;
     }
 
-    // -----------------------------------------------
+    // -------------------------------------
     // NORMALIZE RESULTS
-    // -----------------------------------------------
+    // -------------------------------------
 
     let trips = Array.isArray(data.buses)
       ? data.buses.map(normalizeTrip)
       : [];
 
-    // -----------------------------------------------
-    // STARTING LOCATION FILTER
-    //
-    // Current RAJABUS flow starts at Mihintale.
-    // -----------------------------------------------
+    // -------------------------------------
+    // FROM LOCATION FILTER
+    // -------------------------------------
 
     trips = trips.filter(
       (trip) =>
@@ -707,9 +697,9 @@ async function loadBuses() {
         fromLocation.toLowerCase()
     );
 
-    // -----------------------------------------------
+    // -------------------------------------
     // DESTINATION FILTER
-    // -----------------------------------------------
+    // -------------------------------------
 
     trips = trips.filter(
       (trip) =>
@@ -717,15 +707,15 @@ async function loadBuses() {
         district.toLowerCase()
     );
 
-    // -----------------------------------------------
-    // TYPE FILTER
-    // -----------------------------------------------
+    // -------------------------------------
+    // BUS TYPE FILTER
+    // -------------------------------------
 
     trips = filterTripsByType(trips);
 
-    // -----------------------------------------------
+    // -------------------------------------
     // CLEAR OLD TRIP CACHE
-    // -----------------------------------------------
+    // -------------------------------------
 
     tripsById.clear();
 
@@ -738,9 +728,9 @@ async function loadBuses() {
       }
     }
 
-    // -----------------------------------------------
-    // NO TRIPS
-    // -----------------------------------------------
+    // -------------------------------------
+    // NO TRIPS FOUND
+    // -------------------------------------
 
     if (trips.length === 0) {
       showResultMessage(
@@ -751,9 +741,24 @@ async function loadBuses() {
       return;
     }
 
-    // -----------------------------------------------
-    // SHOW TRIP CARDS
-    // -----------------------------------------------
+    // -------------------------------------
+    // DISTANCE DEBUG CHECK
+    // -------------------------------------
+
+    if (
+      trips.some(
+        (trip) => trip.distanceKm == null
+      )
+    ) {
+      console.warn(
+        "Some trips have no distanceKm from /api/buses/search. " +
+        "Check busSummary() in backend/routes/busRoutes.js."
+      );
+    }
+
+    // -------------------------------------
+    // DISPLAY TRIP CARDS
+    // -------------------------------------
 
     resultsSection.innerHTML = trips
       .map(busCardHtml)
@@ -771,11 +776,11 @@ async function loadBuses() {
     );
 
     showResultMessage(
-      "Could not reach the booking server. Please make sure the backend is running."
+      "Could not reach the booking server. " +
+      "Please make sure the backend is running."
     );
   }
 }
-
 
 // =====================================================
 // INITIALIZE

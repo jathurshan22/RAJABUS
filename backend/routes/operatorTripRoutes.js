@@ -1,85 +1,208 @@
+
+"use strict";
+
 const express = require("express");
+const mongoose = require("mongoose");
 
-const Trip =
-  require("../models/Trip");
-
-const Bus =
-  require("../models/Bus");
+const Trip = require("../models/Trip");
+const Bus = require("../models/Bus");
 
 const {
-  operatorProtect,
-} =
-  require("../middleware/operatorAuth");
-
+  operatorProtect
+} = require("../middleware/operatorAuth");
 
 const router = express.Router();
 
+// ==============================================
+// SRI LANKA CURRENT DATE
+// ==============================================
 
-// =====================================================
+function todayInSriLanka() {
+  const parts = new Intl.DateTimeFormat(
+    "en-GB",
+    {
+      timeZone: "Asia/Colombo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }
+  ).formatToParts(new Date());
+
+  const getPart = (type) =>
+    parts.find(
+      (part) => part.type === type
+    )?.value;
+
+  return (
+    `${getPart("year")}-` +
+    `${getPart("month")}-` +
+    `${getPart("day")}`
+  );
+}
+
+// ==============================================
+// VALIDATE JOURNEY DATE
+// ==============================================
+
+function isValidJourneyDate(value) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    return false;
+  }
+
+  const date = new Date(
+    `${value}T00:00:00.000Z`
+  );
+
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  );
+}
+
+// ==============================================
+// VALIDATE DISTANCE KM
+// ==============================================
+
+function parseDistance(value) {
+  if (
+    (
+      typeof value !== "string" &&
+      typeof value !== "number"
+    ) ||
+    String(value).trim() === ""
+  ) {
+    return null;
+  }
+
+  const distance = Number(value);
+
+  if (
+    !Number.isFinite(distance) ||
+    distance < 0.1
+  ) {
+    return null;
+  }
+
+  return distance;
+}
+
+// ==============================================
+// VALIDATE FARE
+// ==============================================
+
+function parseFare(value) {
+  if (
+    (
+      typeof value !== "string" &&
+      typeof value !== "number"
+    ) ||
+    String(value).trim() === ""
+  ) {
+    return null;
+  }
+
+  const fare = Number(value);
+
+  if (
+    !Number.isFinite(fare) ||
+    fare < 0
+  ) {
+    return null;
+  }
+
+  return fare;
+}
+
+// ==============================================
+// ERROR HANDLER
+// ==============================================
+
+function handleTripError(
+  res,
+  error,
+  operation
+) {
+  console.error(
+    `${operation} trip error:`,
+    error
+  );
+
+  if (error.code === 11000) {
+    return res.status(409).json({
+      success: false,
+      message:
+        "This bus already has a trip on that date at the same departure time"
+    });
+  }
+
+  if (
+    error.name === "ValidationError" ||
+    error.name === "CastError"
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid trip details"
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message:
+      `Failed to ${operation.toLowerCase()} trip`
+  });
+}
+
+// ==============================================
 // GET OPERATOR TRIPS
 // GET /api/operator-trips
-// =====================================================
+// ==============================================
 
 router.get(
   "/",
   operatorProtect,
   async (req, res) => {
-
     try {
-
-      const trips =
-        await Trip.find({
-          operatorId:
-            req.operator._id,
-        })
-          .populate(
-            "busId",
-            "busNo regNo type"
-          )
-          .sort({
-            journeyDate: 1,
-            departureTime: 1,
-          });
-
+      const trips = await Trip.find({
+        operatorId: req.operator._id
+      })
+        .populate(
+          "busId",
+          "busNo regNo type totalSeats"
+        )
+        .sort({
+          journeyDate: 1,
+          departureTime: 1
+        });
 
       return res.json({
         success: true,
         count: trips.length,
-        trips,
+        trips
       });
 
     } catch (error) {
-
-      console.error(
-        "Load trips error:",
-        error
+      return handleTripError(
+        res,
+        error,
+        "Load"
       );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Failed to load trips",
-        error:
-          error.message,
-      });
     }
-
   }
 );
 
-
-// =====================================================
+// ==============================================
 // CREATE TRIP
 // POST /api/operator-trips
-// =====================================================
+// ==============================================
 
 router.post(
   "/",
   operatorProtect,
   async (req, res) => {
-
     try {
-
       const {
         busId,
         journeyDate,
@@ -88,473 +211,560 @@ router.post(
         departureTime,
         arrivalTime,
         fare,
-      } = req.body;
+        distanceKm
+      } = req.body || {};
 
+      // --------------------------------------
+      // REQUIRED FIELDS
+      // --------------------------------------
 
       if (
         !busId ||
         !journeyDate ||
-        !from ||
-        !to ||
+        typeof from !== "string" ||
+        !from.trim() ||
+        typeof to !== "string" ||
+        !to.trim() ||
         !departureTime ||
-        !arrivalTime ||
-        fare === undefined ||
-        fare === null ||
-        fare === ""
+        !arrivalTime
       ) {
-
         return res.status(400).json({
           success: false,
           message:
-            "Please fill all trip details",
+            "Please fill all trip details"
         });
       }
 
+      // --------------------------------------
+      // VALIDATE BUS ID
+      // --------------------------------------
 
-      // ---------------------------------------------
-      // BUS MUST BELONG TO LOGGED-IN OPERATOR
-      // ---------------------------------------------
-
-      const bus =
-        await Bus.findOne({
-          _id: busId,
-          operatorId:
-            req.operator._id,
+      if (!mongoose.isValidObjectId(busId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Bus ID"
         });
+      }
 
+      // --------------------------------------
+      // VALIDATE JOURNEY DATE
+      // --------------------------------------
+
+      if (!isValidJourneyDate(journeyDate)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Journey date must be a valid YYYY-MM-DD date"
+        });
+      }
+
+      if (
+        journeyDate < todayInSriLanka()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Journey date cannot be in the past"
+        });
+      }
+
+      // --------------------------------------
+      // VALIDATE FARE
+      // --------------------------------------
+
+      const cleanFare = parseFare(fare);
+
+      if (cleanFare === null) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Enter a valid Fare (LKR)"
+        });
+      }
+
+      // --------------------------------------
+      // VALIDATE DISTANCE KM
+      // --------------------------------------
+
+      const distance =
+        parseDistance(distanceKm);
+
+      if (distance === null) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Enter a valid Distance (KM) of at least 0.1"
+        });
+      }
+
+      // --------------------------------------
+      // VERIFY BUS OWNERSHIP
+      // --------------------------------------
+
+      const bus = await Bus.findOne({
+        _id: busId,
+        operatorId: req.operator._id
+      });
 
       if (!bus) {
-
         return res.status(403).json({
           success: false,
           message:
-            "You can only create trips for your own buses",
+            "You can only create trips for your own buses"
         });
       }
 
+      // --------------------------------------
+      // CREATE TRIP WITH DISTANCE
+      // --------------------------------------
 
-      // ---------------------------------------------
-      // PAST DATE CHECK
-      // ---------------------------------------------
+      const trip = await Trip.create({
+        operatorId: req.operator._id,
 
-      const today =
-        new Date();
+        busId: bus._id,
 
-      today.setHours(
-        0,
-        0,
-        0,
-        0
-      );
+        journeyDate,
 
+        from: from.trim(),
+        to: to.trim(),
 
-      const selectedDate =
-        new Date(
-          `${journeyDate}T00:00:00`
-        );
+        departureTime,
+        arrivalTime,
 
+        fare: cleanFare,
 
-      if (
-        selectedDate < today
-      ) {
+        // NEW: SAVE DISTANCE KM
+        distanceKm: distance,
 
-        return res.status(400).json({
-          success: false,
-          message:
-            "Journey date cannot be in the past",
-        });
-      }
+        status: "Active"
+      });
 
-
-      const trip =
-        await Trip.create({
-
-          operatorId:
-            req.operator._id,
-
-          busId:
-            bus._id,
-
-          journeyDate,
-
-          from:
-            from.trim(),
-
-          to:
-            to.trim(),
-
-          departureTime,
-
-          arrivalTime,
-
-          fare:
-            Number(fare),
-
-          status:
-            "Active",
-        });
-
+      // --------------------------------------
+      // POPULATE BUS DETAILS
+      // --------------------------------------
 
       const populatedTrip =
         await Trip.findById(
           trip._id
         ).populate(
           "busId",
-          "busNo regNo type"
+          "busNo regNo type totalSeats"
         );
-
 
       return res.status(201).json({
         success: true,
         message:
           "Trip created successfully",
-        trip:
-          populatedTrip,
+        trip: populatedTrip
       });
 
     } catch (error) {
-
-      console.error(
-        "Create trip error:",
-        error
+      return handleTripError(
+        res,
+        error,
+        "Create"
       );
-
-
-      if (
-        error.code === 11000
-      ) {
-
-        return res.status(409).json({
-          success: false,
-          message:
-            "This bus already has a trip at the same date and departure time",
-        });
-      }
-
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Failed to create trip",
-        error:
-          error.message,
-      });
     }
-
   }
 );
 
-
-// =====================================================
+// ==============================================
 // GET SINGLE TRIP
 // GET /api/operator-trips/:id
-// =====================================================
+// ==============================================
 
 router.get(
   "/:id",
   operatorProtect,
   async (req, res) => {
 
-    try {
-
-      const trip =
-        await Trip.findOne({
-          _id:
-            req.params.id,
-
-          operatorId:
-            req.operator._id,
-        }).populate(
-          "busId",
-          "busNo regNo type"
-        );
-
-
-      if (!trip) {
-
-        return res.status(404).json({
-          success: false,
-          message:
-            "Trip not found",
-        });
-      }
-
-
-      return res.json({
-        success: true,
-        trip,
-      });
-
-    } catch (error) {
-
-      return res.status(500).json({
+    if (
+      !mongoose.isValidObjectId(
+        req.params.id
+      )
+    ) {
+      return res.status(400).json({
         success: false,
-        message:
-          "Failed to load trip",
-        error:
-          error.message,
+        message: "Invalid Trip ID"
       });
     }
 
+    try {
+      const trip = await Trip.findOne({
+        _id: req.params.id,
+        operatorId: req.operator._id
+      }).populate(
+        "busId",
+        "busNo regNo type totalSeats"
+      );
+
+      if (!trip) {
+        return res.status(404).json({
+          success: false,
+          message: "Trip not found"
+        });
+      }
+
+      return res.json({
+        success: true,
+        trip
+      });
+
+    } catch (error) {
+      return handleTripError(
+        res,
+        error,
+        "Load"
+      );
+    }
   }
 );
 
-
-// =====================================================
+// ==============================================
 // UPDATE TRIP
 // PUT /api/operator-trips/:id
-// =====================================================
+// ==============================================
 
 router.put(
   "/:id",
   operatorProtect,
   async (req, res) => {
 
+    if (
+      !mongoose.isValidObjectId(
+        req.params.id
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Trip ID"
+      });
+    }
+
     try {
-
-      const trip =
-        await Trip.findOne({
-          _id:
-            req.params.id,
-
-          operatorId:
-            req.operator._id,
-        });
-
+      const trip = await Trip.findOne({
+        _id: req.params.id,
+        operatorId: req.operator._id
+      });
 
       if (!trip) {
-
         return res.status(404).json({
           success: false,
-          message:
-            "Trip not found",
+          message: "Trip not found"
         });
       }
 
+      const changes = req.body || {};
 
-      // If bus changed,
-      // verify ownership
-      if (req.body.busId) {
+      // --------------------------------------
+      // UPDATE BUS - VERIFY OWNERSHIP
+      // --------------------------------------
 
-        const bus =
-          await Bus.findOne({
-            _id:
-              req.body.busId,
-
-            operatorId:
-              req.operator._id,
+      if (
+        changes.busId !== undefined
+      ) {
+        if (
+          !mongoose.isValidObjectId(
+            changes.busId
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid Bus ID"
           });
+        }
 
+        const bus = await Bus.findOne({
+          _id: changes.busId,
+          operatorId: req.operator._id
+        });
 
         if (!bus) {
-
           return res.status(403).json({
             success: false,
             message:
-              "You can only use your own bus",
+              "You can only use your own bus"
           });
         }
 
-
-        trip.busId =
-          bus._id;
+        trip.busId = bus._id;
       }
 
+      // --------------------------------------
+      // UPDATE JOURNEY DATE
+      // --------------------------------------
 
       if (
-        req.body.journeyDate !==
-        undefined
+        changes.journeyDate !== undefined
       ) {
-        trip.journeyDate =
-          req.body.journeyDate;
-      }
-
-
-      if (
-        req.body.from !==
-        undefined
-      ) {
-        trip.from =
-          String(
-            req.body.from
-          ).trim();
-      }
-
-
-      if (
-        req.body.to !==
-        undefined
-      ) {
-        trip.to =
-          String(
-            req.body.to
-          ).trim();
-      }
-
-
-      if (
-        req.body.departureTime !==
-        undefined
-      ) {
-        trip.departureTime =
-          req.body.departureTime;
-      }
-
-
-      if (
-        req.body.arrivalTime !==
-        undefined
-      ) {
-        trip.arrivalTime =
-          req.body.arrivalTime;
-      }
-
-
-      if (
-        req.body.fare !==
-        undefined
-      ) {
-        trip.fare =
-          Number(
-            req.body.fare
-          );
-      }
-
-
-      if (
-        req.body.status !==
-        undefined
-      ) {
-
-        const validStatuses = [
-          "Active",
-          "Cancelled",
-          "Completed",
-        ];
-
-
         if (
-          !validStatuses.includes(
-            req.body.status
+          !isValidJourneyDate(
+            changes.journeyDate
           )
         ) {
-
           return res.status(400).json({
             success: false,
             message:
-              "Invalid trip status",
+              "Journey date must be a valid YYYY-MM-DD date"
           });
         }
 
+        if (
+          changes.journeyDate <
+          todayInSriLanka()
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Journey date cannot be in the past"
+          });
+        }
 
-        trip.status =
-          req.body.status;
+        trip.journeyDate =
+          changes.journeyDate;
       }
 
+      // --------------------------------------
+      // UPDATE FROM
+      // --------------------------------------
+
+      if (
+        changes.from !== undefined
+      ) {
+        if (
+          typeof changes.from !== "string" ||
+          !changes.from.trim()
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Valid From location required"
+          });
+        }
+
+        trip.from = changes.from.trim();
+      }
+
+      // --------------------------------------
+      // UPDATE TO
+      // --------------------------------------
+
+      if (
+        changes.to !== undefined
+      ) {
+        if (
+          typeof changes.to !== "string" ||
+          !changes.to.trim()
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Valid To location required"
+          });
+        }
+
+        trip.to = changes.to.trim();
+      }
+
+      // --------------------------------------
+      // UPDATE DEPARTURE TIME
+      // --------------------------------------
+
+      if (
+        changes.departureTime !== undefined
+      ) {
+        if (!changes.departureTime) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Departure time required"
+          });
+        }
+
+        trip.departureTime =
+          changes.departureTime;
+      }
+
+      // --------------------------------------
+      // UPDATE ARRIVAL TIME
+      // --------------------------------------
+
+      if (
+        changes.arrivalTime !== undefined
+      ) {
+        if (!changes.arrivalTime) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Arrival time required"
+          });
+        }
+
+        trip.arrivalTime =
+          changes.arrivalTime;
+      }
+
+      // --------------------------------------
+      // UPDATE FARE
+      // --------------------------------------
+
+      if (
+        changes.fare !== undefined
+      ) {
+        const cleanFare =
+          parseFare(changes.fare);
+
+        if (cleanFare === null) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Enter a valid Fare (LKR)"
+          });
+        }
+
+        trip.fare = cleanFare;
+      }
+
+      // --------------------------------------
+      // UPDATE DISTANCE KM
+      // --------------------------------------
+
+      if (
+        changes.distanceKm !== undefined
+      ) {
+        const distance =
+          parseDistance(
+            changes.distanceKm
+          );
+
+        if (distance === null) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Enter a valid Distance (KM) of at least 0.1"
+          });
+        }
+
+        // NEW: UPDATE DISTANCE KM
+        trip.distanceKm = distance;
+      }
+
+      // --------------------------------------
+      // UPDATE STATUS
+      // --------------------------------------
+
+      if (
+        changes.status !== undefined
+      ) {
+        const validStatuses = [
+          "Active",
+          "Cancelled",
+          "Completed"
+        ];
+
+        if (
+          !validStatuses.includes(
+            changes.status
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Invalid trip status"
+          });
+        }
+
+        trip.status =
+          changes.status;
+      }
+
+      // --------------------------------------
+      // SAVE UPDATED TRIP
+      // --------------------------------------
 
       await trip.save();
-
 
       const populatedTrip =
         await Trip.findById(
           trip._id
         ).populate(
           "busId",
-          "busNo regNo type"
+          "busNo regNo type totalSeats"
         );
-
 
       return res.json({
         success: true,
         message:
           "Trip updated successfully",
-        trip:
-          populatedTrip,
+        trip: populatedTrip
       });
 
     } catch (error) {
-
-      if (
-        error.code === 11000
-      ) {
-
-        return res.status(409).json({
-          success: false,
-          message:
-            "Duplicate trip schedule",
-        });
-      }
-
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Failed to update trip",
-        error:
-          error.message,
-      });
+      return handleTripError(
+        res,
+        error,
+        "Update"
+      );
     }
-
   }
 );
 
-
-// =====================================================
+// ==============================================
 // DELETE TRIP
 // DELETE /api/operator-trips/:id
-// =====================================================
+// ==============================================
 
 router.delete(
   "/:id",
   operatorProtect,
   async (req, res) => {
 
+    if (
+      !mongoose.isValidObjectId(
+        req.params.id
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Trip ID"
+      });
+    }
+
     try {
-
-      const trip =
-        await Trip.findOne({
-          _id:
-            req.params.id,
-
-          operatorId:
-            req.operator._id,
-        });
-
+      const trip = await Trip.findOne({
+        _id: req.params.id,
+        operatorId: req.operator._id
+      });
 
       if (!trip) {
-
         return res.status(404).json({
           success: false,
-          message:
-            "Trip not found",
+          message: "Trip not found"
         });
       }
-
 
       await Trip.findByIdAndDelete(
         trip._id
       );
 
-
       return res.json({
         success: true,
         message:
-          "Trip deleted successfully",
+          "Trip deleted successfully"
       });
 
     } catch (error) {
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Failed to delete trip",
-        error:
-          error.message,
-      });
+      return handleTripError(
+        res,
+        error,
+        "Delete"
+      );
     }
-
   }
 );
 
+// ==============================================
+// EXPORT ROUTER
+// ==============================================
 
 module.exports = router;
