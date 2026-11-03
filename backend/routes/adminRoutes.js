@@ -7,6 +7,7 @@ const Booking = require("../models/Booking");
 const Bus = require("../models/Bus");
 const Contact = require("../models/Contact");
 const Operator = require("../models/Operator");
+const Trip = require("../models/Trip");
 const { protect, adminOnly } = require("../middleware/auth");
 
 // =============================================
@@ -118,6 +119,229 @@ router.get("/users", async (req, res) => {
         });
     }
 });
+
+
+// =====================================================
+// ADMIN - OPERATORS SUMMARY (READ ONLY)
+// GET /api/admin/operators
+// =====================================================
+
+router.get("/operators", async (req, res) => {
+  try {
+
+    // -----------------------------------------
+    // REGISTERED OPERATORS
+    // Never return operator passwords.
+    // -----------------------------------------
+
+    const operators = await Operator.find()
+      .select(
+        "companyName ownerName email phone " +
+        "address status createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // -----------------------------------------
+    // BUSES, TRIPS AND PAID BOOKINGS
+    // -----------------------------------------
+
+    const [
+      busGroups,
+      tripGroups,
+      bookingGroups
+    ] = await Promise.all([
+
+      Bus.aggregate([
+        {
+          $match: {
+            operatorId: {
+              $type: "objectId"
+            }
+          }
+        },
+        {
+          $group: {
+            _id: "$operatorId",
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+
+      Trip.aggregate([
+        {
+          $group: {
+            _id: "$operatorId",
+
+            totalTrips: {
+              $sum: 1
+            },
+
+            activeTrips: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$status", "Active"] },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ]),
+
+      Booking.aggregate([
+        {
+          $match: {
+            status: "Paid",
+            tripId: {
+              $type: "objectId"
+            }
+          }
+        },
+        {
+          $lookup: {
+            from: Trip.collection.name,
+            localField: "tripId",
+            foreignField: "_id",
+            as: "linkedTrip"
+          }
+        },
+        {
+          $unwind: "$linkedTrip"
+        },
+        {
+          $group: {
+            _id: "$linkedTrip.operatorId",
+
+            paidBookings: {
+              $sum: 1
+            },
+
+            bookedSeats: {
+              $sum: {
+                $size: {
+                  $ifNull: ["$seats", []]
+                }
+              }
+            }
+          }
+        }
+      ])
+
+    ]);
+
+    // -----------------------------------------
+    // GROUP DATA BY OPERATOR ID
+    // -----------------------------------------
+
+    const busesByOperator = new Map(
+      busGroups.map((item) => [
+        String(item._id),
+        item.count
+      ])
+    );
+
+    const tripsByOperator = new Map(
+      tripGroups.map((item) => [
+        String(item._id),
+        item
+      ])
+    );
+
+    const bookingsByOperator = new Map(
+      bookingGroups.map((item) => [
+        String(item._id),
+        item
+      ])
+    );
+
+    // -----------------------------------------
+    // COMBINE OPERATOR DETAILS
+    // -----------------------------------------
+
+    const items = operators.map((operator) => {
+
+      const id = String(operator._id);
+
+      const trips =
+        tripsByOperator.get(id) || {};
+
+      const bookings =
+        bookingsByOperator.get(id) || {};
+
+      return {
+        ...operator,
+
+        totalBuses:
+          busesByOperator.get(id) || 0,
+
+        totalTrips:
+          trips.totalTrips || 0,
+
+        activeTrips:
+          trips.activeTrips || 0,
+
+        paidBookings:
+          bookings.paidBookings || 0,
+
+        bookedSeats:
+          bookings.bookedSeats || 0
+      };
+
+    });
+
+    // -----------------------------------------
+    // ADMIN SUMMARY STATISTICS
+    // -----------------------------------------
+
+    const stats = {
+
+      totalOperators: items.length,
+
+      activeOperators:
+        items.filter(
+          (item) => item.status === "Active"
+        ).length,
+
+      totalOperatorBuses:
+        items.reduce(
+          (sum, item) =>
+            sum + item.totalBuses,
+          0
+        ),
+
+      activeTrips:
+        items.reduce(
+          (sum, item) =>
+            sum + item.activeTrips,
+          0
+        )
+
+    };
+
+    return res.json({
+      success: true,
+      stats,
+      operators: items
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Admin operators load error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to load operator details"
+    });
+
+  }
+});
+
 
 // =============================================
 // GET BOOKINGS

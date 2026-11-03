@@ -557,9 +557,7 @@
 
         if (state.reviews.size) {
 
-          status.textContent =
-            `${state.reviews.size} reviews · ` +
-            "Auto-scrolling · Hover to pause";
+          status.textContent ="";
 
         } else {
 

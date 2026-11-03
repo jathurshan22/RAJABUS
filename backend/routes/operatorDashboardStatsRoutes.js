@@ -135,6 +135,51 @@ router.get(
           },
         ]),
       ]);
+      
+      
+      // ====================================
+      // RECENT BOOKINGS - LAST 5
+      // ====================================
+
+      const recentRecords = await Booking.find({
+        tripId: { $in: tripIds }
+      })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(5)
+        .select(
+          "ticketId passengerName busNo busRegNo " +
+          "busId seats selectedSeats totalFare status createdAt"
+        )
+        .populate("busId", "busNo regNo")
+        .lean();
+
+      const recentBookings = recentRecords.map((booking) => {
+        const seats =
+          Array.isArray(booking.seats) && booking.seats.length
+            ? booking.seats
+            : String(booking.selectedSeats || "")
+                .split(",")
+                .map((seat) => seat.trim())
+                .filter(Boolean);
+
+        return {
+          id: String(booking._id),
+          ticketId: booking.ticketId || "—",
+          passengerName: booking.passengerName || "—",
+          busNo:
+            booking.busNo ||
+            booking.busId?.busNo ||
+            "—",
+          busRegNo:
+            booking.busRegNo ||
+            booking.busId?.regNo ||
+            "",
+          seats,
+          totalFare: booking.totalFare ?? 0,
+          status: booking.status || "Unknown",
+          createdAt: booking.createdAt || null
+        };
+      });
 
       const stats = paidStats[0] || {};
 
@@ -143,20 +188,22 @@ router.get(
       // ====================================
 
       return res.json({
-        success: true,
+      success: true,
 
-        stats: {
-          totalBuses,
-          todayTrips,
-          totalBookings,
+      stats: {
+        totalBuses,
+        todayTrips,
+        totalBookings,
 
-          confirmedPassengers:
-            stats.confirmedPassengers || 0,
+        confirmedPassengers:
+          stats.confirmedPassengers || 0,
 
-          totalRevenue:
-            stats.totalRevenue || 0,
-        },
-      });
+        totalRevenue:
+          stats.totalRevenue || 0
+      },
+
+      recentBookings
+    });
 
     } catch (error) {
       console.error(

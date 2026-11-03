@@ -244,6 +244,12 @@ async function loadDashboardStats() {
         stats.totalRevenue
       )
     );
+    
+    
+    // Load real recent bookings from same API
+    renderRecentBookings(
+      data.recentBookings
+    );
 
     console.log(
       "Dashboard statistics loaded:",
@@ -262,6 +268,87 @@ async function loadDashboardStats() {
       "Could not load dashboard statistics."
     );
   }
+}
+
+
+// ==========================================
+// RECENT BOOKINGS - SAFE HTML
+// ==========================================
+
+function escapeBookingHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// ==========================================
+// RENDER RECENT BOOKINGS
+// ==========================================
+
+function renderRecentBookings(bookings) {
+  const tbody =
+    document.getElementById("recentBookings");
+
+  if (!tbody) return;
+
+  if (
+    !Array.isArray(bookings) ||
+    bookings.length === 0
+  ) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="empty-row">
+          No bookings available yet.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = bookings.map((booking) => {
+    const seatText =
+      Array.isArray(booking.seats)
+        ? booking.seats.join(", ")
+        : "";
+
+    const busText = [
+      booking.busNo,
+      booking.busRegNo
+    ].filter(Boolean).join(" · ") || "—";
+
+    return `
+      <tr>
+        <td>
+          ${escapeBookingHtml(booking.ticketId || "—")}
+        </td>
+
+        <td>
+          ${escapeBookingHtml(booking.passengerName || "—")}
+        </td>
+
+        <td>
+          ${escapeBookingHtml(busText)}
+        </td>
+
+        <td>
+          ${escapeBookingHtml(seatText || "—")}
+        </td>
+
+        <td>
+          ${escapeBookingHtml(
+            formatCurrency(booking.totalFare)
+          )}
+        </td>
+
+        <td>
+          ${escapeBookingHtml(booking.status || "Unknown")}
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 

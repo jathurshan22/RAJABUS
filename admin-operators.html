@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Raja Bus - Manage Operators</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="admin-common.css">
+  <link rel="stylesheet" href="admin-operators.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dark-responsive.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+  <!-- ADMIN SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="logo">
+      <i class="fa-solid fa-bus"></i>
+      <span>Raja Bus</span>
+    </div>
+
+    <ul class="menu">
+
+      <li>
+        <a href="admin-dashboard.html">
+          <i class="fa-solid fa-chart-line"></i>
+          Dashboard
+        </a>
+      </li>
+
+      <li>
+        <a href="admin-buses.html">
+          <i class="fa-solid fa-bus"></i>
+          Buses
+        </a>
+      </li>
+
+      <li>
+        <a href="admin-bookings.html">
+          <i class="fa-solid fa-ticket"></i>
+          Bookings
+        </a>
+      </li>
+
+      <li>
+        <a href="admin-users.html">
+          <i class="fa-solid fa-users"></i>
+          Users
+        </a>
+      </li>
+
+      <li class="active">
+        <a href="admin-operators.html" aria-current="page">
+          <i class="fa-solid fa-building-user"></i>
+          Operators
+        </a>
+      </li>
+
+      <li>
+        <a href="admin-messages.html">
+          <i class="fa-solid fa-envelope"></i>
+          Messages
+        </a>
+      </li>
+
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content op-main">
+
+    <div class="topbar op-topbar">
+
+      <div>
+        <h1>Manage Operators</h1>
+        <p>Registered bus operators and service activity</p>
+      </div>
+
+      <div class="op-top-actions">
+
+        <button
+          type="button"
+          id="themeToggle"
+          class="op-theme-btn"
+          aria-label="Toggle dark mode"
+        >
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <a
+          class="op-dashboard-link"
+          href="admin-dashboard.html"
+        >
+          <i class="fa-solid fa-chart-line"></i>
+          Dashboard
+        </a>
+
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <section class="op-stats-grid" aria-label="Operator statistics">
+
+      <article class="op-stat-card">
+        <div class="op-stat-icon op-blue">
+          <i class="fa-solid fa-building-user"></i>
+        </div>
+
+        <div>
+          <h2 id="totalOperators">—</h2>
+          <p>Total Operators</p>
+        </div>
+      </article>
+
+      <article class="op-stat-card">
+        <div class="op-stat-icon op-green">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+
+        <div>
+          <h2 id="activeOperators">—</h2>
+          <p>Active Operators</p>
+        </div>
+      </article>
+
+      <article class="op-stat-card">
+        <div class="op-stat-icon op-orange">
+          <i class="fa-solid fa-bus"></i>
+        </div>
+
+        <div>
+          <h2 id="totalOperatorBuses">—</h2>
+          <p>Operator Buses</p>
+        </div>
+      </article>
+
+      <article class="op-stat-card">
+        <div class="op-stat-icon op-purple">
+          <i class="fa-solid fa-route"></i>
+        </div>
+
+        <div>
+          <h2 id="activeTrips">—</h2>
+          <p>Active Trips</p>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- OPERATORS TABLE -->
+    <section class="table-card op-table-card">
+
+      <div class="table-header op-table-header">
+
+        <div>
+          <h2>Registered Operators</h2>
+
+          <p id="operatorCountLabel" class="op-subtitle">
+            Loading operators...
+          </p>
+        </div>
+
+        <div class="op-table-actions">
+
+          <label for="operatorSearch" class="op-visually-hidden">
+            Search operators
+          </label>
+
+          <div class="op-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+              id="operatorSearch"
+              type="search"
+              placeholder="Search company, owner, email..."
+              autocomplete="off"
+            >
+          </div>
+
+          <button
+            id="refreshOperators"
+            type="button"
+            class="op-refresh-btn"
+            title="Refresh operators"
+          >
+            <i class="fa-solid fa-rotate-right"></i>
+            Refresh
+          </button>
+
+        </div>
+      </div>
+
+      <div class="op-table-scroll">
+
+        <table class="op-table">
+
+          <thead>
+            <tr>
+              <th>Company / Owner</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th>Buses</th>
+              <th>Trips</th>
+              <th>Paid Bookings</th>
+              <th>Joined</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="operatorsTable">
+            <tr>
+              <td colspan="8" class="op-empty">
+                Loading operators...
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<!-- EXISTING ADMIN AUTH -->
+<script src="admin-auth.js"></script>
+
+<!-- NEW OPERATORS PAGE -->
+<script src="admin-operators.js?v=1"></script>
+
+<!-- EXISTING THEME -->
+<script src="theme.js"></script>
+
+</body>
+</html>
