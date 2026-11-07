@@ -3,7 +3,6 @@
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8">
 
   <meta
@@ -13,441 +12,642 @@
 
   <title>My Buses | RajaBus</title>
 
-  <!-- CSS FILES -->
-
-  <link
-    rel="stylesheet"
-    href="operator-buses.css"
-  >
-
-  <link
-    rel="stylesheet"
-    href="toast.css"
-  >
-
-  <!-- FONT AWESOME -->
+  <link rel="stylesheet" href="operator-buses.css">
+  <link rel="stylesheet" href="toast.css">
 
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   >
 
-  <!-- GOOGLE FONTS -->
-
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
   >
 
+  <!-- ======================================
+       REGISTERED BUSES SEARCH STYLES
+  ======================================= -->
+
+  <style>
+
+    .bus-search-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .bus-search-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      width: min(100%, 375px);
+      min-height: 48px;
+      padding: 0 14px;
+
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+
+      transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+    }
+
+    .bus-search-field:focus-within {
+      border-color: #f26522;
+
+      box-shadow:
+        0 0 0 3px rgba(242, 101, 34, 0.12);
+    }
+
+    .bus-search-field .fa-magnifying-glass {
+      color: #f26522;
+    }
+
+    .bus-search-field input {
+      flex: 1;
+      min-width: 0;
+      height: 46px;
+
+      border: 0;
+      outline: 0;
+      background: transparent;
+
+      color: #111827;
+      font-size: 12px;
+    }
+
+    .bus-search-field input::placeholder {
+      color: #9ca3af;
+    }
+
+    .bus-search-clear {
+      display: none;
+      padding: 6px;
+
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .bus-search-clear.is-visible {
+      display: inline-flex;
+    }
+
+    .bus-search-count {
+      margin: 0 0 15px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .bus-search-empty {
+      padding: 28px 14px;
+      text-align: center;
+      color: #64748b;
+    }
+
+    .bus-search-empty i {
+      color: #f26522;
+      margin-right: 8px;
+    }
+
+    .bus-card.bus-search-hidden {
+      display: none !important;
+    }
+
+    .bus-search-empty[hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 750px) {
+      .bus-search-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .bus-search-field {
+        width: 100%;
+      }
+    }
+
+  </style>
 </head>
 
 <body>
 
-<!-- =====================================
-     TOAST NOTIFICATIONS
-     ===================================== -->
+  <!-- TOAST -->
 
-<div
-  id="toastContainer"
-  class="toast-container"
-></div>
+  <div
+    id="toastContainer"
+    class="toast-container"
+  ></div>
 
+  <div class="layout">
 
-<div class="layout">
+    <!-- ===================================
+         OPERATOR SIDEBAR
+    ==================================== -->
 
-  <!-- =====================================
-       SIDEBAR
-       ===================================== -->
+    <aside class="sidebar">
 
-  <aside class="sidebar">
-
-    <div class="logo">
-      Raja<span>Bus</span>
-    </div>
-
-    <p class="portal">
-      Operator Portal
-    </p>
-
-    <nav>
-
-      <a href="operator-dashboard.html">
-
-        <i class="fa-solid fa-chart-line"></i>
-        Dashboard
-
-      </a>
-
-      <a
-        href="operator-buses.html"
-        class="active"
-      >
-
-        <i class="fa-solid fa-bus"></i>
-        My Buses
-
-      </a>
-
-      <a href="operator-trips.html">
-
-        <i class="fa-solid fa-route"></i>
-        Trips
-
-      </a>
-
-      <a href="operator-bookings.html">
-
-        <i class="fa-solid fa-ticket"></i>
-        Bookings
-
-      </a>
-
-      <a href="operator-profile.html">
-
-        <i class="fa-solid fa-user"></i>
-        Profile
-
-      </a>
-
-    </nav>
-
-    <!-- LOGOUT -->
-
-    <button
-      id="logoutBtn"
-      class="logout-btn"
-      type="button"
-    >
-
-      <i class="fa-solid fa-right-from-bracket"></i>
-      Logout
-
-    </button>
-
-  </aside>
-
-
-  <!-- =====================================
-       MAIN CONTENT
-       ===================================== -->
-
-  <main class="main">
-
-    <!-- PAGE HEADER -->
-
-    <header class="page-header">
-
-      <div>
-
-        <p>
-          Operator Management
-        </p>
-
-        <h1>
-          My Buses
-        </h1>
-
+      <div class="logo">
+        Raja<span>Bus</span>
       </div>
+
+      <p class="portal">
+        Operator Portal
+      </p>
+
+      <nav>
+
+        <a href="operator-dashboard.html">
+          <i class="fa-solid fa-chart-line"></i>
+          Dashboard
+        </a>
+
+        <a
+          href="operator-buses.html"
+          class="active"
+        >
+          <i class="fa-solid fa-bus"></i>
+          My Buses
+        </a>
+
+        <a href="operator-trips.html">
+          <i class="fa-solid fa-route"></i>
+          Trips
+        </a>
+
+        <a href="operator-bookings.html">
+          <i class="fa-solid fa-ticket"></i>
+          Bookings
+        </a>
+
+        <a href="operator-profile.html">
+          <i class="fa-solid fa-user"></i>
+          Profile
+        </a>
+
+      </nav>
 
       <button
-        id="openAddBusBtn"
-        class="primary-btn"
+        id="logoutBtn"
+        class="logout-btn"
         type="button"
       >
-
-        <i class="fa-solid fa-plus"></i>
-        Add New Bus
-
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Logout
       </button>
 
-    </header>
+    </aside>
 
+    <!-- ===================================
+         MAIN CONTENT
+    ==================================== -->
 
-    <!-- =====================================
-         BUS SUMMARY
-         ===================================== -->
+    <main class="main">
 
-    <section class="summary-card">
-
-      <div class="summary-icon">
-
-        <i class="fa-solid fa-bus"></i>
-
-      </div>
-
-      <div>
-
-        <p>
-          Total Buses
-        </p>
-
-        <h2 id="busCount">
-          0
-        </h2>
-
-      </div>
-
-    </section>
-
-
-    <!-- =====================================
-         REGISTERED BUSES
-         ===================================== -->
-
-    <section class="content-card">
-
-      <div class="content-header">
+      <header class="page-header">
 
         <div>
+          <p>Operator Management</p>
+          <h1>My Buses</h1>
+        </div>
 
-          <h2>
-            Registered Buses
+        <button
+          id="openAddBusBtn"
+          class="primary-btn"
+          type="button"
+        >
+          <i class="fa-solid fa-plus"></i>
+          Add New Bus
+        </button>
+
+      </header>
+
+      <!-- TOTAL BUSES -->
+
+      <section class="summary-card">
+
+        <div class="summary-icon">
+          <i class="fa-solid fa-bus"></i>
+        </div>
+
+        <div>
+          <p>Total Buses</p>
+
+          <h2 id="busCount">
+            0
           </h2>
+        </div>
 
-          <p>
-            Manage buses belonging to your company.
-          </p>
+      </section>
+
+      <!-- ===================================
+           REGISTERED BUSES + SEARCH
+      ==================================== -->
+
+      <section class="content-card">
+
+        <div class="content-header bus-search-header">
+
+          <div>
+            <h2>Registered Buses</h2>
+
+            <p>
+              Manage buses belonging to your company.
+            </p>
+          </div>
+
+          <!-- NEW SEARCH BOX -->
+
+          <div class="bus-search-field">
+
+            <i
+              class="fa-solid fa-magnifying-glass"
+              aria-hidden="true"
+            ></i>
+
+            <input
+              id="busSearchInput"
+              type="search"
+              autocomplete="off"
+              placeholder="Search bus no, registration, type..."
+              aria-label="Search registered buses"
+            >
+
+            <button
+              type="button"
+              id="clearBusSearch"
+              class="bus-search-clear"
+              aria-label="Clear bus search"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+
+          </div>
 
         </div>
 
-      </div>
+        <!-- SEARCH RESULT COUNT -->
 
-      <div
-        id="busContainer"
-        class="bus-grid"
-      >
-
-        <div class="loading">
+        <p
+          id="busSearchCount"
+          class="bus-search-count"
+          aria-live="polite"
+        >
           Loading buses...
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-
-</div>
-
-
-<!-- =====================================
-     ADD / EDIT BUS MODAL
-     ===================================== -->
-
-<div
-  id="busModal"
-  class="modal"
->
-
-  <div class="modal-card">
-
-    <!-- MODAL HEADER -->
-
-    <div class="modal-header">
-
-      <div>
-
-        <p>
-          Bus Management
         </p>
 
-        <h2 id="modalTitle">
-          Add New Bus
-        </h2>
+        <!-- EXISTING BUS CARDS -->
 
-      </div>
-
-      <button
-        id="closeModalBtn"
-        class="close-btn"
-        type="button"
-        aria-label="Close bus form"
-      >
-
-        <i class="fa-solid fa-xmark"></i>
-
-      </button>
-
-    </div>
-
-
-    <!-- =====================================
-         ADD / EDIT BUS FORM
-         ===================================== -->
-
-    <form id="busForm">
-
-      <!-- HIDDEN EDIT BUS ID -->
-
-      <input
-        type="hidden"
-        id="editBusId"
-      >
-
-
-      <div class="form-grid">
-
-        <!-- =================================
-             BUS NUMBER
-             ================================= -->
-
-        <div class="input-group">
-
-          <label for="busNo">
-            Bus Number
-          </label>
-
-          <input
-            id="busNo"
-            type="text"
-            placeholder="RB-001"
-            maxlength="50"
-            required
-          >
-
-        </div>
-
-
-        <!-- =================================
-             REGISTRATION NUMBER
-             ================================= -->
-
-        <div class="input-group">
-
-          <label for="regNo">
-            Registration Number
-          </label>
-
-          <input
-            id="regNo"
-            type="text"
-            placeholder="NC-1234"
-            maxlength="50"
-            required
-          >
-
-        </div>
-
-
-        <!-- =================================
-             BUS TYPE
-             ================================= -->
-
-        <div class="input-group">
-
-          <label for="type">
-            Bus Type
-          </label>
-
-          <select
-            id="type"
-            required
-          >
-
-            <option value="">
-              Select type
-            </option>
-
-            <option value="Private">
-              Private
-            </option>
-
-            <option value="CTB">
-              CTB
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <!-- =================================
-             TOTAL BUS SEAT CAPACITY
-             ================================= -->
-
-        <div class="input-group">
-
-          <label for="totalSeats">
-            Total Seats (Bus Capacity)
-          </label>
-
-          <select
-            id="totalSeats"
-            required
-          >
-
-            <option value="50">
-              50 Seats
-            </option>
-
-            <option value="54" selected>
-              54 Seats
-            </option>
-
-          </select>
-
-          <small
-            style="
-              display: block;
-              margin-top: 8px;
-              font-size: 11px;
-              line-height: 1.6;
-              color: #777;
-            "
-          >
-            Select the actual seating capacity
-            of your bus. Capacity cannot be
-            changed after trips or bookings
-            are created.
-          </small>
-
-        </div>
-
-      </div>
-
-
-      <!-- =====================================
-           MODAL ACTION BUTTONS
-           ===================================== -->
-
-      <div class="modal-actions">
-
-        <button
-          id="cancelBtn"
-          type="button"
-          class="secondary-btn"
+        <div
+          id="busContainer"
+          class="bus-grid"
         >
-          Cancel
-        </button>
+          <div class="loading">
+            Loading buses...
+          </div>
+        </div>
 
-        <button
-          id="saveBusBtn"
-          type="submit"
-          class="primary-btn"
+        <!-- NO MATCHING BUSES -->
+
+        <p
+          id="busSearchEmpty"
+          class="bus-search-empty"
+          hidden
         >
+          <i class="fa-solid fa-magnifying-glass"></i>
+          No matching buses found.
+        </p>
 
-          <i class="fa-solid fa-floppy-disk"></i>
-          Save Bus
+      </section>
 
-        </button>
-
-      </div>
-
-    </form>
+    </main>
 
   </div>
 
-</div>
+  <!-- ===================================
+       ADD / EDIT BUS MODAL
+  ==================================== -->
 
+  <div
+    id="busModal"
+    class="modal"
+  >
 
-<!-- =====================================
-     JAVASCRIPT FILES
-     ===================================== -->
+    <div class="modal-card">
 
-<script src="toast.js"></script>
+      <div class="modal-header">
 
-<script src="operator-buses.js"></script>
+        <div>
+          <p>Bus Management</p>
+
+          <h2 id="modalTitle">
+            Add New Bus
+          </h2>
+        </div>
+
+        <button
+          id="closeModalBtn"
+          class="close-btn"
+          type="button"
+          aria-label="Close bus form"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
+
+      <!-- ADD / EDIT FORM -->
+
+      <form id="busForm">
+
+        <input
+          type="hidden"
+          id="editBusId"
+        >
+
+        <div class="form-grid">
+
+          <!-- BUS NUMBER -->
+
+          <div class="input-group">
+
+            <label for="busNo">
+              Bus Number
+            </label>
+
+            <input
+              id="busNo"
+              type="text"
+              placeholder="RB-001"
+              maxlength="50"
+              required
+            >
+
+          </div>
+
+          <!-- REGISTRATION NUMBER -->
+
+          <div class="input-group">
+
+            <label for="regNo">
+              Registration Number
+            </label>
+
+            <input
+              id="regNo"
+              type="text"
+              placeholder="NC-1234"
+              maxlength="50"
+              required
+            >
+
+          </div>
+
+          <!-- BUS TYPE -->
+
+          <div class="input-group">
+
+            <label for="type">
+              Bus Type
+            </label>
+
+            <select
+              id="type"
+              required
+            >
+              <option value="">
+                Select type
+              </option>
+
+              <option value="Private">
+                Private
+              </option>
+
+              <option value="CTB">
+                CTB
+              </option>
+            </select>
+
+          </div>
+
+          <!-- TOTAL SEATS -->
+
+          <div class="input-group">
+
+            <label for="totalSeats">
+              Total Seats (Bus Capacity)
+            </label>
+
+            <select
+              id="totalSeats"
+              required
+            >
+              <option value="50">
+                50 Seats
+              </option>
+
+              <option value="54" selected>
+                54 Seats
+              </option>
+            </select>
+
+            <small
+              style="
+                display: block;
+                margin-top: 8px;
+                font-size: 11px;
+                line-height: 1.6;
+                color: #777;
+              "
+            >
+              Select the actual seating capacity
+              of your bus. Capacity cannot be
+              changed after trips or bookings
+              are created.
+            </small>
+
+          </div>
+
+        </div>
+
+        <!-- MODAL BUTTONS -->
+
+        <div class="modal-actions">
+
+          <button
+            id="cancelBtn"
+            type="button"
+            class="secondary-btn"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="saveBusBtn"
+            type="submit"
+            class="primary-btn"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Bus
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- EXISTING JAVASCRIPT -->
+
+  <script src="toast.js"></script>
+
+  <script src="operator-buses.js"></script>
+
+  <!-- ===================================
+       LIVE BUS SEARCH JAVASCRIPT
+  ==================================== -->
+
+  <script>
+
+    (function () {
+      "use strict";
+
+      const input =
+        document.getElementById("busSearchInput");
+
+      const clearButton =
+        document.getElementById("clearBusSearch");
+
+      const count =
+        document.getElementById("busSearchCount");
+
+      const empty =
+        document.getElementById("busSearchEmpty");
+
+      const container =
+        document.getElementById("busContainer");
+
+      if (!input || !container) {
+        return;
+      }
+
+      // =====================================
+      // FILTER REGISTERED BUS CARDS
+      // =====================================
+
+      function applySearch() {
+
+        const query =
+          input.value.trim().toLocaleLowerCase();
+
+        const cards = Array.from(
+          container.querySelectorAll(".bus-card")
+        );
+
+        let visible = 0;
+
+        for (const card of cards) {
+
+          const text = [
+
+            card.querySelector("h3")?.textContent,
+
+            card.querySelector(".reg-no")?.textContent,
+
+            card.querySelector(".type-badge")?.textContent
+
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLocaleLowerCase();
+
+          const matches =
+            text.includes(query);
+
+          card.classList.toggle(
+            "bus-search-hidden",
+            !matches
+          );
+
+          if (matches) {
+            visible++;
+          }
+        }
+
+        // RESULT COUNT
+
+        count.textContent = cards.length
+          ? `Showing ${visible} of ${cards.length} buses`
+          : "";
+
+        // NO MATCHING BUSES MESSAGE
+
+        empty.hidden =
+          !query ||
+          visible > 0 ||
+          cards.length === 0;
+
+        // CLEAR SEARCH BUTTON
+
+        clearButton.classList.toggle(
+          "is-visible",
+          Boolean(query)
+        );
+      }
+
+      // =====================================
+      // LIVE SEARCH
+      // =====================================
+
+      input.addEventListener(
+        "input",
+        applySearch
+      );
+
+      // =====================================
+      // CLEAR SEARCH
+      // =====================================
+
+      clearButton.addEventListener(
+        "click",
+        function () {
+
+          input.value = "";
+
+          applySearch();
+
+          input.focus();
+        }
+      );
+
+      // =====================================
+      // AUTO UPDATE AFTER ADD / EDIT / DELETE
+      // =====================================
+
+      new MutationObserver(
+        applySearch
+      ).observe(
+        container,
+        {
+          childList: true
+        }
+      );
+
+      applySearch();
+
+    })();
+
+  </script>
 
 </body>
-
 </html>

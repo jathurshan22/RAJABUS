@@ -426,6 +426,94 @@ th {
 }
 
 
+/* RAJABUS - OPERATOR TRIPS SEARCH */
+
+.trip-search-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.trip-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 390px);
+  min-height: 48px;
+  padding: 0 14px;
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.trip-search-wrap:focus-within {
+  border-color: #f26522;
+  box-shadow: 0 0 0 3px rgba(242,101,34,.12);
+}
+
+.trip-search-wrap > i {
+  color: #f26522;
+}
+
+.trip-search-wrap input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #111827;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.trip-search-clear {
+  display: none;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.trip-search-clear.is-visible {
+  display: inline-flex;
+}
+
+.trip-search-count {
+  margin: 0 0 14px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.trip-search-hidden {
+  display: none !important;
+}
+
+.trip-search-no-match {
+  text-align: center;
+  padding: 26px 12px !important;
+  color: #64748b;
+}
+
+.trip-search-no-match[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 750px) {
+  .trip-search-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trip-search-wrap {
+    width: 100%;
+  }
+}
+
 /* RESPONSIVE */
 
 @media(max-width:750px) {

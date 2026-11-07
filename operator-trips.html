@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -32,505 +33,1092 @@
     rel="stylesheet"
   >
 
+  <!-- =====================================
+       OPERATOR TRIPS LIVE SEARCH CSS
+  ====================================== -->
+
+  <style>
+
+    /* SEARCH HEADER */
+
+    .trip-search-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .trip-search-heading > div:first-child {
+      min-width: 0;
+    }
+
+    /* SEARCH INPUT CONTAINER */
+
+    .trip-search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      width: min(100%, 390px);
+      min-height: 48px;
+
+      padding: 0 14px;
+
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .trip-search-wrap:focus-within {
+      border-color: #f26522;
+
+      box-shadow:
+        0 0 0 3px rgba(242, 101, 34, 0.12);
+    }
+
+    /* SEARCH ICON */
+
+    .trip-search-wrap > .fa-magnifying-glass {
+      color: #f26522;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    /* SEARCH INPUT */
+
+    .trip-search-wrap input {
+      flex: 1;
+
+      width: 100%;
+      min-width: 0;
+      height: 46px;
+
+      border: none;
+      outline: none;
+      background: transparent;
+      box-shadow: none;
+
+      font-family: "Poppins", sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: #111827;
+    }
+
+    .trip-search-wrap input::placeholder {
+      color: #9ca3af;
+    }
+
+    /* CLEAR SEARCH BUTTON */
+
+    .trip-search-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 7px;
+
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+
+      color: #64748b;
+
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .trip-search-clear:hover {
+      background: #fff0e8;
+      color: #f26522;
+    }
+
+    .trip-search-clear[hidden] {
+      display: none !important;
+    }
+
+    /* SEARCH COUNT */
+
+    .trip-search-count {
+      margin: 12px 0 18px;
+
+      font-family: "Poppins", sans-serif;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* FILTERED TABLE ROW */
+
+    #tripTableBody tr.trip-search-hidden {
+      display: none !important;
+    }
+
+    /* NO MATCHING TRIPS */
+
+    .trip-search-empty {
+      margin: 16px 0 0;
+      padding: 22px;
+
+      border: 1px dashed #fed7aa;
+      border-radius: 14px;
+
+      background: #fffaf6;
+
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .trip-search-empty i {
+      margin-right: 8px;
+      color: #f26522;
+    }
+
+    .trip-search-empty[hidden] {
+      display: none !important;
+    }
+
+    /* DARK MODE SUPPORT */
+
+    body.dark .trip-search-wrap,
+    body.dark-mode .trip-search-wrap,
+    [data-theme="dark"] .trip-search-wrap {
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    body.dark .trip-search-wrap input,
+    body.dark-mode .trip-search-wrap input,
+    [data-theme="dark"] .trip-search-wrap input {
+      color: #f8fafc;
+    }
+
+    body.dark .trip-search-count,
+    body.dark-mode .trip-search-count,
+    [data-theme="dark"] .trip-search-count {
+      color: #94a3b8;
+    }
+
+    body.dark .trip-search-empty,
+    body.dark-mode .trip-search-empty,
+    [data-theme="dark"] .trip-search-empty {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #9a3412;
+    }
+
+    /* MOBILE RESPONSIVE */
+
+    @media (max-width: 750px) {
+
+      .trip-search-heading {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .trip-search-wrap {
+        width: 100%;
+        max-width: 100%;
+      }
+
+    }
+
+  </style>
+
 </head>
 
 
 <body>
 
-<div
-  id="toastContainer"
-  class="toast-container"
-></div>
+  <!-- TOAST NOTIFICATIONS -->
+
+  <div
+    id="toastContainer"
+    class="toast-container"
+  ></div>
 
 
-<div class="layout">
+  <div class="layout">
+
+    <!-- =====================================
+         OPERATOR SIDEBAR
+    ====================================== -->
+
+    <aside class="sidebar">
+
+      <div class="logo">
+        Raja<span>Bus</span>
+      </div>
+
+      <p class="portal">
+        Operator Portal
+      </p>
 
 
-  <aside class="sidebar">
+      <nav>
 
-    <div class="logo">
-      Raja<span>Bus</span>
-    </div>
+        <a href="operator-dashboard.html">
 
-    <p class="portal">
-      Operator Portal
-    </p>
+          <i class="fa-solid fa-chart-line"></i>
 
+          Dashboard
 
-    <nav>
-
-      <a href="operator-dashboard.html">
-
-        <i class="fa-solid fa-chart-line"></i>
-
-        Dashboard
-
-      </a>
+        </a>
 
 
-      <a href="operator-buses.html">
+        <a href="operator-buses.html">
 
-        <i class="fa-solid fa-bus"></i>
+          <i class="fa-solid fa-bus"></i>
 
-        My Buses
+          My Buses
 
-      </a>
-
-
-      <a
-        href="operator-trips.html"
-        class="active"
-      >
-
-        <i class="fa-solid fa-route"></i>
-
-        Trips
-
-      </a>
+        </a>
 
 
-      <a href="operator-bookings.html">
+        <a
+          href="operator-trips.html"
+          class="active"
+        >
 
-        <i class="fa-solid fa-ticket"></i>
+          <i class="fa-solid fa-route"></i>
 
-        Bookings
-
-      </a>
-
-
-      <a href="operator-profile.html">
-
-        <i class="fa-solid fa-user"></i>
-
-        Profile
-
-      </a>
-
-    </nav>
-
-
-    <button
-      id="logoutBtn"
-      class="logout-btn"
-    >
-
-      <i class="fa-solid fa-right-from-bracket"></i>
-
-      Logout
-
-    </button>
-
-  </aside>
-
-
-
-  <main class="main">
-
-
-    <header class="page-header">
-
-      <div>
-
-        <p>
-          Schedule Management
-        </p>
-
-        <h1>
           Trips
-        </h1>
 
-      </div>
+        </a>
+
+
+        <a href="operator-bookings.html">
+
+          <i class="fa-solid fa-ticket"></i>
+
+          Bookings
+
+        </a>
+
+
+        <a href="operator-profile.html">
+
+          <i class="fa-solid fa-user"></i>
+
+          Profile
+
+        </a>
+
+      </nav>
 
 
       <button
-        id="openTripBtn"
-        class="primary-btn"
+        id="logoutBtn"
+        class="logout-btn"
+        type="button"
       >
 
-        <i class="fa-solid fa-plus"></i>
+        <i class="fa-solid fa-right-from-bracket"></i>
 
-        Create Trip
+        Logout
 
       </button>
 
-    </header>
+    </aside>
 
 
+    <!-- =====================================
+         MAIN CONTENT
+    ====================================== -->
 
-    <section class="summary-grid">
-
-
-      <div class="summary-card">
-
-        <i class="fa-solid fa-route"></i>
-
-        <div>
-
-          <span>
-            Total Trips
-          </span>
-
-          <h2 id="totalTrips">
-            0
-          </h2>
-
-        </div>
-
-      </div>
+    <main class="main">
 
 
-      <div class="summary-card">
+      <!-- PAGE HEADER -->
 
-        <i class="fa-solid fa-circle-check"></i>
+      <header class="page-header">
 
         <div>
 
-          <span>
-            Active Trips
-          </span>
+          <p>
+            Schedule Management
+          </p>
 
-          <h2 id="activeTrips">
-            0
-          </h2>
-
-        </div>
-
-      </div>
-
-
-    </section>
-
-
-
-    <section class="content-card">
-
-      <div class="section-title">
-
-        <h2>
-          Scheduled Trips
-        </h2>
-
-        <p>
-          Manage journey schedules for your buses.
-        </p>
-
-      </div>
-
-
-      <div class="table-wrapper">
-
-        <table>
-
-          <thead>
-
-          <tr>
-
-            <th>Date</th>
-            <th>Bus</th>
-            <th>Route</th>
-            <th>Departure</th>
-            <th>Arrival</th>
-            <th>Fare</th>
-            <th>Status</th>
-            <th>Actions</th>
-
-          </tr>
-
-          </thead>
-
-
-          <tbody id="tripTableBody">
-
-          <tr>
-
-            <td
-              colspan="8"
-              class="empty-row"
-            >
-              Loading trips...
-            </td>
-
-          </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </section>
-
-  </main>
-
-</div>
-
-
-
-<!-- CREATE / EDIT MODAL -->
-
-<div
-  id="tripModal"
-  class="modal"
->
-
-  <div class="modal-card">
-
-
-    <div class="modal-header">
-
-      <div>
-
-        <p>
-          Schedule
-        </p>
-
-        <h2 id="modalTitle">
-          Create Trip
-        </h2>
-
-      </div>
-
-
-      <button
-        id="closeModalBtn"
-        class="close-btn"
-      >
-
-        <i class="fa-solid fa-xmark"></i>
-
-      </button>
-
-    </div>
-
-
-
-    <form id="tripForm">
-
-
-      <input
-        id="editTripId"
-        type="hidden"
-      >
-
-
-      <div class="form-grid">
-
-
-        <div class="input-group">
-
-          <label>
-            Select Bus
-          </label>
-
-          <select
-            id="busId"
-            required
-          >
-
-            <option value="">
-              Select a bus
-            </option>
-
-          </select>
+          <h1>
+            Trips
+          </h1>
 
         </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Journey Date
-          </label>
-
-          <input
-            id="journeyDate"
-            type="date"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label for="from">From</label>
-
-          <select id="from" required>
-            <option value="Mihintale">Mihintale</option>
-          </select>
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label for="to">To (District)</label>
-
-          <select id="to" required>
-            <option value="" disabled selected>Select district</option>
-            <option>Ampara</option>
-            <option>Anuradhapura</option>
-            <option>Badulla</option>
-            <option>Batticaloa</option>
-            <option>Colombo</option>
-            <option>Galle</option>
-            <option>Gampaha</option>
-            <option>Hambantota</option>
-            <option>Jaffna</option>
-            <option>Kalutara</option>
-            <option>Kandy</option>
-            <option>Kegalle</option>
-            <option>Kilinochchi</option>
-            <option>Kurunegala</option>
-            <option>Mannar</option>
-            <option>Matale</option>
-            <option>Matara</option>
-            <option>Monaragala</option>
-            <option>Mullaitivu</option>
-            <option>Nuwara Eliya</option>
-            <option>Polonnaruwa</option>
-            <option>Puttalam</option>
-            <option>Ratnapura</option>
-            <option>Trincomalee</option>
-            <option>Vavuniya</option>
-          </select>
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Departure
-          </label>
-
-          <input
-            id="departureTime"
-            type="time"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Arrival
-          </label>
-
-          <input
-            id="arrivalTime"
-            type="time"
-            required
-          >
-
-        </div>
-        
-        
-        <!-- ==================================
-            TRIP DISTANCE (KM)
-        ================================== -->
-
-        <div class="input-group">
-
-          <label for="distanceKm">
-            <i class="fa-solid fa-route"></i>
-            Distance (KM)
-          </label>
-
-          <input
-            type="number"
-            id="distanceKm"
-            name="distanceKm"
-            min="0.1"
-            step="0.1"
-            placeholder="Enter trip distance in KM"
-            required
-          >
-
-        </div>
-
-
-        <div class="input-group">
-
-          <label>
-            Fare (LKR)
-          </label>
-
-          <input
-            id="fare"
-            type="number"
-            min="0"
-            required
-          >
-
-        </div>
-
-
-        <div
-          id="statusGroup"
-          class="input-group"
-        >
-
-          <label>
-            Status
-          </label>
-
-          <select id="status">
-
-            <option value="Active">
-              Active
-            </option>
-
-            <option value="Cancelled">
-              Cancelled
-            </option>
-
-            <option value="Completed">
-              Completed
-            </option>
-
-          </select>
-
-        </div>
-
-      </div>
-
-
-      <div class="modal-actions">
-
-        <button
-          id="cancelBtn"
-          type="button"
-          class="secondary-btn"
-        >
-          Cancel
-        </button>
 
 
         <button
-          type="submit"
+          id="openTripBtn"
           class="primary-btn"
+          type="button"
         >
 
-          <i class="fa-solid fa-floppy-disk"></i>
+          <i class="fa-solid fa-plus"></i>
 
-          Save Trip
+          Create Trip
 
         </button>
 
-      </div>
+      </header>
 
-    </form>
+
+      <!-- =====================================
+           SUMMARY CARDS
+      ====================================== -->
+
+      <section class="summary-grid">
+
+
+        <!-- TOTAL TRIPS -->
+
+        <div class="summary-card">
+
+          <i class="fa-solid fa-route"></i>
+
+          <div>
+
+            <span>
+              Total Trips
+            </span>
+
+            <h2 id="totalTrips">
+              0
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <!-- ACTIVE TRIPS -->
+
+        <div class="summary-card">
+
+          <i class="fa-solid fa-circle-check"></i>
+
+          <div>
+
+            <span>
+              Active Trips
+            </span>
+
+            <h2 id="activeTrips">
+              0
+            </h2>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =====================================
+           SCHEDULED TRIPS
+      ====================================== -->
+
+      <section class="content-card">
+
+
+        <!-- TITLE + SEARCH -->
+
+        <div class="section-title trip-search-heading">
+
+          <div>
+
+            <h2>
+              Scheduled Trips
+            </h2>
+
+            <p>
+              Manage journey schedules for your buses.
+            </p>
+
+          </div>
+
+
+          <!-- NEW: LIVE SEARCH BOX -->
+
+          <div class="trip-search-wrap">
+
+            <i
+              class="fa-solid fa-magnifying-glass"
+              aria-hidden="true"
+            ></i>
+
+            <input
+              type="search"
+              id="tripSearchInput"
+              placeholder="Search bus, route, date, status..."
+              aria-label="Search scheduled trips"
+              autocomplete="off"
+            >
+
+            <button
+              type="button"
+              id="clearTripSearch"
+              class="trip-search-clear"
+              aria-label="Clear trip search"
+              hidden
+            >
+
+              <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- SEARCH RESULT COUNT -->
+
+        <p
+          id="tripSearchCount"
+          class="trip-search-count"
+          aria-live="polite"
+        >
+          Loading trips...
+        </p>
+
+
+        <!-- =====================================
+             TRIPS TABLE
+        ====================================== -->
+
+        <div class="table-wrapper">
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>Date</th>
+
+                <th>Bus</th>
+
+                <th>Route</th>
+
+                <th>Departure</th>
+
+                <th>Arrival</th>
+
+                <!-- DISTANCE KM COLUMN -->
+
+                <th>Distance (KM)</th>
+
+                <th>Fare</th>
+
+                <th>Status</th>
+
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+
+            <!-- EXISTING TABLE ID PRESERVED -->
+
+            <tbody id="tripTableBody">
+
+              <tr>
+
+                <td
+                  colspan="9"
+                  class="empty-row"
+                >
+                  Loading trips...
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- NO MATCHING SEARCH RESULTS -->
+
+        <p
+          id="tripSearchEmpty"
+          class="trip-search-empty"
+          hidden
+        >
+
+          <i class="fa-solid fa-magnifying-glass"></i>
+
+          No matching trips found.
+
+        </p>
+
+      </section>
+
+    </main>
 
   </div>
 
-</div>
+
+  <!-- =====================================
+       CREATE / EDIT TRIP MODAL
+  ====================================== -->
+
+  <div
+    id="tripModal"
+    class="modal"
+  >
+
+    <div class="modal-card">
 
 
-<script src="toast.js"></script>
-<script src="operator-trips.js"></script>
+      <!-- MODAL HEADER -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <p>
+            Schedule
+          </p>
+
+          <h2 id="modalTitle">
+            Create Trip
+          </h2>
+
+        </div>
+
+
+        <button
+          id="closeModalBtn"
+          class="close-btn"
+          type="button"
+          aria-label="Close trip form"
+        >
+
+          <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+      </div>
+
+
+      <!-- =====================================
+           TRIP FORM
+      ====================================== -->
+
+      <form id="tripForm">
+
+
+        <input
+          id="editTripId"
+          type="hidden"
+        >
+
+
+        <div class="form-grid">
+
+
+          <!-- SELECT BUS -->
+
+          <div class="input-group">
+
+            <label for="busId">
+              Select Bus
+            </label>
+
+            <select
+              id="busId"
+              required
+            >
+
+              <option value="">
+                Select a bus
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- JOURNEY DATE -->
+
+          <div class="input-group">
+
+            <label for="journeyDate">
+              Journey Date
+            </label>
+
+            <input
+              id="journeyDate"
+              type="date"
+              required
+            >
+
+          </div>
+
+
+          <!-- FROM -->
+
+          <div class="input-group">
+
+            <label for="from">
+              From
+            </label>
+
+            <select
+              id="from"
+              required
+            >
+
+              <option value="Mihintale">
+                Mihintale
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <!-- TO DISTRICT -->
+
+          <div class="input-group">
+
+            <label for="to">
+              To (District)
+            </label>
+
+            <select
+              id="to"
+              required
+            >
+
+              <option
+                value=""
+                disabled
+                selected
+              >
+                Select district
+              </option>
+
+              <option>Ampara</option>
+              <option>Anuradhapura</option>
+              <option>Badulla</option>
+              <option>Batticaloa</option>
+              <option>Colombo</option>
+              <option>Galle</option>
+              <option>Gampaha</option>
+              <option>Hambantota</option>
+              <option>Jaffna</option>
+              <option>Kalutara</option>
+              <option>Kandy</option>
+              <option>Kegalle</option>
+              <option>Kilinochchi</option>
+              <option>Kurunegala</option>
+              <option>Mannar</option>
+              <option>Matale</option>
+              <option>Matara</option>
+              <option>Monaragala</option>
+              <option>Mullaitivu</option>
+              <option>Nuwara Eliya</option>
+              <option>Polonnaruwa</option>
+              <option>Puttalam</option>
+              <option>Ratnapura</option>
+              <option>Trincomalee</option>
+              <option>Vavuniya</option>
+
+            </select>
+
+          </div>
+
+
+          <!-- DEPARTURE -->
+
+          <div class="input-group">
+
+            <label for="departureTime">
+              Departure
+            </label>
+
+            <input
+              id="departureTime"
+              type="time"
+              required
+            >
+
+          </div>
+
+
+          <!-- ARRIVAL -->
+
+          <div class="input-group">
+
+            <label for="arrivalTime">
+              Arrival
+            </label>
+
+            <input
+              id="arrivalTime"
+              type="time"
+              required
+            >
+
+          </div>
+
+
+          <!-- =====================================
+               TRIP DISTANCE (KM)
+          ====================================== -->
+
+          <div class="input-group">
+
+            <label for="distanceKm">
+
+              <i class="fa-solid fa-route"></i>
+
+              Distance (KM)
+
+            </label>
+
+            <input
+              type="number"
+              id="distanceKm"
+              name="distanceKm"
+              min="0.1"
+              step="0.1"
+              placeholder="Enter trip distance in KM"
+              required
+            >
+
+          </div>
+
+
+          <!-- FARE -->
+
+          <div class="input-group">
+
+            <label for="fare">
+              Fare (LKR)
+            </label>
+
+            <input
+              id="fare"
+              type="number"
+              min="0"
+              required
+            >
+
+          </div>
+
+
+          <!-- STATUS -->
+
+          <div
+            id="statusGroup"
+            class="input-group"
+          >
+
+            <label for="status">
+              Status
+            </label>
+
+            <select id="status">
+
+              <option value="Active">
+                Active
+              </option>
+
+              <option value="Cancelled">
+                Cancelled
+              </option>
+
+              <option value="Completed">
+                Completed
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- MODAL ACTIONS -->
+
+        <div class="modal-actions">
+
+          <button
+            id="cancelBtn"
+            type="button"
+            class="secondary-btn"
+          >
+            Cancel
+          </button>
+
+
+          <button
+            type="submit"
+            class="primary-btn"
+          >
+
+            <i class="fa-solid fa-floppy-disk"></i>
+
+            Save Trip
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================
+       EXISTING JAVASCRIPT
+  ====================================== -->
+
+  <script src="toast.js"></script>
+
+  <!-- KEEP EXISTING CREATE / EDIT / DELETE -->
+
+  <script src="operator-trips.js?v=search2"></script>
+
+
+  <!-- =====================================
+       NEW: LIVE TRIPS SEARCH JAVASCRIPT
+  ====================================== -->
+
+  <script>
+
+    (function () {
+
+      "use strict";
+
+      const input =
+        document.getElementById(
+          "tripSearchInput"
+        );
+
+      const clearButton =
+        document.getElementById(
+          "clearTripSearch"
+        );
+
+      const count =
+        document.getElementById(
+          "tripSearchCount"
+        );
+
+      const empty =
+        document.getElementById(
+          "tripSearchEmpty"
+        );
+
+      const tbody =
+        document.getElementById(
+          "tripTableBody"
+        );
+
+      if (
+        !input ||
+        !clearButton ||
+        !count ||
+        !empty ||
+        !tbody
+      ) {
+        console.error(
+          "Trips Search: Required HTML elements missing"
+        );
+
+        return;
+      }
+
+
+      // =====================================
+      // NORMALIZE SEARCH TEXT
+      // =====================================
+
+      function normalizeText(value) {
+
+        return String(value || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+
+      }
+
+
+      // =====================================
+      // GET ACTUAL TRIP ROWS
+      // =====================================
+
+      function getTripRows() {
+
+        return Array.from(
+          tbody.querySelectorAll("tr")
+        ).filter((row) => {
+
+          return Boolean(
+            row.querySelector(
+              "button.edit-btn, " +
+              "button[data-action='edit']"
+            )
+          );
+
+        });
+
+      }
+
+
+      // =====================================
+      // APPLY LIVE SEARCH
+      // =====================================
+
+      function applyTripSearch() {
+
+        const query =
+          normalizeText(input.value);
+
+        const rows =
+          getTripRows();
+
+        let visible = 0;
+
+
+        // ---------------------------------
+        // FILTER EACH TRIP ROW
+        // ---------------------------------
+
+        rows.forEach((row) => {
+
+          // Includes bus, registration,
+          // route, date, KM, fare and status.
+
+          const searchable =
+            normalizeText(
+              row.textContent
+            );
+
+          const matches =
+            searchable.includes(query);
+
+
+          row.classList.toggle(
+            "trip-search-hidden",
+            !matches
+          );
+
+
+          if (matches) {
+            visible++;
+          }
+
+        });
+
+
+        // ---------------------------------
+        // SEARCH RESULT COUNT
+        // ---------------------------------
+
+        if (rows.length > 0) {
+
+          count.textContent =
+            `Showing ${visible} of ${rows.length} trips`;
+
+        } else {
+
+          count.textContent = "";
+
+        }
+
+
+        // ---------------------------------
+        // EMPTY SEARCH MESSAGE
+        // ---------------------------------
+
+        empty.hidden =
+          !query ||
+          rows.length === 0 ||
+          visible > 0;
+
+
+        // ---------------------------------
+        // CLEAR BUTTON
+        // ---------------------------------
+
+        clearButton.hidden =
+          query.length === 0;
+
+      }
+
+
+      // =====================================
+      // SEARCH WHILE TYPING
+      // =====================================
+
+      input.addEventListener(
+        "input",
+        applyTripSearch
+      );
+
+
+      // =====================================
+      // CLEAR SEARCH BUTTON
+      // =====================================
+
+      clearButton.addEventListener(
+        "click",
+        function () {
+
+          input.value = "";
+
+          applyTripSearch();
+
+          input.focus();
+
+        }
+      );
+
+
+      // =====================================
+      // UPDATE AFTER CREATE / EDIT / DELETE
+      // =====================================
+
+      const observer =
+        new MutationObserver(
+          applyTripSearch
+        );
+
+      observer.observe(
+        tbody,
+        {
+          childList: true
+        }
+      );
+
+
+      // =====================================
+      // INITIAL SEARCH
+      // =====================================
+
+      applyTripSearch();
+
+
+      console.log(
+        "RAJABUS Trips Live Search initialized"
+      );
+
+    })();
+
+  </script>
 
 </body>
 
