@@ -126,67 +126,143 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
         <!-- STATS -->
 
-        <div class="stats-grid">
+        
+<!-- =====================================
+     CLICKABLE DASHBOARD STATISTICS
+===================================== -->
 
-            <div class="stat-card">
-                <div class="icon blue">
-                    <i class="fa-solid fa-users"></i>
-                </div>
+<div class="stats-grid">
 
-                <div>
-                    <h2 id="totalUsers">0</h2>
-                    <p>Total Users</p>
-                </div>
-            </div>
+  <!-- TOTAL USERS -->
 
-            <div class="stat-card">
-                <div class="icon green">
-                    <i class="fa-solid fa-ticket"></i>
-                </div>
+  <a
+    href="admin-users.html"
+    class="stat-card stat-card-link"
+    aria-label="View all registered users"
+  >
 
-                <div>
-                    <h2 id="totalBookings">0</h2>
-                    <p>Total Bookings</p>
-                </div>
-            </div>
+    <div class="icon blue">
+      <i class="fa-solid fa-users"></i>
+    </div>
 
-            <div class="stat-card">
-                <div class="icon orange">
-                    <i class="fa-solid fa-bus"></i>
-                </div>
+    <div>
+      <h2 id="totalUsers">0</h2>
+      <p>Total Users</p>
+    </div>
 
-                <div>
-                    <h2 id="totalBuses">0</h2>
-                    <p>Total Buses</p>
-                </div>
-            </div>
+  </a>
 
-            <div class="stat-card">
-                <div class="icon purple">
-                    <i class="fa-solid fa-wallet"></i>
-                </div>
 
-                <div>
-                    <h2 id="totalRevenue">Rs.0</h2>
-                    <p>Total Revenue</p>
-                </div>
-            </div>
+  <!-- TOTAL BOOKINGS -->
 
-        </div>
+  <a
+    href="admin-bookings.html"
+    class="stat-card stat-card-link"
+    aria-label="View all bookings"
+  >
+
+    <div class="icon green">
+      <i class="fa-solid fa-ticket"></i>
+    </div>
+
+    <div>
+      <h2 id="totalBookings">0</h2>
+      <p>Total Bookings</p>
+    </div>
+
+  </a>
+
+
+  <!-- TOTAL BUSES -->
+
+  <a
+    href="admin-buses.html"
+    class="stat-card stat-card-link"
+    aria-label="View all buses"
+  >
+
+    <div class="icon orange">
+      <i class="fa-solid fa-bus"></i>
+    </div>
+
+    <div>
+      <h2 id="totalBuses">0</h2>
+      <p>Total Buses</p>
+    </div>
+
+  </a>
+
+
+  <!-- TOTAL REVENUE - UNCHANGED -->
+
+  <div class="stat-card">
+
+    <div class="icon purple">
+      <i class="fa-solid fa-wallet"></i>
+    </div>
+
+    <div>
+      <h2 id="totalRevenue">Rs.0</h2>
+      <p>Total Revenue</p>
+    </div>
+
+  </div>
+
+</div>
+
 
         <!-- RECENT BOOKINGS -->
 
         <div class="table-card">
 
-            <div class="table-header">
+            
+            <!-- RECENT BOOKINGS HEADER + LIVE SEARCH -->
 
-                <h2>Recent Bookings</h2>
+            <div class="table-header admin-recent-header">
+
+            <h2>Recent Bookings</h2>
+
+            <div class="admin-recent-controls">
+
+                <div class="admin-recent-search">
+
+                <i
+                    class="fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                ></i>
+
+                <input
+                    type="search"
+                    id="recentBookingSearch"
+                    placeholder="Search ticket, passenger, route..."
+                    aria-label="Search bookings"
+                    autocomplete="off"
+                >
+
+                <button
+                    id="clearRecentSearch"
+                    type="button"
+                    aria-label="Clear search"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                </div>
 
                 <a href="admin-bookings.html">
-                    View All
+                View All
                 </a>
 
             </div>
+
+            </div>
+
+            <p
+            class="admin-recent-count"
+            id="recentSearchCount"
+            aria-live="polite"
+            ></p>
+
 
             <table>
 
@@ -196,7 +272,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
                         <th>Passenger</th>
                         <th>Route</th>
                         <th>Seat</th>
-                        <th>Date</th>
+                        <th>Booking Date</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -215,7 +291,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 </div>
 
 <script src="admin-auth.js"></script>
-<script src="admin-dashboard.js"></script>
+<script src="admin-dashboard.js?v=booking-search1"></script>
 
 <script src="theme.js"></script>
 </body>

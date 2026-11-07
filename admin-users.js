@@ -52,7 +52,7 @@ function renderUsers(data){
 
         userTable.innerHTML += `
             <tr>
-                <td>${id.slice(-6).toUpperCase()}</td>
+                <td>${user.userCode || "Not assigned"}</td>
                 <td>${name}</td>
                 <td>${email}</td>
                 <td>${phone}</td>
@@ -88,6 +88,7 @@ searchInput.addEventListener("input",function(){
         (user.fullName || user.name || "").toLowerCase().includes(value) ||
         (user.email || "").toLowerCase().includes(value) ||
         (user.phone || "").toLowerCase().includes(value) ||
+        (user.userCode || "").toLowerCase().includes(value) ||
         (user._id || "").toLowerCase().includes(value)
     );
 
@@ -104,7 +105,10 @@ function viewUser(id){
     }
 
     showDetailModal("User Details", [
-        { label: "User ID", value: user._id },
+        {
+            label: "User ID",
+            value: user.userCode || "Not assigned"
+        },
         { label: "Name", value: user.fullName || user.name || "N/A" },
         { label: "Email", value: user.email || "N/A" },
         { label: "Phone", value: user.phone || "N/A" },

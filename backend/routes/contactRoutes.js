@@ -1,5 +1,10 @@
 const express = require("express");
 const Contact = require("../models/Contact");
+
+const {
+  getNextSequence
+} = require("../models/Counter");
+
 const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
@@ -18,13 +23,32 @@ router.post("/", async (req, res) => {
         message: "Name, email and message are required",
       });
     }
+    
+    
+    // ==========================================
+    // AUTOMATIC UNIQUE MESSAGE ID
+    // ==========================================
 
-    const contact = await Contact.create({
-      name: name.trim(),
-      email: email.trim(),
-      subject: (subject || "").trim(),
-      message: message.trim(),
-    });
+    const nextNumber =
+      await getNextSequence("contactMessage");
+
+    const messageCode =
+      `RBM${String(nextNumber).padStart(4, "0")}`;
+
+
+    
+const contact = await Contact.create({
+  messageCode,
+
+  name: name.trim(),
+
+  email: email.trim(),
+
+  subject: (subject || "").trim(),
+
+  message: message.trim()
+});
+
 
     await sendEmail({
       subject: `New Contact Message - ${subject || "Raja Bus"}`,

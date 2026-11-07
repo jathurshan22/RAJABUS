@@ -1,6 +1,16 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+
+  
+  userCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    match: /^RBU\d{4,}$/
+  },
+
   fullName: {
     type: String,
     required: true

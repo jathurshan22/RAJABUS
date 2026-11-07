@@ -1,0 +1,335 @@
+
+/* ==========================================
+   RAJABUS SHARED HOME FOOTER
+   REVIEW / CONTACT / JOURNEY
+========================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+/* FOOTER WRAPPER */
+
+#rajabusSharedFooter {
+  display: block;
+  clear: both;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 48px;
+  background: #fff;
+  overflow: hidden;
+}
+
+#rajabusSharedFooter,
+#rajabusSharedFooter * {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   MAIN FOOTER
+========================================== */
+
+#rajabusSharedFooter .site-footer {
+  background: #fff;
+  padding: 40px 20px 28px;
+  font-family: Poppins, system-ui, Arial, sans-serif;
+}
+
+#rajabusSharedFooter .footer-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  justify-content: center;
+  gap: 28px 40px;
+  align-items: start;
+}
+
+/* FOOTER COLUMNS */
+
+#rajabusSharedFooter .f-col {
+  text-align: center;
+  min-width: 0;
+}
+
+#rajabusSharedFooter .f-col h3 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #111;
+  letter-spacing: .2px;
+}
+
+/* LINKS */
+
+#rajabusSharedFooter .f-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+#rajabusSharedFooter .f-links li {
+  margin: 0;
+  padding: 0;
+}
+
+#rajabusSharedFooter .f-links a {
+  text-decoration: none;
+  color: #6f6f6f;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+#rajabusSharedFooter .f-links a:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+/* ADDRESS */
+
+#rajabusSharedFooter .f-address {
+  display: block;
+  margin: 6px 0 16px;
+  font-style: normal;
+  color: #6f6f6f;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+/* PHONE */
+
+#rajabusSharedFooter .f-phone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  color: #111;
+  text-decoration: none;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+#rajabusSharedFooter .f-phone svg {
+  color: #000;
+}
+
+/* ==========================================
+   DISTRICT AUTO SCROLL
+========================================== */
+
+#rajabusSharedFooter .marquee-viewport {
+  width: 100%;
+  margin: -18px auto 30px;
+  overflow: hidden;
+
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 0;
+  position: relative;
+  opacity: .2;
+}
+
+#rajabusSharedFooter .marquee-track {
+  display: flex;
+  width: max-content;
+
+  animation:
+    rbFooterScrollLeft 28s linear infinite;
+
+  will-change: transform;
+}
+
+#rajabusSharedFooter .marquee-list {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 36px;
+  padding: 0 36px;
+  margin: 0;
+
+  list-style: none;
+  white-space: nowrap;
+}
+
+#rajabusSharedFooter .marquee-list li {
+  font: 600 16px/1.2 system-ui, Arial, sans-serif;
+  color: #111;
+}
+
+@keyframes rbFooterScrollLeft {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ==========================================
+   COPYRIGHT BAR
+========================================== */
+
+#rajabusSharedFooter .footer-bar {
+  background: #f49a75;
+  padding: 8px 12px;
+
+  text-align: center;
+  font-family: system-ui, Arial, sans-serif;
+  margin-top: -30px;
+}
+
+#rajabusSharedFooter .footer-bar p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+#rajabusSharedFooter .top-text {
+  font-size: 13px;
+  color: #444;
+}
+
+#rajabusSharedFooter .bottom-text {
+  font-size: 14px;
+  color: #111;
+}
+
+#rajabusSharedFooter .bottom-text strong {
+  font-weight: 700;
+}
+
+/* ==========================================
+   TABLET RESPONSIVE
+========================================== */
+
+@media (max-width: 1000px) {
+
+  #rajabusSharedFooter .footer-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 28px 30px;
+  }
+
+  #rajabusSharedFooter .f-col h3 {
+    font-size: 28px;
+  }
+
+  #rajabusSharedFooter .f-address {
+    font-size: 24px;
+  }
+
+  #rajabusSharedFooter .f-links a {
+    font-size: 20px;
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE
+========================================== */
+
+@media (max-width: 600px) {
+
+  #rajabusSharedFooter .marquee-list {
+    gap: 24px;
+    padding: 0 24px;
+  }
+
+  #rajabusSharedFooter .marquee-list li {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+
+  #rajabusSharedFooter .site-footer {
+    padding: 32px 16px;
+  }
+
+  #rajabusSharedFooter .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #rajabusSharedFooter .f-col h3 {
+    font-size: 26px;
+  }
+
+  #rajabusSharedFooter .f-address {
+    font-size: 20px;
+  }
+
+  #rajabusSharedFooter .f-links a {
+    font-size: 18px;
+  }
+}
+
+/* ==========================================
+   DARK MODE - SAME HOME THEME
+========================================== */
+
+:root[data-theme="dark"] #rajabusSharedFooter,
+:root[data-theme="dark"] #rajabusSharedFooter .site-footer {
+  background: #0b1220;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-col h3 {
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-address {
+  color: #c7cfde;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-links a {
+  color: #aab4c9;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-links a:hover {
+  color: #fff;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-phone {
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .f-phone svg {
+  color: #fff;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .marquee-viewport {
+  background: #0b1220;
+  opacity: .35;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .marquee-list li {
+  color: #e5e7eb;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .footer-bar {
+  background: #331e165e;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .top-text {
+  color: #c7cfde;
+}
+
+:root[data-theme="dark"] #rajabusSharedFooter .bottom-text {
+  color: #e5e7eb;
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  #rajabusSharedFooter .marquee-track {
+    animation: none;
+  }
+}

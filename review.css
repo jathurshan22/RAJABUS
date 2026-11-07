@@ -1645,3 +1645,256 @@ select,
   .menu-toggle{ display: inline-flex; }
   .nav-links{ display: none; }      
 }
+
+/* ==========================================
+   RAJABUS - REVIEW HOME FOOTER
+========================================== */
+
+#rajabusReviewFooter {
+  width: 100%;
+  max-width: 100%;
+  clear: both;
+  margin: 0;
+  background: #fff;
+  font-family: Poppins, Arial, sans-serif;
+  overflow: hidden;
+}
+
+#rajabusReviewFooter * {
+  box-sizing: border-box;
+}
+
+#rajabusReviewFooter .top-border1 {
+  width: 95%;
+  height: 1px;
+  background: #f26522;
+  margin: 20px auto 0;
+}
+
+#rajabusReviewFooter .site-footer {
+  padding: 40px 20px 28px;
+  background: #fff;
+}
+
+#rajabusReviewFooter .footer-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px 40px;
+  align-items: start;
+}
+
+#rajabusReviewFooter .f-col {
+  min-width: 0;
+  text-align: center;
+}
+
+#rajabusReviewFooter .f-col h3 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+}
+
+#rajabusReviewFooter .f-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+#rajabusReviewFooter .f-links a {
+  color: #6f6f6f;
+  font-size: 15px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+#rajabusReviewFooter .f-links a:hover {
+  color: #f26522;
+  text-decoration: underline;
+}
+
+#rajabusReviewFooter .f-address {
+  display: block;
+  font-style: normal;
+  color: #6f6f6f;
+  font-size: 15px;
+  line-height: 1.35;
+  margin: 6px 0 16px;
+}
+
+#rajabusReviewFooter .f-phone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #111;
+  font-size: 13px;
+  margin-top: 6px;
+  text-decoration: none;
+}
+
+/* DISTRICT MARQUEE */
+
+#rajabusReviewFooter .marquee-viewport {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+
+  margin: -18px auto 30px;
+  padding: 14px 0;
+
+  background: #fff;
+  border-radius: 14px;
+  opacity: .2;
+}
+
+#rajabusReviewFooter .marquee-track {
+  display: flex;
+  width: max-content;
+
+  animation: rbReviewFooterScroll
+    28s linear infinite;
+}
+
+#rajabusReviewFooter .marquee-list {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+
+  gap: 36px;
+  padding: 0 36px;
+  margin: 0;
+
+  list-style: none;
+  white-space: nowrap;
+}
+
+#rajabusReviewFooter .marquee-list li {
+  color: #111;
+  font: 600 16px/1.2 Arial, sans-serif;
+}
+
+@keyframes rbReviewFooterScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* COPYRIGHT */
+
+#rajabusReviewFooter .footer-bar {
+  background: #f49a75;
+  padding: 8px 12px;
+  margin: -30px 0 0;
+  text-align: center;
+}
+
+#rajabusReviewFooter .footer-bar p {
+  margin: 4px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+#rajabusReviewFooter .top-text {
+  font-size: 13px;
+}
+
+#rajabusReviewFooter .bottom-text {
+  color: #111;
+}
+
+/* TABLET */
+
+@media (max-width: 1000px) {
+  #rajabusReviewFooter .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 30px;
+  }
+
+  #rajabusReviewFooter .f-col h3 {
+    font-size: 28px;
+  }
+
+  #rajabusReviewFooter .f-address {
+    font-size: 24px;
+  }
+
+  #rajabusReviewFooter .f-links a {
+    font-size: 20px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 560px) {
+  #rajabusReviewFooter .site-footer {
+    padding: 32px 16px;
+  }
+
+  #rajabusReviewFooter .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  #rajabusReviewFooter .f-col h3 {
+    font-size: 26px;
+  }
+
+  #rajabusReviewFooter .f-address {
+    font-size: 20px;
+  }
+
+  #rajabusReviewFooter .f-links a {
+    font-size: 18px;
+  }
+
+  #rajabusReviewFooter .marquee-list {
+    gap: 24px;
+    padding: 0 24px;
+  }
+}
+
+/* DARK MODE */
+
+html[data-theme="dark"] #rajabusReviewFooter,
+html[data-theme="dark"] #rajabusReviewFooter .site-footer,
+html[data-theme="dark"] #rajabusReviewFooter .marquee-viewport {
+  background: #0b1220;
+}
+
+html[data-theme="dark"] #rajabusReviewFooter .f-col h3,
+html[data-theme="dark"] #rajabusReviewFooter .marquee-list li {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] #rajabusReviewFooter .f-links a,
+html[data-theme="dark"] #rajabusReviewFooter .f-address,
+html[data-theme="dark"] #rajabusReviewFooter .f-phone {
+  color: #c7cfde;
+}
+
+html[data-theme="dark"] #rajabusReviewFooter .footer-bar {
+  background: #331e16;
+}
+
+html[data-theme="dark"] #rajabusReviewFooter .footer-bar p {
+  color: #e5e7eb;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #rajabusReviewFooter .marquee-track {
+    animation: none;
+  }
+}

@@ -907,3 +907,32 @@ if (document.readyState === "loading") {
 } else {
   start();
 }
+
+// ==========================================
+// OPERATOR TRIPS - LIVE STATUS REFRESH
+// ==========================================
+
+let tripRefreshRunning = false;
+
+setInterval(async () => {
+
+  if (
+    document.hidden ||
+    tripRefreshRunning
+  ) {
+    return;
+  }
+
+  tripRefreshRunning = true;
+
+  try {
+
+    await loadTrips();
+
+  } finally {
+
+    tripRefreshRunning = false;
+
+  }
+
+}, 15000);

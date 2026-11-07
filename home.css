@@ -3490,3 +3490,175 @@ html[data-theme="dark"] .bus-reviews-section {
   }
 
 }
+
+/* ==========================================
+   RAJABUS - HOME BUS REVIEWS
+   RESTORE HORIZONTAL AUTO SCROLL
+========================================== */
+
+/* Horizontal scrolling viewport */
+
+.bus-reviews-section .hbr-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Animated horizontal track */
+
+.bus-reviews-section .hbr-track {
+  display: flex !important;
+  align-items: stretch;
+
+  width: max-content !important;
+  max-width: none !important;
+
+  gap: 0;
+  will-change: transform;
+}
+
+/* IMPORTANT: Override old 3-column grid */
+
+.bus-reviews-section .hbr-grid {
+  display: flex !important;
+
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+
+  flex: 0 0 auto;
+
+  width: max-content !important;
+  max-width: none !important;
+
+  grid-template-columns: none !important;
+
+  gap: 22px;
+  padding-right: 22px;
+}
+
+/* Horizontal review cards */
+
+.bus-reviews-section .hbr-card {
+  flex: 0 0 clamp(300px, 30vw, 510px);
+
+  width: clamp(300px, 30vw, 510px);
+  min-width: 0;
+  min-height: 260px;
+}
+
+/* Start animation after reviews are ready */
+
+.bus-reviews-section
+.hbr-viewport.hbr-ready
+.hbr-track {
+  animation:
+    rbHomeBusReviewScroll
+    var(--hbr-duration, 35s)
+    linear
+    infinite !important;
+}
+
+/* Continuous right-to-left movement */
+
+@keyframes rbHomeBusReviewScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Pause on mouse hover */
+
+.bus-reviews-section
+.hbr-viewport:hover
+.hbr-track,
+.bus-reviews-section
+.hbr-viewport:focus-within
+.hbr-track {
+  animation-play-state: paused !important;
+}
+
+/* Tablet and Mobile */
+
+@media (max-width: 640px) {
+
+  .bus-reviews-section .hbr-grid {
+    gap: 14px;
+    padding-right: 14px;
+  }
+
+  .bus-reviews-section .hbr-card {
+    flex-basis: min(83vw, 390px);
+    width: min(83vw, 390px);
+    min-height: 245px;
+    padding: 20px;
+  }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .bus-reviews-section .hbr-viewport {
+    overflow-x: auto;
+  }
+
+  .bus-reviews-section
+  .hbr-viewport.hbr-ready
+  .hbr-track {
+    animation: none !important;
+  }
+}
+
+/* ==========================================
+   RAJABUS - HOME SEARCH FONT ENHANCEMENT
+   FONT SIZE + BOLD ONLY
+========================================== */
+
+/* Search Through 25 district in Sri Lanka */
+
+.search-box h3 {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+}
+
+/* Select District + Select Bus Type */
+
+.search-box .csel__btn {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+/* Date Picker */
+
+.search-box .custom-input .js-date {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+/* Search Button */
+
+.search-box .search-btn {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+/* Mobile Responsive */
+
+@media (max-width: 640px) {
+
+  .search-box h3 {
+    font-size: 15px !important;
+  }
+
+  .search-box .csel__btn,
+  .search-box .custom-input .js-date,
+  .search-box .search-btn {
+    font-size: 15px !important;
+  }
+
+}

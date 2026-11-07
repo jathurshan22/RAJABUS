@@ -53,7 +53,7 @@ function renderMessages(data){
 
         messageTable.innerHTML += `
             <tr>
-                <td>${id.slice(-6).toUpperCase()}</td>
+                <td>${msg.messageCode || "Not assigned"}</td>
                 <td>${name}</td>
                 <td>${email}</td>
                 <td>${subject}</td>
@@ -90,6 +90,7 @@ searchInput.addEventListener("input",function(){
     const value = searchInput.value.toLowerCase();
 
     const filtered = messages.filter(msg =>
+        (msg.messageCode || "").toLowerCase().includes(value) ||
         (msg.name || "").toLowerCase().includes(value) ||
         (msg.email || "").toLowerCase().includes(value) ||
         (msg.subject || "").toLowerCase().includes(value) ||
@@ -109,7 +110,10 @@ async function viewMessage(id){
     }
 
     showDetailModal("Contact Message", [
-        { label: "Message ID", value: msg._id },
+        {
+        label: "Message ID",
+        value: msg.messageCode || "Not assigned"
+        },
         { label: "Name", value: msg.name || "N/A" },
         { label: "Email", value: msg.email || "N/A" },
         { label: "Subject", value: msg.subject || "Contact Message" },

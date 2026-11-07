@@ -24,6 +24,41 @@ async function loadBookings(){
     }
 }
 
+
+// ==========================================
+// RAJABUS - BOOKING CREATED DATE
+// ==========================================
+
+function formatBookingDate(booking) {
+
+  const rawDate =
+    booking.createdAt ||
+    booking.bookingDate ||
+    booking.bookedAt;
+
+  if (!rawDate) {
+    return "N/A";
+  }
+
+  const date = new Date(rawDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Colombo"
+    }
+  ).format(date);
+
+}
+
+
 /* SHOW BOOKINGS */
 function renderBookings(data){
     bookingTable.innerHTML = "";
@@ -45,7 +80,7 @@ function renderBookings(data){
         const email = booking.email || "N/A";
         const route = booking.route || `${booking.from || "N/A"} - ${booking.to || "N/A"}`;
         const seat = booking.seatNo || booking.seat || booking.seats || "N/A";
-        const date = booking.date || booking.travelDate || "N/A";
+        const date = formatBookingDate(booking);
         const amount = booking.totalFare || booking.amount || booking.totalAmount || booking.fare || 0;
         const status = booking.status || "Pending";
 
@@ -111,6 +146,7 @@ function filterBookings(){
     const statusValue = statusFilter.value;
 
     let filtered = bookings.filter((booking)=>{
+        
         const text = `
             ${booking.ticketId || ""}
             ${booking.passengerName || ""}
@@ -122,7 +158,13 @@ function filterBookings(){
             ${booking.to || ""}
             ${booking.seatNo || ""}
             ${booking.seat || ""}
+            ${Array.isArray(booking.seats)
+            ? booking.seats.join(" ")
+            : booking.seats || ""}
+            ${formatBookingDate(booking)}
+            ${booking.status || ""}
         `.toLowerCase();
+
 
         return text.includes(searchValue);
     });
@@ -153,7 +195,10 @@ function viewBooking(id){
         { label: "Email", value: booking.email || "N/A" },
         { label: "Route", value: booking.route || `${booking.from || "N/A"} - ${booking.to || "N/A"}` },
         { label: "Seat", value: booking.seatNo || booking.seat || booking.seats || "N/A" },
-        { label: "Date", value: booking.date || booking.travelDate || "N/A" },
+        {
+        label: "Booking Date",
+        value: formatBookingDate(booking)
+        },
         { label: "Amount", value: "Rs. " + (booking.totalFare || booking.amount || booking.totalAmount || booking.fare || 0) },
         { label: "Status", value: booking.status || "Pending", badge: status },
     ]);
