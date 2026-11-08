@@ -172,27 +172,8 @@ window.addEventListener("scroll", function() {
     btn.setAttribute("aria-controls", listId);
     wrap.appendChild(list);
 
-    const opts = [];
-    [...native.options].forEach((o) => {
-      const item = document.createElement("div");
-      item.className = "csel__opt";
-      item.tabIndex = -1;
-      item.role = "option";
-      item.dataset.value = o.value || o.text;
-      item.textContent = o.text;
-      if (o.disabled) item.setAttribute("aria-disabled","true");
-      if (o.selected) {
-        item.setAttribute("aria-selected","true");
-        btn.textContent = o.text;
-      }
-      list.appendChild(item);
-      opts.push(item);
-    });
-
-    if (!btn.textContent.trim()) {
-      const ph = native.querySelector("option[hidden], option[disabled][selected]") || native.options[0];
-      btn.textContent = ph ? ph.text : "Select";
-    }
+    let opts = [];
+    let activeIndex = -1;
 
     function setActive(el){
       opts.forEach(x=> x.classList.remove("csel__opt--active"));
@@ -203,8 +184,6 @@ window.addEventListener("scroll", function() {
       if (r.top < lr.top) list.scrollTop -= (lr.top - r.top) + 6;
       if (r.bottom > lr.bottom) list.scrollTop += (r.bottom - lr.bottom) + 6;
     }
-
-    let activeIndex = -1;
 
     function open(){
       closeAll();
@@ -227,10 +206,50 @@ window.addEventListener("scroll", function() {
       opts.forEach(x=> x.removeAttribute("aria-selected"));
       el.setAttribute("aria-selected","true");
       btn.textContent = el.textContent;
-      native.value = el.dataset.value;
-      native.dispatchEvent(new Event("change", {bubbles:true}));
+      if (native.value !== el.dataset.value) {
+        native.value = el.dataset.value;
+        native.dispatchEvent(new Event("change", {bubbles:true}));
+      }
       close();
     }
+
+    function buildOptions() {
+      list.innerHTML = "";
+      opts = [];
+      activeIndex = -1;
+
+      [...native.options].forEach((o) => {
+        if (o.hidden) return;
+        const item = document.createElement("div");
+        item.className = "csel__opt";
+        item.tabIndex = -1;
+        item.role = "option";
+        item.dataset.value = o.value || o.text;
+        item.textContent = o.text;
+        if (o.disabled) item.setAttribute("aria-disabled","true");
+        if (o.selected && (o.value || !o.disabled)) {
+          item.setAttribute("aria-selected","true");
+          btn.textContent = o.text;
+        }
+        list.appendChild(item);
+        opts.push(item);
+      });
+
+      if (!native.value) {
+        const ph = native.querySelector("option[hidden], option[disabled][selected]") || native.options[0];
+        btn.textContent = ph ? ph.text : "Select";
+      } else {
+        const selOpt = native.options[native.selectedIndex];
+        if (selOpt) {
+          btn.textContent = selOpt.text;
+        }
+      }
+    }
+
+    buildOptions();
+
+    // Listen for custom rebuild event when options change dynamically
+    native.addEventListener("csel:rebuild", buildOptions);
 
     btn.addEventListener("click", () => {
       wrap.classList.contains("csel--open") ? close() : open();
@@ -266,9 +285,135 @@ window.addEventListener("scroll", function() {
 
     native.addEventListener("change", () => {
       const match = opts.find(x => x.dataset.value === native.value);
-      if (match) selectItem(match);
+      if (match) {
+        opts.forEach(x=> x.removeAttribute("aria-selected"));
+        match.setAttribute("aria-selected","true");
+        btn.textContent = match.textContent;
+      } else if (!native.value) {
+        opts.forEach(x=> x.removeAttribute("aria-selected"));
+        const ph = native.querySelector("option[hidden], option[disabled][selected]") || native.options[0];
+        btn.textContent = ph ? ph.text : "Select";
+      }
     });
   });
+})();
+
+// ================== FROM & TO DISTRICT SYNC ==================
+(function() {
+  const fromSelect = document.getElementById("fromSelect");
+  const toSelect = document.getElementById("toSelect");
+  const hiddenDistrict = document.getElementById("hiddenDistrict");
+
+  if (!fromSelect || !toSelect) return;
+
+  const ALL_DISTRICTS = [
+    "Ampara",
+    "Anuradhapura",
+    "Badulla",
+    "Batticaloa",
+    "Colombo",
+    "Galle",
+    "Gampaha",
+    "Hambantota",
+    "Jaffna",
+    "Kalutara",
+    "Kandy",
+    "Kegalle",
+    "Kilinochchi",
+    "Kurunegala",
+    "Mannar",
+    "Matale",
+    "Matara",
+    "Monaragala",
+    "Mullaitivu",
+    "Nuwara Eliya",
+    "Polonnaruwa",
+    "Puttalam",
+    "Ratnapura",
+    "Trincomalee",
+    "Vavuniya"
+  ];
+
+  function syncHiddenDistrict() {
+    if (hiddenDistrict) {
+      hiddenDistrict.value = toSelect.value || "";
+    }
+  }
+
+  function handleFromChange() {
+    const fromVal = fromSelect.value ? fromSelect.value.trim() : "";
+    const prevToVal = toSelect.value ? toSelect.value.trim() : "";
+
+    toSelect.innerHTML = "";
+
+    if (fromVal === "Mihintale") {
+      // Condition 1: If From is "Mihintale",
+      // To must show all 25 districts EXCEPT "Mihintale"
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.disabled = true;
+      ph.hidden = true;
+      ph.textContent = "Select To";
+      toSelect.appendChild(ph);
+
+      ALL_DISTRICTS.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        toSelect.appendChild(opt);
+      });
+
+      // Retain previous To value only if it's one of the 25 districts (not Mihintale)
+      if (prevToVal && prevToVal !== "Mihintale" && ALL_DISTRICTS.includes(prevToVal)) {
+        toSelect.value = prevToVal;
+      } else {
+        toSelect.value = "";
+        ph.selected = true;
+      }
+    } else if (fromVal && fromVal !== "Mihintale") {
+      // Condition 2: If From is other than "Mihintale",
+      // To must ONLY show "Mihintale"
+      const opt = document.createElement("option");
+      opt.value = "Mihintale";
+      opt.textContent = "Mihintale";
+      opt.selected = true;
+      toSelect.appendChild(opt);
+
+      toSelect.value = "Mihintale";
+    } else {
+      // Initial / empty From: show placeholder, Mihintale, and all 25 districts
+      const ph = document.createElement("option");
+      ph.value = "";
+      ph.disabled = true;
+      ph.hidden = true;
+      ph.selected = true;
+      ph.textContent = "Select To";
+      toSelect.appendChild(ph);
+
+      const mOpt = document.createElement("option");
+      mOpt.value = "Mihintale";
+      mOpt.textContent = "Mihintale";
+      toSelect.appendChild(mOpt);
+
+      ALL_DISTRICTS.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        toSelect.appendChild(opt);
+      });
+
+      toSelect.value = "";
+    }
+
+    // Rebuild the custom select UI for To
+    toSelect.dispatchEvent(new Event("csel:rebuild"));
+    syncHiddenDistrict();
+  }
+
+  fromSelect.addEventListener("change", handleFromChange);
+  toSelect.addEventListener("change", syncHiddenDistrict);
+
+  syncHiddenDistrict();
 })();
 
 // ================== FLATPICKR DATE PICKER ==================
@@ -294,15 +439,17 @@ const formEl = document.querySelector(".form-container");
 if (formEl) {
   formEl.addEventListener("submit", (e) => {
     const f = e.target;
-    const district = f.elements["district"]?.value?.trim();
+    const fromVal  = f.elements["from"]?.value?.trim();
+    const toVal    = f.elements["to"]?.value?.trim();
     const bus      = f.elements["bus"]?.value?.trim();
     const dateVal  = f.elements["date"]?.value?.trim();
 
-    if (!district || !bus || !dateVal) {
+    if (!fromVal || !toVal || !bus || !dateVal) {
       e.preventDefault();
-      if (!district) highlight("[name='district']");
-      if (!bus)      highlight("[name='bus']");
-      if (!dateVal)  highlight(".js-date");
+      if (!fromVal) highlight("[name='from']");
+      if (!toVal)   highlight("[name='to']");
+      if (!bus)     highlight("[name='bus']");
+      if (!dateVal) highlight(".js-date");
     }
   });
 }
@@ -310,8 +457,9 @@ if (formEl) {
 function highlight(sel){
   const el = document.querySelector(sel);
   if(!el) return;
-  el.style.boxShadow = "0 0 0 3px rgba(242,101,34,.35)";
-  setTimeout(()=> el.style.boxShadow = "", 1500);
+  const target = el.closest(".csel")?.querySelector(".csel__btn") || el;
+  target.style.boxShadow = "0 0 0 3px rgba(242,101,34,.45)";
+  setTimeout(()=> target.style.boxShadow = "", 1500);
 }
 
 // ================== MOBILE MENU ==================

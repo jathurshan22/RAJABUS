@@ -13,10 +13,14 @@ const RESULT_API_BASE =
 
 const params = new URLSearchParams(window.location.search);
 
-const fromLocation = "Mihintale";
+const fromLocation = (
+  params.get("from") || "Mihintale"
+).trim();
 
 const district = (
-  params.get("district") || ""
+  params.get("to") ||
+  params.get("district") ||
+  ""
 ).trim();
 
 const travelDate = (
@@ -30,6 +34,9 @@ const busType = (
 // =====================================================
 // DOM ELEMENTS
 // =====================================================
+
+const fromNameElement =
+  document.getElementById("fromName");
 
 const districtNameElement =
   document.getElementById("districtName");
@@ -45,6 +52,10 @@ const resultsSection =
 
 const tripsById = new Map();
 
+if (fromNameElement) {
+  fromNameElement.textContent = fromLocation || "Mihintale";
+}
+
 if (districtNameElement) {
   districtNameElement.textContent = district || "-";
 }
@@ -54,7 +65,13 @@ if (travelDateElement) {
 }
 
 if (busTypeElement) {
-  busTypeElement.textContent = busType || "Any";
+  busTypeElement.textContent =
+    !busType ||
+    busType.toLowerCase() === "any" ||
+    busType.toLowerCase() === "all" ||
+    busType.toLowerCase() === "all bus types"
+      ? "All"
+      : busType;
 }
 
 // =====================================================
@@ -274,7 +291,9 @@ function normalizeTrip(raw) {
 function filterTripsByType(trips) {
   if (
     !busType ||
-    busType.toLowerCase() === "any"
+    busType.toLowerCase() === "any" ||
+    busType.toLowerCase() === "all" ||
+    busType.toLowerCase() === "all bus types"
   ) {
     return trips;
   }
@@ -636,13 +655,16 @@ async function loadBuses() {
     // -------------------------------------
 
     const qs = new URLSearchParams({
+      from: fromLocation,
       to: district,
       date: travelDate
     });
 
     if (
       busType &&
-      busType.toLowerCase() !== "any"
+      busType.toLowerCase() !== "any" &&
+      busType.toLowerCase() !== "all" &&
+      busType.toLowerCase() !== "all bus types"
     ) {
       qs.set("type", busType);
     }

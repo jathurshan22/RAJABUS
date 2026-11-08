@@ -158,6 +158,7 @@ router.get("/test", (req, res) => {
 
 router.get("/search", async (req, res) => {
   try {
+    const from = String(req.query.from || "").trim();
     const to = String(req.query.to || "").trim();
     const date = String(req.query.date || "").trim();
     const type = String(req.query.type || "").trim();
@@ -185,10 +186,15 @@ router.get("/search", async (req, res) => {
     // Dummy buses are excluded by population.
 
     if (!date) {
-      const trips = await Trip.find({
+      const tripFilter = {
         to: exactRegex(to),
         status: "Active",
-      })
+      };
+      if (from) {
+        tripFilter.from = exactRegex(from);
+      }
+
+      const trips = await Trip.find(tripFilter)
         .sort({
           journeyDate: 1,
           departureTime: 1
@@ -203,6 +209,9 @@ router.get("/search", async (req, res) => {
           trip.busId &&
           (
             !type ||
+            type.toLowerCase() === "any" ||
+            type.toLowerCase() === "all" ||
+            type.toLowerCase() === "all bus types" ||
             exactRegex(type).test(
               String(trip.busId.type || "")
             )
@@ -225,11 +234,16 @@ router.get("/search", async (req, res) => {
     // ACTIVE SCHEDULED TRIPS
     // =========================================
 
-    const trips = await Trip.find({
+    const tripFilter = {
       to: exactRegex(to),
       journeyDate: date,
       status: "Active",
-    })
+    };
+    if (from) {
+      tripFilter.from = exactRegex(from);
+    }
+
+    const trips = await Trip.find(tripFilter)
       .sort({ departureTime: 1 })
       .populate({
         path: "busId",
@@ -241,6 +255,9 @@ router.get("/search", async (req, res) => {
         trip.busId &&
         (
           !type ||
+          type.toLowerCase() === "any" ||
+          type.toLowerCase() === "all" ||
+          type.toLowerCase() === "all bus types" ||
           exactRegex(type).test(
             String(trip.busId.type || "")
           )

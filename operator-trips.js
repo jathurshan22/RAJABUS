@@ -240,8 +240,108 @@ async function loadBuses() {
 }
 
 // ==========================================
-// AUTO-FILL BUS DETAILS
+// AUTO-FILL BUS DETAILS & DISTRICT SYNC
 // ==========================================
+
+const SRI_LANKA_DISTRICTS = [
+  "Ampara",
+  "Anuradhapura",
+  "Badulla",
+  "Batticaloa",
+  "Colombo",
+  "Galle",
+  "Gampaha",
+  "Hambantota",
+  "Jaffna",
+  "Kalutara",
+  "Kandy",
+  "Kegalle",
+  "Kilinochchi",
+  "Kurunegala",
+  "Mannar",
+  "Matale",
+  "Matara",
+  "Monaragala",
+  "Mullaitivu",
+  "Nuwara Eliya",
+  "Polonnaruwa",
+  "Puttalam",
+  "Ratnapura",
+  "Trincomalee",
+  "Vavuniya"
+];
+
+function syncTripToOptions(targetValue) {
+  const fromSelect = $("from");
+  const toSelect = $("to");
+  if (!fromSelect || !toSelect) return;
+
+  const fromVal = fromSelect.value ? fromSelect.value.trim() : "";
+  const prevToVal = targetValue !== undefined ? targetValue : (toSelect.value ? toSelect.value.trim() : "");
+
+  toSelect.innerHTML = "";
+
+  if (fromVal === "Mihintale") {
+    // Condition 1: If From is "Mihintale",
+    // To must show all 25 districts EXCEPT "Mihintale"
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.disabled = true;
+    ph.textContent = "Select district";
+    toSelect.appendChild(ph);
+
+    SRI_LANKA_DISTRICTS.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      toSelect.appendChild(opt);
+    });
+
+    if (prevToVal && prevToVal !== "Mihintale" && SRI_LANKA_DISTRICTS.includes(prevToVal)) {
+      toSelect.value = prevToVal;
+    } else {
+      toSelect.value = "";
+      ph.selected = true;
+    }
+  } else if (fromVal && fromVal !== "Mihintale") {
+    // Condition 2: If From is other than "Mihintale",
+    // To must ONLY show "Mihintale"
+    const opt = document.createElement("option");
+    opt.value = "Mihintale";
+    opt.textContent = "Mihintale";
+    opt.selected = true;
+    toSelect.appendChild(opt);
+
+    toSelect.value = "Mihintale";
+  } else {
+    // Initial / empty From: show placeholder, Mihintale, and all 25 districts
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.disabled = true;
+    ph.selected = true;
+    ph.textContent = "Select district";
+    toSelect.appendChild(ph);
+
+    const mOpt = document.createElement("option");
+    mOpt.value = "Mihintale";
+    mOpt.textContent = "Mihintale";
+    toSelect.appendChild(mOpt);
+
+    SRI_LANKA_DISTRICTS.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      toSelect.appendChild(opt);
+    });
+
+    if (prevToVal && (prevToVal === "Mihintale" || SRI_LANKA_DISTRICTS.includes(prevToVal))) {
+      toSelect.value = prevToVal;
+    } else {
+      toSelect.value = "";
+      ph.selected = true;
+    }
+  }
+}
 
 function applyBusDefaults() {
   const option =
@@ -249,9 +349,12 @@ function applyBusDefaults() {
 
   if (!option?.value) return;
 
+  if (option.dataset.from) {
+    $("from").value = option.dataset.from;
+    syncTripToOptions(option.dataset.to || "");
+  }
+
   const defaults = [
-    ["from", option.dataset.from],
-    ["to", option.dataset.to],
     ["departureTime", option.dataset.depart],
     ["arrivalTime", option.dataset.arrive]
   ];
@@ -260,15 +363,6 @@ function applyBusDefaults() {
     const input = $(id);
 
     if (!input || !value) continue;
-
-    if (
-      input.tagName === "SELECT" &&
-      ![...input.options].some(
-        (o) => o.value === value
-      )
-    ) {
-      continue;
-    }
 
     input.value = value;
   }
@@ -450,6 +544,8 @@ function openCreateTrip() {
   $("journeyDate").min =
     todayInSriLanka();
 
+  syncTripToOptions("");
+
   tripModal.classList.add("show");
 }
 
@@ -463,6 +559,7 @@ function closeModal() {
   tripForm.reset();
   editTripId.value = "";
   loadedEditTrip = null;
+  syncTripToOptions("");
 }
 
 // ==========================================
@@ -503,8 +600,7 @@ async function editTrip(id) {
     $("from").value =
       trip.from || "";
 
-    $("to").value =
-      trip.to || "";
+    syncTripToOptions(trip.to || "");
 
     $("departureTime").value =
       trip.departureTime || "";
@@ -859,6 +955,12 @@ async function start() {
   busSelect.addEventListener(
     "change",
     applyBusDefaults
+  );
+
+  // From selection syncs To options
+  $("from")?.addEventListener(
+    "change",
+    () => syncTripToOptions()
   );
 
   // Save

@@ -332,6 +332,15 @@ body {
   display: none; 
 }
 /* === Make closed selects look like orange pills === */
+.search-box .csel {
+  width: 185px;
+}
+.search-box .custom-input {
+  width: 205px;
+}
+.search-box .custom-input .js-date {
+  width: 100%;
+}
 .search-box .csel__btn{
   background:#f26522;        
   color:#fff;                
@@ -3166,6 +3175,7 @@ html[data-theme="dark"] .bus-reviews-section {
     text-overflow: ellipsis;
   }
   .container .search-box .search-btn {
+    grid-column: 1 / -1;
     padding: 0 14px !important;
     text-align: center;
   }
