@@ -1,4 +1,5 @@
 const PDFDocument = require("pdfkit");
+const Trip = require("../models/Trip");
 
 const BRAND_ORANGE = "#f26522";
 const DARK_TEXT = "#111827";
@@ -13,6 +14,33 @@ const statusColor = (status) => {
 
 // Streams a PDF ticket for the given booking directly into the response.
 const generateTicketPdf = async (booking, res) => {
+
+  
+  // ==========================================
+  // GET OPERATOR-ASSIGNED DEPARTURE TIME
+  // ==========================================
+
+  let departureTime = String(
+    booking.departTime || ""
+  ).trim();
+
+  // Fetch actual schedule using the
+  // trip linked to this booking.
+
+  if (booking.tripId) {
+
+    const trip = await Trip.findById(
+      booking.tripId
+    )
+      .select("departureTime")
+      .lean();
+
+    if (trip?.departureTime) {
+      departureTime = trip.departureTime;
+    }
+
+  }
+
   const ticketId = booking.ticketId || String(booking._id).slice(-6).toUpperCase();
 
   const doc = new PDFDocument({ size: "A4", margin: 50 });
@@ -88,7 +116,7 @@ const generateTicketPdf = async (booking, res) => {
     ["Mobile", booking.mobileNo || "N/A"],
     ["Email", booking.email || "N/A"],
     ["Journey Date", booking.journeyDate || "N/A"],
-    ["Departure Time", booking.departTime || "N/A"],
+    ["Departure Time", departureTime || "N/A"],
     ["Seat(s)", booking.selectedSeats || (booking.seats || []).join(", ") || "N/A"],
     ["Total Fare", `Rs. ${booking.totalFare || 0}`],
   ];

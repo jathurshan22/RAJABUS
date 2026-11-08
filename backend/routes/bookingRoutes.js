@@ -791,14 +791,15 @@ router.post(
         bus.to;
 
 
+      
       const bookingDepart =
-        trip.depart ||
+        trip.departureTime ||
         bus.depart;
 
-
       const bookingArrive =
-        trip.arrive ||
+        trip.arrivalTime ||
         bus.arrive;
+
 
 
       // ==================================================
